@@ -6,6 +6,7 @@ import fitz, re, os, shutil, asyncio, difflib, ast
 from PIL import Image, ImageTk, ImageOps
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
+import traceback
 
 # # Import Local Scripts
 from util.subs.ImageSplitter import ImageSplitter
@@ -16,6 +17,8 @@ from util.SettingsWindow import SettingsWindow
 from util.Settings import Settings
 from util.AnalyzeDocuments import AnalyzeDocuments
 from util.ImageHandler import ImageHandler
+from util.ProjectIO import ProjectIO
+from export_functions import ExportManager
 
 class App(TkinterDnD.Tk):
 
@@ -156,13 +159,16 @@ class App(TkinterDnD.Tk):
         if not hasattr(self, 'project_directory') or not self.project_directory:
             self.project_directory = self.temp_directory
 
-        self.enable_drag_and_drop() 
-        self.create_menus()
-        self.create_key_bindings()
-        self.bind_key_universal_commands(self.text_display)
-        
         # Initialize settings now (after the top frame is created)
         self.settings = Settings()
+        
+        # Initialize temp directory
+        self.initialize_temp_directory()
+        if not hasattr(self, 'project_directory') or not self.project_directory:
+            self.project_directory = self.temp_directory
+        
+        # Initialize the main DataFrame
+        self.initialize_main_df()
         
         # --- Update Chunking Dropdown with Actual Presets ---
         preset_names = [p['name'] for p in self.settings.chunk_text_presets] if self.settings.chunk_text_presets else []
@@ -192,37 +198,45 @@ class App(TkinterDnD.Tk):
         # Initialize the Progress Bar
         self.progress_bar = ProgressBar(self)
 
+        # Initialize ProjectIO
+        self.project_io = ProjectIO(self)
+
+        # Initialize the export manager
+        self.export_manager = ExportManager(self)
+
+        # Create menus and key bindings
+        self.create_menus()
+        self.create_key_bindings()
+        self.bind_key_universal_commands(self.text_display)
+        
+        # Enable drag and drop
+        self.enable_drag_and_drop() 
+
 # GUI Setup
 
     def create_menus(self):
-        self.menu_bar = tk.Menu(self)
-        self.config(menu=self.menu_bar)
-        
-        # File Menu
-        self.file_menu = tk.Menu(self.menu_bar, tearoff=0)
-        self.menu_bar.add_cascade(label="File", menu=self.file_menu)
-        
+        # Create menu bar
+        self.menubar = tk.Menu(self)
+        self.config(menu=self.menubar)
+
+        # File menu
+        self.file_menu = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="File", menu=self.file_menu)
         self.file_menu.add_command(label="New Project", command=self.create_new_project)
         self.file_menu.add_command(label="Open Project", command=self.open_project)
-        self.file_menu.add_command(label="Save Project As...", command=self.save_project_as)
         self.file_menu.add_command(label="Save Project", command=self.save_project)
+        self.file_menu.add_command(label="Save Project As", command=self.save_project_as)
         self.file_menu.add_separator()
-        self.file_menu.add_command(label="Import Images Only", command=lambda: self.open_folder(toggle="Images without Text"))        
-        self.file_menu.add_command(label="Import Text and Images", command=lambda: self.open_folder(toggle="Images with Text"))        
-        self.file_menu.add_command(label="Import PDF", command=self.open_pdf)
-        self.file_menu.add_separator()
-        self.file_menu.add_command(label="Export as Single Txt File", command=self.export_single_file)
-        self.file_menu.add_command(label="Export as Multiple Txt Files", command=self.export_text_files)
-        self.file_menu.add_command(label="Export as PDF with Text", command=self.export_as_pdf)
+        self.file_menu.add_command(label="Export...", command=self.export_manager.export_menu)
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Settings", command=self.create_settings_window)
         self.file_menu.add_separator()
-        self.file_menu.add_command(label="Exit", command=self.quit)
+        self.file_menu.add_command(label="Exit", command=self.on_closing)
 
         # Edit Menu
 
-        self.edit_menu = tk.Menu(self.menu_bar, tearoff=0)
-        self.menu_bar.add_cascade(label="Edit", menu=self.edit_menu)
+        self.edit_menu = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="Edit", menu=self.edit_menu)
         
         self.edit_menu.add_command(label="Find and Replace", command=self.find_and_replace)
         self.edit_menu.add_separator()
@@ -248,8 +262,8 @@ class App(TkinterDnD.Tk):
 
         # Process Menu
 
-        self.process_menu = tk.Menu(self.menu_bar, tearoff=0)
-        self.menu_bar.add_cascade(label="Process", menu=self.process_menu)
+        self.process_menu = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="Process", menu=self.process_menu)
 
         self.process_menu.add_command(label="Recognize Text on Current Page", command=lambda: self.ai_function(all_or_one_flag="Current Page", ai_job="HTR"))        
         self.process_menu.add_command(label="Recognize Text on All Pages", command=lambda: self.ai_function(all_or_one_flag="All Pages", ai_job="HTR"))
@@ -257,16 +271,8 @@ class App(TkinterDnD.Tk):
         self.process_menu.add_command(label="Correct Text on Current Page", command=lambda: self.ai_function(all_or_one_flag="Current Page", ai_job="Correct_Text"))
         self.process_menu.add_command(label="Correct Text on All Pages", command=lambda: self.ai_function(all_or_one_flag="All Pages", ai_job="Correct_Text"))
         self.process_menu.add_separator()
-        self.process_menu.add_command(label="Run Custom Function on Current Page", command=lambda: self.open_custom_function_window("Current Page"))
-        self.process_menu.add_command(label="Run Custom Function on All Pages", command=lambda: self.open_custom_function_window("All Pages"))
-        self.process_menu.add_separator()
         self.process_menu.add_command(label="Get Names and Places on Current Page", command=lambda: self.ai_function(all_or_one_flag="Current Page", ai_job="Get_Names_and_Places"))
         self.process_menu.add_command(label="Get Names and Places on All Pages", command=lambda: self.ai_function(all_or_one_flag="All Pages", ai_job="Get_Names_and_Places"))
-        self.process_menu.add_separator()
-        self.process_menu.add_command(
-            label="Collate Names & Places",
-            command=self.run_collation_and_open_window  # <-- new function
-        )
         self.process_menu.add_separator()
         self.process_menu.add_command(label="Separate Documents on Current Page", 
                                     command=lambda: self.ai_function(all_or_one_flag="Current Page", 
@@ -284,8 +290,8 @@ class App(TkinterDnD.Tk):
         
         # Document Menu
 
-        self.document_menu = tk.Menu(self.menu_bar, tearoff=0)
-        self.menu_bar.add_cascade(label="Document", menu=self.document_menu)
+        self.document_menu = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="Document", menu=self.document_menu)
         self.document_menu.add_command(label="Remove Pagination", 
                             command=self.remove_pagination,
                             state="disabled")  # Initially disabled
@@ -312,11 +318,16 @@ class App(TkinterDnD.Tk):
         
         # Tools Menu
 
-        self.tools_menu = tk.Menu(self.menu_bar, tearoff=0)
-        self.menu_bar.add_cascade(label="Tools", menu=self.tools_menu)
+        self.tools_menu = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="Tools", menu=self.tools_menu)
 
         self.tools_menu.add_command(label="Edit Current Image", command=self.edit_single_image)
         self.tools_menu.add_command(label="Edit All Images", command=self.edit_all_images)
+        self.tools_menu.add_separator()
+        self.tools_menu.add_command(
+            label="Collate Names & Places",
+            command=self.run_collation_and_open_window  # <-- new function
+        )
 
     def create_key_bindings(self):
         # Navigation bindings
@@ -871,201 +882,22 @@ class App(TkinterDnD.Tk):
         if not success:
             messagebox.showerror("Error", error_message)
 
-# Project Save and Open Functions
+# Project Save and Open Function Handlers
 
     def create_new_project(self):
-        if not messagebox.askyesno("New Project", "Creating a new project will reset the current application state. This action cannot be undone. Are you sure you want to proceed?"):
-            return  # User chose not to proceed
-        
-        # Reset the application
-        self.reset_application()
-
-        # Enable drag and drop
-        self.enable_drag_and_drop()
+        self.project_io.create_new_project()
 
     def save_project(self):
-        # If no project directory exists, call save_project_as.
-        if not hasattr(self, 'project_directory') or not self.project_directory:
-            self.save_project_as()
-            return
-
-        try:
-            project_name = os.path.basename(self.project_directory)
-            project_file = os.path.join(self.project_directory, f"{project_name}.pbf")
-
-            # Save the updated DataFrame back to the project file.
-            self.main_df.to_csv(project_file, index=False, encoding='utf-8')
-
-            messagebox.showinfo("Success", f"Project saved successfully to {self.project_directory}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to save project: {e}")
-            self.error_logging(f"Failed to save project: {e}")
+        self.project_io.save_project()
 
     def open_project(self):
-        project_directory = filedialog.askdirectory(title="Select Project Directory")
-        if not project_directory:
-            return
+        self.project_io.open_project()
 
-        project_name = os.path.basename(project_directory)
-        project_file = os.path.join(project_directory, f"{project_name}.pbf")
-        images_directory = os.path.join(project_directory, "images")
-
-        if not os.path.exists(project_file) or not os.path.exists(images_directory):
-            messagebox.showerror("Error", "Invalid project directory. Missing project file or images directory.")
-            return
-
-        try:
-            # Read and process the project CSV file, update paths, etc.
-            self.main_df = pd.read_csv(project_file, encoding='utf-8')
-            # Ensure required text columns exist...
-            for col in ["Original_Text", "First_Draft", "Final_Draft", "Text_Toggle"]:
-                if col not in self.main_df.columns:
-                    self.main_df[col] = ""
-                else:
-                    self.main_df[col] = self.main_df[col].astype('object')
-
-            self.project_directory = project_directory
-            self.images_directory = images_directory
-
-            # Convert relative paths to absolute paths
-            self.main_df['Image_Path'] = self.main_df['Image_Path'].apply(
-                lambda x: os.path.join(self.project_directory, x) if pd.notna(x) else x)
-            self.main_df['Text_Path'] = self.main_df['Text_Path'].apply(
-                lambda x: os.path.join(self.project_directory, x) if pd.notna(x) else x)
-
-            # Reset page counter and load the first image and text.
-            self.page_counter = 0
-            if not self.main_df.empty:
-                self.current_image_path = self.main_df.loc[0, 'Image_Path']
-                self.image_handler.load_image(self.current_image_path)
-                self.load_text()
-            self.counter_update()
-
-            messagebox.showinfo("Success", "Project loaded successfully.")
-            
-            self.get_doc_type_with_ai()
-
-            # Trigger document classification upon project load
-            self.get_doc_type_with_ai()
-
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to open project: {e}")
-            self.error_logging("Failed to open project", str(e))
-    
     def save_project_as(self):
-        # Ask the user to select a parent directory and project name.
-        parent_directory = filedialog.askdirectory(title="Select Directory for New Project")
-        if not parent_directory:
-            return  # User cancelled
-        project_name = simpledialog.askstring("Project Name", "Enter a name for the new project:")
-        if not project_name:
-            return  # User cancelled or provided an empty name
-
-        # Create the project directory and images subfolder.
-        project_directory = os.path.join(parent_directory, project_name)
-        os.makedirs(project_directory, exist_ok=True)
-        images_directory = os.path.join(project_directory, "images")
-        os.makedirs(images_directory, exist_ok=True)
-
-        # Path for the project file (CSV).
-        project_file = os.path.join(project_directory, f"{project_name}.pbf")
-
-        # Iterate over each row in the DataFrame.
-        for index, row in self.main_df.iterrows():
-            new_image_filename = f"{index+1:04d}_p{index+1:03d}.jpg"
-            new_image_path = os.path.join(images_directory, new_image_filename)
-            self.resize_image(row['Image_Path'], new_image_path)
-            
-            # Do not create a text file; store text in the DataFrame.
-            new_text_path = ""  # No text file is created
-            
-            rel_image_path = os.path.relpath(new_image_path, project_directory)
-            rel_text_path = ""  # No text file path
-
-            self.main_df.at[index, 'Image_Path'] = rel_image_path
-            self.main_df.at[index, 'Text_Path'] = rel_text_path
-
-        # Save the DataFrame (project file) in the project directory.
-        self.main_df.to_csv(project_file, index=False, encoding='utf-8')
-
-        messagebox.showinfo("Success", f"Project saved successfully to {project_directory}")
-        
-        # Update the project directory references.
-        self.project_directory = project_directory
-        self.images_directory = images_directory
+        self.project_io.save_project_as()
 
     def open_pdf(self, pdf_file=None):
-        if pdf_file is None:
-            pdf_file = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")])
-        if not pdf_file:
-            return
-
-        # Show progress bar immediately
-        progress_window, progress_bar, progress_label = self.progress_bar.create_progress_window("Processing PDF")
-        self.progress_bar.update_progress(0, 1)  # Show 0% progress immediately
-
-        try:
-            pdf_document = fitz.open(pdf_file)
-            total_pages = len(pdf_document)
-
-            # Get the starting index for new entries
-            start_index = len(self.main_df)
-
-            # Update progress bar with actual total
-            self.progress_bar.update_progress(0, total_pages)
-
-            for page_num in range(total_pages):
-                self.progress_bar.update_progress(page_num + 1, total_pages)
-            
-                page = pdf_document[page_num]
-
-                # Extract image at a lower resolution
-                pix = page.get_pixmap(matrix=fitz.Matrix(300/72, 300/72))
-                temp_image_path = os.path.join(self.temp_directory, f"temp_page_{page_num + 1}.jpg")
-                pix.save(temp_image_path)
-
-                # Calculate new index and page number
-                new_index = start_index + page_num
-                new_page_num = new_index + 1
-
-                # Resize and save the image using the existing resize_image method
-                image_filename = f"{new_page_num:04d}_p{new_page_num:03d}.jpg"
-                image_path = os.path.join(self.images_directory, image_filename)
-                self.resize_image(temp_image_path, image_path)
-
-                # Remove the temporary image
-                os.remove(temp_image_path)
-
-                # Extract text
-                text_content = page.get_text()
-                text_path = ""
-
-                # Add to DataFrame
-                new_row = pd.DataFrame({
-                    "Index": [new_index],
-                    "Page": [f"{new_page_num:04d}_p{new_page_num:03d}"],
-                    "Original_Text": [text_content],
-                    "First_Draft": [""],
-                    "Final_Draft": [""],
-                    "Image_Path": [image_path],
-                    "Text_Path": [text_path],
-                    "Text_Toggle": ["Original_Text"]
-                })
-                self.main_df = pd.concat([self.main_df, new_row], ignore_index=True)
-
-            pdf_document.close()
-            self.refresh_display()
-            self.progress_bar.close_progress_window()
-            self.get_doc_type_with_ai()
-            messagebox.showinfo("Success", f"PDF processed successfully. {total_pages} pages added.")
-
-        except Exception as e:
-            self.progress_bar.close_progress_window()
-            messagebox.showerror("Error", f"An error occurred while processing the PDF: {str(e)}")
-            self.error_logging(f"Error in open_pdf: {str(e)}")
-
-        finally:
-            self.enable_drag_and_drop()
+        self.project_io.open_pdf(pdf_file)
 
 # Loading Functions
 
@@ -1338,15 +1170,15 @@ class App(TkinterDnD.Tk):
     def error_logging(self, error_message, additional_info=None):
         try:
             error_logs_path = "util/error_logs.txt"
+            os.makedirs(os.path.dirname(error_logs_path), exist_ok=True)
+            
             with open(error_logs_path, "a", encoding='utf-8') as file:
-                # Add stack trace
-                import traceback
                 stack = traceback.format_exc()
                 
                 log_message = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: {error_message}"
                 if additional_info:
                     log_message += f" - Additional Info: {additional_info}"
-                if stack:
+                if stack and stack != "NoneType: None\n":
                     log_message += f"\nStack trace:\n{stack}"
                 file.write(log_message + "\n")
         except Exception as e:
@@ -1492,14 +1324,14 @@ class App(TkinterDnD.Tk):
         self.counter_update()
 
     def on_closing(self):
-        try:
-            # Cleanup code
-            self.destroy()
-        except Exception as e:
-            print(f"Error closing application: {str(e)}")
-            self.destroy()
-
+        """Handle application closing"""
+        if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            self.quit()
+            
     def error_logging(self, error_message, additional_info=None):
+        """Log errors to the error log file"""
+        # Create a timestamp for the error
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         try:
             error_logs_path = "util/error_logs.txt"
             with open(error_logs_path, "a", encoding='utf-8') as file:
@@ -1507,7 +1339,7 @@ class App(TkinterDnD.Tk):
                 import traceback
                 stack = traceback.format_exc()
                 
-                log_message = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: {error_message}"
+                log_message = f"{timestamp}: {error_message}"
                 if additional_info:
                     log_message += f" - Additional Info: {additional_info}"
                 if stack:
@@ -1518,29 +1350,6 @@ class App(TkinterDnD.Tk):
 
 # GUI Actions / Toggles
 
-    def open_custom_function_window(self, scope):
-        # Create a modal window for selecting a function
-        window = tk.Toplevel(self)
-        window.title("Select Custom Function")
-        window.grab_set()  # make window modal
-
-        tk.Label(window, text="Select a custom function to run:").pack(padx=10, pady=10)
-        
-        # Get the default function names from your settings;
-        # here we assume they are stored in self.settings.function_presets
-        preset_names = [p['name'] for p in self.settings.function_presets] if self.settings.function_presets else []
-        selected_function = tk.StringVar(value=preset_names[0] if preset_names else "")
-        
-        combobox = ttk.Combobox(window, textvariable=selected_function, values=preset_names, state="readonly", width=30)
-        combobox.pack(padx=10, pady=5)
-        
-        def confirm_selection():
-            self.custom_function_selected = selected_function.get()
-            window.destroy()
-            # Now call your AI function using the selected preset name.
-            self.ai_function(all_or_one_flag=scope, ai_job="Custom")
-        
-        tk.Button(window, text="OK", command=confirm_selection).pack(pady=10)
 
     def run_collation_and_open_window(self):
         # 1) Collect suggestions from the LLM automatically
@@ -2041,20 +1850,16 @@ class App(TkinterDnD.Tk):
         self.counter_update()
 
     def remove_pagination(self):
-        """Remove pagination markers from the current text."""
-        if not self.main_df.empty:
-            index = self.page_counter
-            current_toggle = self.main_df.loc[index, 'Text_Toggle']
-            
-            # Get the current text based on Text_Toggle
-            if current_toggle == "Final_Draft":
-                text = self.main_df.loc[index, 'Final_Draft']
-                column = 'Final_Draft'
-            elif current_toggle == "First_Draft":
-                text = self.main_df.loc[index, 'First_Draft']
-                column = 'First_Draft'
+        # Get the current index
+        index = self.page_counter - 1
+        
+        if index >= 0 and index < len(self.main_df):
+            # Get the text based on the toggle state
+            if self.text_toggle:
+                text = self.main_df.at[index, 'Processed_Text']
+                column = 'Processed_Text'
             else:
-                text = self.main_df.loc[index, 'Original_Text']
+                text = self.main_df.at[index, 'Original_Text']
                 column = 'Original_Text'
 
             # Remove the pagination markers
@@ -2075,259 +1880,11 @@ class App(TkinterDnD.Tk):
                 # Update the menu item state
                 self.document_menu.entryconfig("Remove Pagination", state="disabled")
 
-# Export Functions
-
-    def export(self, export_path=None):
-        """
-        Export the processed text to a file.
-        
-        Args:
-            export_path (str, optional): Path where the exported file should be saved.
-                If None, a file dialog will be shown.
-        """
-        self.toggle_button_state()
-        
-        try:
-            # If no export path is provided, show file dialog
-            if export_path is None:
-                export_path = filedialog.asksaveasfilename(
-                    defaultextension=".txt",
-                    filetypes=[("Text files", "*.txt")],
-                    title="Save Exported Text As"
-                )
-                
-                if not export_path:  # User cancelled the dialog
-                    self.toggle_button_state()
-                    return
-
-            combined_text = ""
-            
-            # Combine all the text values into a single string
-            for index, row in self.main_df.iterrows():
-                text = self.find_right_text(index)
-                
-                # Add appropriate spacing between entries
-                if text:
-                    if text[0].isalpha():  # If text starts with a letter
-                        combined_text += text
-                    else:
-                        combined_text += "\n\n" + text
-            
-            # Clean up multiple newlines
-            combined_text = re.sub(r"\n{3,}", "\n\n", combined_text)
-            
-            # Save the combined text to the chosen file
-            with open(export_path, "w", encoding="utf-8") as f:
-                f.write(combined_text)
-                
-            # Show success message if this was manually triggered
-            if export_path is None:
-                messagebox.showinfo("Success", "Text exported successfully!")
-                
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to export text: {str(e)}")
-            self.error_logging(f"Failed to export text: {str(e)}")
-            
-        finally:
-            self.toggle_button_state()
-
-    def export_single_file(self):
-        self.toggle_button_state()        
-        combined_text = ""
-
-        # Use a file dialog to ask the user where to save the exported text
-        export_path = filedialog.asksaveasfilename(
-            defaultextension=".txt",
-            filetypes=[("Text files", "*.txt")],
-            title="Save Exported Text As"
-        )
-        
-        # Combine all the processed_text values into a single string
-        for index, row in self.main_df.iterrows():
-            text = self.find_right_text(index)
-            if text and text[0].isalpha():
-                combined_text += text
-            else:
-                combined_text += "\n\n" + text
-
-        # Delete instances of three or more newline characters in a row, replacing them with two newline characters
-        combined_text = re.sub(r"\n{3,}", "\n\n", combined_text)
-
-        if not export_path:  # User cancelled the file dialog
-            self.toggle_button_state()
-            return
-
-        # Save the combined text to the chosen file
-        with open(export_path, "w", encoding="utf-8") as f:
-            f.write(combined_text)
-
-        self.toggle_button_state()
-
-    def export_text_files(self):
-        """Export each page's text as a separate text file with sequential numbering."""
-        if self.main_df.empty:
-            messagebox.showwarning("No Data", "No documents to export.")
-            return
-
-        # Ask user for base filename and directory
-        save_dir = filedialog.askdirectory(title="Select Directory to Save Text Files")
-        if not save_dir:
-            return
-
-        base_filename = simpledialog.askstring("Input", "Enter base filename for text files:",
-                                            initialvalue="document")
-        if not base_filename:
-            return
-
-        try:
-            # Show progress bar
-            progress_window, progress_bar, progress_label = self.progress_bar.create_progress_window("Exporting Text Files")
-            total_pages = len(self.main_df)
-            self.progress_bar.update_progress(0, total_pages)
-
-            # Track successful exports
-            successful_exports = 0
-
-            for index, row in self.main_df.iterrows():
-                try:
-                    # Update progress
-                    self.progress_bar.update_progress(index + 1, total_pages)
-
-                    # Get the text using existing function
-                    text = self.find_right_text(index)
-
-                    # Create filename with sequential numbering
-                    filename = f"{base_filename}_{index+1:04d}.txt"
-                    file_path = os.path.join(save_dir, filename)
-
-                    # Write the text to file
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(text if text else '')
-
-                    successful_exports += 1
-
-                except Exception as e:
-                    self.error_logging(f"Error exporting text file for index {index}: {str(e)}")
-                    continue
-
-            self.progress_bar.close_progress_window()
-
-            # Show completion message
-            if successful_exports == total_pages:
-                messagebox.showinfo("Success", f"Successfully exported {successful_exports} text files.")
-            else:
-                messagebox.showwarning("Partial Success", 
-                                    f"Exported {successful_exports} out of {total_pages} text files.\n"
-                                    f"Check the error log for details.")
-
-        except Exception as e:
-            self.progress_bar.close_progress_window()
-            messagebox.showerror("Error", f"Failed to export text files: {str(e)}")
-            self.error_logging(f"Text file export error: {str(e)}")
-
-    def export_as_pdf(self):
-        """Export the document as a PDF with images and their associated text."""
-        if self.main_df.empty:
-            messagebox.showwarning("No Data", "No documents to export.")
-            return
-
-        # Ask user for save location
-        file_path = filedialog.asksaveasfilename(
-            defaultextension=".pdf",
-            filetypes=[("PDF files", "*.pdf")],
-            title="Save PDF As"
-        )
-        
-        if not file_path:
-            return
-
-        try:
-            # Show progress bar
-            progress_window, progress_bar, progress_label = self.progress_bar.create_progress_window("Creating PDF")
-            total_pages = len(self.main_df)
-            self.progress_bar.update_progress(0, total_pages)
-
-            # Create PDF document
-            doc = fitz.open()
-            
-            for index, row in self.main_df.iterrows():
-                try:
-                    # Update progress
-                    self.progress_bar.update_progress(index + 1, total_pages)
-                    
-                    # Get image path and ensure it's absolute
-                    image_path = row['Image_Path']
-                    if not os.path.isabs(image_path):
-                        image_path = os.path.join(self.project_directory, image_path)
-
-                    # Get associated text based on Text_Toggle
-                    text = self.find_right_text(index)
-
-                    # Create new page at A4 size
-                    page = doc.new_page(width=595, height=842)  # A4 size in points
-
-                    try:
-                        # Open image and get its size
-                        img = Image.open(image_path)
-                        img_width, img_height = img.size
-                        img.close()
-
-                        # Calculate scaling to fit page while maintaining aspect ratio
-                        page_width = page.rect.width
-                        page_height = page.rect.height
-                        
-                        width_scale = page_width / img_width
-                        height_scale = page_height / img_height
-                        scale = min(width_scale, height_scale)
-
-                        # Insert image with proper scaling
-                        page.insert_image(
-                            page.rect,  # Use full page rect
-                            filename=image_path,
-                            keep_proportion=True
-                        )
-
-                        # Add searchable text layer
-                        if text:
-                            page.insert_text(
-                                point=(0, 0),  # Starting position
-                                text=text,
-                                fontsize=1,  # Very small font size
-                                color=(0, 0, 0, 0),  # Transparent color
-                                render_mode=3  # Invisible but searchable
-                            )
-
-                    except Exception as e:
-                        self.error_logging(f"Error inserting image at index {index}: {str(e)}")
-                        continue
-
-                except Exception as e:
-                    self.error_logging(f"Error processing page {index + 1}: {str(e)}")
-                    continue
-
-            # Save the PDF with optimization for images
-            doc.save(
-                file_path,
-                garbage=4,
-                deflate=True,
-                pretty=False
-            )
-            doc.close()
-
-            self.progress_bar.close_progress_window()
-            messagebox.showinfo("Success", "PDF exported successfully!")
-
-        except Exception as e:
-            self.progress_bar.close_progress_window()
-            messagebox.showerror("Error", f"Failed to export PDF: {str(e)}")
-            self.error_logging(f"PDF export error: {str(e)}")
-
 # External Tools
 
     def find_and_replace(self, event=None):
         self.find_replace.update_main_df(self.main_df)
-        self.find_replace.find_and_replace(event)
-            
+        self.find_replace.find_and_replace(event) 
     
     def update_api_handler(self):
         self.api_handler = APIHandler(
@@ -2769,15 +2326,9 @@ class App(TkinterDnD.Tk):
                 messagebox.showwarning("Processing Error", message)
     
     def setup_job_parameters(self, ai_job):
-        """
-        Setup and return the job parameters for the specified AI job.
-        For the "Chunk_Text" job, use the preset selected via the chunking strategy dropdown.
-        For other jobs, use the function presets as before.
-        """
-        if ai_job == "Chunk_Text":
-            # Use the selected chunking preset from the dropdown
-            selected_name = self.chunking_strategy_var.get()
-            preset = next((p for p in self.settings.chunk_text_presets if p['name'] == selected_name), None)
+        """Set up parameters for different AI jobs"""
+        if ai_job == "HTR":
+            preset = next((p for p in self.settings.function_presets if p['name'] == "HTR"), None)
             if preset:
                 return {
                     "temp": float(preset.get('temperature', 0.7)),
@@ -2799,22 +2350,6 @@ class App(TkinterDnD.Tk):
                     "batch_size": self.settings.batch_size,
                     "use_images": False
                 }
-        elif ai_job == "Custom":
-            # Use the custom function selected by the user
-            custom_preset_name = self.custom_function_selected  # set in your custom selection window
-            preset = next((p for p in self.settings.function_presets if p['name'] == custom_preset_name), None)
-            if preset:
-                return {
-                    "temp": float(preset.get('temperature', 0.7)),
-                    "val_text": preset.get('val_text', ''),
-                    "engine": preset.get('model', self.settings.model_list[0]),
-                    "user_prompt": preset.get('specific_instructions', ''),
-                    "system_prompt": preset.get('general_instructions', ''),
-                    "batch_size": self.settings.batch_size,
-                    "use_images": preset.get('use_images', True)
-                }
-            else:
-                raise ValueError("Custom preset not found.")
         else:
             # Existing logic for function-based AI jobs
             preset = next((p for p in self.settings.function_presets if p['name'] == ai_job), None)
@@ -2826,24 +2361,10 @@ class App(TkinterDnD.Tk):
                     "user_prompt": preset.get('specific_instructions', ''),
                     "system_prompt": preset.get('general_instructions', ''),
                     "batch_size": self.settings.batch_size,
-                    "use_images": preset.get('use_images', True),
-                    "current_image": preset.get('current_image', "Yes"),
-                    "num_prev_images": int(preset.get('num_prev_images', 0)),
-                    "num_after_images": int(preset.get('num_after_images', 0))
+                    "use_images": preset.get('use_images', True)
                 }
             else:
-                return {
-                    "temp": 0.7,
-                    "val_text": "",
-                    "engine": self.settings.model_list[0],
-                    "user_prompt": "",
-                    "system_prompt": "",
-                    "batch_size": self.settings.batch_size,
-                    "use_images": True,
-                    "current_image": "Yes",
-                    "num_prev_images": 0,
-                    "num_after_images": 0
-                }
+                raise ValueError(f"Preset not found for job: {ai_job}")
         
     def get_images_for_job(self, ai_job, index, row_data, job_params):
         """

@@ -239,17 +239,6 @@ In your response, write any notes you need to that will help you. Then write "Fi
             },          
         ] # List of dictionaries for analysis presets
         
-        self.translation_system_prompt = '''You will be given a transcription of a historical text along with the original page images to translate into English. 
-            Retain all the original line breaks (as closely as possible). In your response write the word "Translation:" in English 
-            followed only by your accurate translation of the text.'''
-        self.translation_user_prompt = '''Text to translate into English:\n\n{text_to_process}\n\nOriginal Page Images:'''
-        self.translation_val_text = "Translation:"
-        self.translation_model = "gpt-4o"
-       
-        self.query_system_prompt = "You are an expert historian hired to perform work for another historian. You closely follow the user's instructions and are always truthful. When you don't know something or have insufficient information, explicitly tell the user 'I don't know' or 'I require more information to...'. "
-        self.query_val_text = None
-        self.query_model = "gpt-4o"
-
         self.metadata_system_prompt = '''You analyze historical documments to extract information. Read the document and then make any notes you require. Then, in your response, write "Metadata:" and then on new lines output the following headings, filling in the information beside each one:
 
 Document Type: <Letter/Baptismal Record/Diary Entry/Will/etc.>

@@ -297,19 +297,14 @@ class SettingsWindow:
                                             values=preset_names, state="readonly", width=30)
         self.preset_dropdown.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
-        # New preset button
-        new_preset_button = tk.Button(main_settings_frame, text="+", 
-                                        command=lambda: self.create_new_preset_window("analysis"))
-        new_preset_button.grid(row=0, column=2, padx=5, pady=5, sticky="w")
-
-        # Add modify and delete buttons
+        # Modify and delete buttons
         modify_button = tk.Button(main_settings_frame, text="Modify", 
                                     command=self.modify_analysis_preset)
-        modify_button.grid(row=0, column=3, padx=5, pady=5, sticky="w")
+        modify_button.grid(row=0, column=2, padx=5, pady=5, sticky="w")
 
-        delete_button = tk.Button(main_settings_frame, text="🗑️", 
+        delete_button = tk.Button(main_settings_frame, text="Delete", 
                                     command=self.delete_analysis_preset)
-        delete_button.grid(row=0, column=4, padx=5, pady=5, sticky="w")
+        delete_button.grid(row=0, column=3, padx=5, pady=5, sticky="w")
 
         # Model selection
         tk.Label(main_settings_frame, text="Model:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
@@ -466,20 +461,15 @@ class SettingsWindow:
                                                 state="readonly", 
                                                 width=30)
         self.chunk_preset_dropdown.grid(row=0, column=1, padx=5, pady=5, sticky="w")
-        
-        # New preset button
-        new_preset_button = tk.Button(main_settings_frame, text="+", 
-                                    command=self.create_new_chunk_preset_window)
-        new_preset_button.grid(row=0, column=2, padx=5, pady=5, sticky="w")
 
         # Modify and delete buttons
         modify_button = tk.Button(main_settings_frame, text="Modify", 
                                 command=self.modify_chunk_preset)
-        modify_button.grid(row=0, column=3, padx=5, pady=5, sticky="w")
+        modify_button.grid(row=0, column=2, padx=5, pady=5, sticky="w")
 
-        delete_button = tk.Button(main_settings_frame, text="🗑️", 
+        delete_button = tk.Button(main_settings_frame, text="Delete", 
                                 command=self.delete_chunk_preset)
-        delete_button.grid(row=0, column=4, padx=5, pady=5, sticky="w")
+        delete_button.grid(row=0, column=3, padx=5, pady=5, sticky="w")
 
         # Model selection
         tk.Label(main_settings_frame, text="Model:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
@@ -598,17 +588,12 @@ class SettingsWindow:
         self.function_preset_dropdown.grid(row=0, column=1, padx=5, pady=5, sticky="w")
         self.function_preset_dropdown.bind("<<ComboboxSelected>>", self.load_selected_function_preset)
 
-        # New preset button
-        new_preset_button = tk.Button(main_settings_frame, text="+", command=self.create_new_function_preset_window)
-        new_preset_button.grid(row=0, column=2, padx=5, pady=5, sticky="w")
-
-        # Insert the following buttons next to the + button:
-
+        # Modify and delete buttons
         modify_button = tk.Button(main_settings_frame, text="Modify", command=self.modify_function_preset)
-        modify_button.grid(row=0, column=3, padx=5, pady=5, sticky="w")
+        modify_button.grid(row=0, column=2, padx=5, pady=5, sticky="w")
 
-        delete_button = tk.Button(main_settings_frame, text="🗑️", command=self.delete_function_preset)  # Use "🗑️" if supported; otherwise, use text="-"
-        delete_button.grid(row=0, column=4, padx=5, pady=5, sticky="w")
+        delete_button = tk.Button(main_settings_frame, text="Delete", command=self.delete_function_preset)
+        delete_button.grid(row=0, column=3, padx=5, pady=5, sticky="w")
 
         # Model and Temperature row
         tk.Label(main_settings_frame, text="Model:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
