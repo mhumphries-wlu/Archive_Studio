@@ -18,7 +18,7 @@ from util.Settings import Settings
 from util.AnalyzeDocuments import AnalyzeDocuments
 from util.ImageHandler import ImageHandler
 from util.ProjectIO import ProjectIO
-from export_functions import ExportManager
+from util.ExportFunctions import ExportManager
 
 class App(TkinterDnD.Tk):
 
