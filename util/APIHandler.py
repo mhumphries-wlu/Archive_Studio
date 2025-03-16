@@ -1,0 +1,465 @@
+import asyncio, base64, os
+from pathlib import Path
+from PIL import Image
+
+# OpenAI API
+from openai import OpenAI
+import openai
+
+# Anthropic API
+from anthropic import AsyncAnthropic
+import anthropic
+
+# Google API
+import google.generativeai as genai
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
+
+class APIHandler:
+    def __init__(self, openai_api_key, anthropic_api_key, google_api_key):
+        self.openai_api_key = openai_api_key
+        self.anthropic_api_key = anthropic_api_key
+        self.google_api_key = google_api_key
+
+    async def route_api_call(self, engine, system_prompt, user_prompt, temp, 
+                            image_data=None, text_to_process=None, val_text=None, 
+                            index=None, is_base64=True, formatting_function=False, 
+                            api_timeout=80):
+        """
+        Routes the API call to the appropriate service based on the engine name.
+        image_data can be either:
+        - None
+        - A single image (base64 string or path)
+        - A list of tuples [(image_data, label), ...]
+        """
+        if "gpt" in engine.lower() or "o1" in engine.lower() or "o3" in engine.lower():
+            return await self.handle_gpt_call(system_prompt, user_prompt, temp, 
+                                            image_data, text_to_process, val_text, 
+                                            engine, index, is_base64, formatting_function, 
+                                            api_timeout)
+        elif "gemini" in engine.lower():
+            return await self.handle_gemini_call(system_prompt, user_prompt, temp, 
+                                            image_data, text_to_process, val_text, 
+                                            engine, index, is_base64, formatting_function, 
+                                            api_timeout)
+        elif "claude" in engine.lower():
+            return await self.handle_claude_call(system_prompt, user_prompt, temp, 
+                                            image_data, text_to_process, val_text, 
+                                            engine, index, is_base64, formatting_function, 
+                                            api_timeout)
+        else:
+            raise ValueError(f"Unsupported engine: {engine}")
+    
+    def _prepare_gpt_messages(self, system_prompt, user_prompt, image_data):
+        """Handle both single and multiple image cases for GPT"""
+        # Check if using o-series model
+        is_o_series_model = "o1" in system_prompt.lower() or "o3" in system_prompt.lower()
+        
+        # Prepare the system/developer message
+        initial_message = {
+            "role": "developer" if is_o_series_model else "system",
+            "content": system_prompt
+        }
+        
+        if not image_data:
+            return [
+                initial_message,
+                {"role": "user", "content": [{"type": "text", "text": user_prompt}]}
+            ]
+        
+        # Single image case
+        if isinstance(image_data, str):
+            return [
+                initial_message,
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": user_prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{image_data}",
+                                "detail": "high"
+                            },
+                        },
+                    ],
+                }
+            ]
+        
+        # Multiple images case
+        content = [{"type": "text", "text": user_prompt}]
+        for image_data, label in image_data:
+            if label:
+                content.append({"type": "text", "text": label})
+            content.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{image_data}",
+                    "detail": "high"
+                }
+            })
+        
+        return [
+            initial_message,
+            {"role": "user", "content": content}
+        ]
+    
+    def _prepare_gemini_content(self, user_prompt, image_data, is_base64=True):
+        """Handle both single and multiple image cases for Gemini"""
+        content = []
+        
+        # Add the user prompt first
+        if user_prompt:
+            content.append(user_prompt)
+        
+        if not image_data:
+            return content
+        
+        # Single image case
+        if isinstance(image_data, (str, Path)):
+            image = Image.open(image_data)  # Changed from PIL.Image to Image
+            content.append(image)
+            return content
+        
+        # Multiple images case - handle as a sequence
+        for image_path, label in image_data:
+            if label:
+                content.append(label)
+            # Load image directly using PIL
+            image = Image.open(image_path)  # Changed from PIL.Image to Image
+            content.append(image)
+        
+        return content
+    
+    async def _prepare_claude_content(self, user_prompt, image_data, is_base64=True):
+        """Handle both single and multiple image cases for Claude"""
+        content = []
+        
+        if not image_data:
+            if user_prompt.strip():
+                content.append({"type": "text", "text": user_prompt.strip()})
+            return content
+        
+        # Handle multiple images case
+        if isinstance(image_data, list):
+            for img_data, label in image_data:
+                if label:
+                    content.append({"type": "text", "text": label})
+                content.append({
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": "image/jpeg",
+                        "data": img_data
+                    }
+                })
+        
+        # Handle single image case
+        elif isinstance(image_data, str):
+            content.append({"type": "text", "text": "Document Image:"})
+            content.append({
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/jpeg",
+                    "data": image_data
+                }
+            })
+        
+        # Add the user prompt at the end if it exists
+        if user_prompt.strip():
+            content.append({"type": "text", "text": user_prompt.strip()})
+        
+        return content    
+
+    async def handle_gpt_call(self, system_prompt, user_prompt, temp, image_data, 
+                            text_to_process, val_text, engine, index, 
+                            is_base64=True, formatting_function=False, api_timeout=25.0):
+        client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+        
+        populated_user_prompt = (user_prompt if formatting_function 
+                            else user_prompt.format(text_to_process=text_to_process))
+        max_tokens = 200 if "pagination" in user_prompt.lower() else 1500
+        max_retries = 3
+        retries = 0
+        
+        # Check if using o1 or o3 models
+        is_o_series_model = "o1" in engine.lower() or "o3" in engine.lower()
+        
+        while retries < max_retries:
+            try:
+                messages = self._prepare_gpt_messages(system_prompt, populated_user_prompt, 
+                                                    image_data)
+                
+                # Prepare API call parameters
+                api_params = {
+                    "model": engine,
+                    "messages": messages,
+                }
+                
+                # Add model-specific parameters
+                if is_o_series_model:
+                    api_params["response_format"] = {"type": "text"}
+                    api_params["reasoning_effort"] = "low"
+                else:
+                    api_params["temperature"] = temp
+                    api_params["max_tokens"] = max_tokens
+                
+                message = client.chat.completions.create(**api_params)
+                
+                response = message.choices[0].message.content
+                return self._validate_response(response, val_text, index)
+
+            except (openai.APITimeoutError, openai.APIError) as e:
+                print(f"GPT API Error: {e}")
+                retries += 1
+                if retries == max_retries:
+                    return "Error", index
+                await asyncio.sleep(1)
+
+    async def handle_gemini_call(self, system_prompt, user_prompt, temp, image_data, 
+                                text_to_process, val_text, engine, index, 
+                                is_base64=True, formatting_function=False, api_timeout=120.0):
+        genai.configure(api_key=self.google_api_key)
+        # Add generation config
+        generation_config = {
+            "temperature": temp,
+            "top_p": 0.95,
+            "top_k": 40,
+            "max_output_tokens": 8192,
+        }
+
+        model = genai.GenerativeModel(
+            model_name=engine,
+            generation_config=generation_config,
+            system_instruction=system_prompt
+        )
+
+        populated_user_prompt = (user_prompt if formatting_function 
+                            else user_prompt.format(text_to_process=text_to_process))
+
+        # Handle file uploads
+        content = [populated_user_prompt]
+        
+        if image_data:
+            if isinstance(image_data, (str, Path)):
+                # Single image case
+                file = genai.upload_file(image_data, mime_type="image/jpeg")
+                content.append(file)
+            else:
+                # Multiple images case
+                for img_path, label in image_data:
+                    if label:
+                        content.append(label)
+                    file = genai.upload_file(img_path, mime_type="image/jpeg")
+                    content.append(file)
+
+        max_retries = 3
+        retries = 0
+        while retries < max_retries:
+            try:
+                response = model.generate_content(
+                    content,
+                    safety_settings=[
+                                    {
+                                        "category": HarmCategory.HARM_CATEGORY_HARASSMENT,
+                                        "threshold": "BLOCK_NONE",
+                                    },
+                                    {
+                                        "category": HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                                        "threshold": "BLOCK_NONE",
+                                    },
+                                    {
+                                        "category": HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                                        "threshold": "BLOCK_NONE",
+                                    },
+                                    {
+                                        "category": HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                                        "threshold": "BLOCK_NONE",
+                                    }
+                                ],
+                                    )
+                return self._validate_response(response.text, val_text, index)
+
+            except Exception as e:
+                print(f"Gemini API Error: {e}")
+                retries += 1
+                if retries == max_retries:
+                    return "Error", index
+                await asyncio.sleep(1)
+
+    async def handle_claude_call(self, system_prompt, user_prompt, temp, image_data, 
+                                text_to_process, val_text, engine, index, 
+                                is_base64=True, formatting_function=False, api_timeout=120.0):
+        async with AsyncAnthropic(api_key=self.anthropic_api_key, 
+                                max_retries=0, timeout=api_timeout) as client:
+            populated_user_prompt = (user_prompt if formatting_function 
+                                else user_prompt.format(text_to_process=text_to_process))
+
+            try:
+                # Ensure image_data is properly formatted base64 string
+                if isinstance(image_data, list):
+                    content = []
+                    for img, label in image_data:
+                        if label:
+                            content.append({"type": "text", "text": label})
+                        # Ensure img is a valid base64 string
+                        if isinstance(img, bytes):
+                            img = base64.b64encode(img).decode('utf-8')
+                        elif not isinstance(img, str):
+                            raise ValueError(f"Invalid image data type: {type(img)}")
+                        
+                        content.append({
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/jpeg",
+                                "data": img
+                            }
+                        })
+                elif isinstance(image_data, str):
+                    content = [
+                        {"type": "text", "text": "Document Image:"},
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/jpeg",
+                                "data": image_data
+                            }
+                        }
+                    ]
+                else:
+                    content = []
+
+                # Add the user prompt at the end
+                if populated_user_prompt.strip():
+                    content.append({"type": "text", "text": populated_user_prompt.strip()})
+
+                if "Pagination:" in user_prompt.lower():
+                    max_tokens = 200
+                elif "extract information" in user_prompt.lower():
+                    max_tokens = 1500
+                elif "Split Before:" in user_prompt:
+                    max_tokens = 200
+                else:
+                    max_tokens = 2500
+                max_retries = 3
+                retries = 0
+                
+                while retries < max_retries:
+                    try:
+                                    # Add logging
+                                      
+                        message = await client.messages.create(
+                            max_tokens=max_tokens,
+                            messages=[{"role": "user", "content": content}],
+                            system=system_prompt,
+                            model=engine,
+                            temperature=temp,
+                            timeout=api_timeout
+                        )
+                        
+                        response = message.content[0].text
+                        return self._validate_response(response, val_text, index)
+
+                    except (anthropic.APITimeoutError, anthropic.APIError) as e:
+                        print(f"Claude API Error: {e}")
+                        retries += 1
+                        if retries == max_retries:
+                            return "Error", index
+                        await asyncio.sleep(1)
+                        
+            except Exception as e:
+                print(f"Error preparing Claude content: {str(e)}")
+                return "Error", index
+                
+    def _validate_response(self, response, val_text, index):
+        """
+        Validates and processes the API response.
+        
+        Args:
+            response: The response text from the API
+            val_text: The validation text to look for (can be None or "None")
+            index: The index of the current document
+            
+        Returns:
+            Tuple of (processed_response, index)
+        """
+        # First check if we have a valid response
+        if not response:
+            return "Error", index
+            
+        # If no validation text is needed, return the full response
+        if not val_text or val_text == "None":
+            return response, index
+            
+        # Check if validation text exists in response
+        try:
+            if val_text in response:
+                # Split and return everything after the validation text
+                return response.split(val_text, 1)[1].strip(), index
+        except TypeError:
+            # Handle case where response or val_text is not a string
+            print(f"Validation error - Response: {type(response)}, Val_text: {type(val_text)}")
+            return "Error", index
+            
+        # If validation text not found, return error
+        return "Error", index
+
+    def prepare_image_data(self, image_data, engine, is_base64=True):
+        """
+        Prepare image data based on the engine and format requirements.
+        
+        Args:
+            image_data: Can be a single image path or a list of tuples [(path, label), ...]
+            engine: The AI engine being used
+            is_base64: Whether to encode the images to base64
+        
+        Returns:
+            Processed image data in the appropriate format for the specified engine
+        """
+        if not image_data:
+            return None
+
+        needs_base64 = is_base64 and ("gpt" in engine.lower() or "o1" in engine.lower() or "o3" in engine.lower() or "claude" in engine.lower())
+        
+        # Handle single image case
+        if isinstance(image_data, str):
+            return self.encode_image(image_data) if needs_base64 else image_data
+
+        # Handle multiple images case
+        processed_data = []
+        for img_path, label in image_data:
+            if needs_base64:
+                encoded_image = self.encode_image(img_path)
+                if encoded_image:
+                    processed_data.append((encoded_image, label))
+            else:
+                processed_data.append((img_path, label))
+
+        return processed_data
+
+    def encode_image(self, image_path):
+        with open(image_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode('utf-8')   
+
+    def _format_content_for_print(self, content):
+        formatted_content = []
+        for item in content:
+            if item['type'] == 'text':
+                formatted_content.append(item['text'])
+            elif item['type'] == 'image_url':
+                formatted_content.append("{IMAGE}")
+        return formatted_content
+    
+    def _format_gemini_content_for_print(self, content):
+        return [item if isinstance(item, str) else "{IMAGE}" for item in content]
+    
+    def _format_claude_content_for_print(self, content):
+        formatted_content = []
+        for item in content:
+            if item['type'] == 'text':
+                formatted_content.append(item['text'])
+            elif item['type'] == 'image':
+                formatted_content.append("{IMAGE}")
+        return formatted_content
