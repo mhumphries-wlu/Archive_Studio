@@ -71,9 +71,33 @@ Your objective is to ensure that break markers are inserted only when a new lett
                 "name": "Diary",
                 "model": "gemini-2.0-flash",
                 "temperature": "0.2",
-                "general_instructions": "For diary entries, chunk text by identifying dated entries. Insert '*****' before each new entry.",
-                "specific_instructions": "Document Text: {text_to_process}",
-                "val_text": "Final Chunk:",
+                "general_instructions": f'''You are an expert in historical document analysis. You will be provided with a page from a historical diary that may contain part of a diary entry that continues from a previous page and/or onto the next page, or it may contain multiple diary entries.
+
+Your task is to insert an entry break marker ("*****") on a new line immediately before the beginning of each new diary entry (including the first entry on the page if it begins on this page). To do this accurately, follow these guidelines:
+
+1. Identify a New Diary Entry Opening:
+
+Date Indicators: Look for temporal markers that typically begin a new entry (e.g., "January 23, 1789", "Monday 4th", "Saturday 4th", etc). These date markers will always be found at the beginning of a paragraph.
+
+Formatting Cues: Notice any clear changes in formatting such as marginal notations, paragraphing, indentation, line breaks, or that consistently indicate a new entry in this diary.
+
+2. Contextual Analysis:
+
+Chunk Boundaries: Be aware that the text you're analyzing might begin in the middle of an entry. If the text begins without a clear date marker but seems to continue from a previous page, it likely belongs to an entry that started on the previous page.
+
+3. Avoiding False Breaks:
+
+No Break on Topic Changes: Do not insert an entry break marker when the diarist merely changes topics within the same day's entry.
+
+No Break on New Paragraphs that Do Not Begin With Some Sort of Date Indicator: Do not insert an entry break marker when the diarist merely starts a new paragraph that does not begin a new entry, as identified by the Date Indicators above.
+
+Handling Uncertainty: If you cannot determine with reasonable confidence whether text represents a new entry, err on the side of continuity and do not insert a break marker.
+
+In your response, begin by providing a brief explanation of how you identified entry breaks. Then on a new line write "Processed Diary Text:" followed by the exact text of the provided page with entry break markers ("*****") inserted on a new line immediately before each new diary entry.
+
+Your objective is to preserve the original diary structure as accurately as possible, ensuring entries are properly delineated for future analysis.''',
+"specific_instructions": "Document Text: {text_to_process}",               
+"val_text": "Processed Diary Text:",
                 "use_images": False
             },
             {
@@ -292,13 +316,6 @@ If you don't have information for a heading or don't know, leave it blank.'''
             'anthropic_api_key': self.anthropic_api_key,
             'google_api_key': self.google_api_key,
             'model_list': self.model_list,                                              # List of models
-            'translation_system_prompt': self.translation_system_prompt,                # Translation = Translating Text
-            'translation_user_prompt': self.translation_user_prompt,
-            'translation_val_text': self.translation_val_text,
-            'translation_model': self.translation_model,
-            'query_system_prompt': self.query_system_prompt,                            # Query = Answering Questions
-            'query_val_text': self.query_val_text,
-            'query_model': self.query_model,
             'metadata_system_prompt': self.metadata_system_prompt,                      # Metadata = Extracting Metadata
             'metadata_user_prompt': self.metadata_user_prompt,
             'metadata_val_text': self.metadata_val_text,

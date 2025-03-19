@@ -6013,3 +6013,483 @@ NoneType: None
 Stack trace:
 NoneType: None
 
+2025-03-19 11:26:03: Setting up job parameters for Identify_Errors
+Stack trace:
+NoneType: None
+
+2025-03-19 11:26:03: Available presets: ['HTR', 'Correct_Text', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:26:03: Preset not found for job: Identify_Errors
+Stack trace:
+NoneType: None
+
+2025-03-19 11:28:15: Setting up job parameters for Identify_Errors
+Stack trace:
+NoneType: None
+
+2025-03-19 11:28:15: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:28:15: Setting up job parameters for Identify_Errors
+Stack trace:
+NoneType: None
+
+2025-03-19 11:28:15: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:30:52: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:30:52: Available presets: ['HTR', 'Correct_Text', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:30:52: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:30:52: Available presets: ['HTR', 'Correct_Text', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:32:41: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:32:41: Available presets: ['HTR', 'Correct_Text', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:32:41: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:32:41: Available presets: ['HTR', 'Correct_Text', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:37:14: Setting up job parameters for Identify_Errors
+Stack trace:
+NoneType: None
+
+2025-03-19 11:37:14: Available presets: ['HTR', 'Correct_Text', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:37:14: Preset not found for job: Identify_Errors
+Stack trace:
+NoneType: None
+
+2025-03-19 11:37:21: Setting up job parameters for Identify_Errors
+Stack trace:
+NoneType: None
+
+2025-03-19 11:37:21: Available presets: ['HTR', 'Correct_Text', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:37:21: Preset not found for job: Identify_Errors
+Stack trace:
+NoneType: None
+
+2025-03-19 11:37:51: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:37:51: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:37:51: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:37:51: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:38:30: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:38:30: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:38:30: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:38:30: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:39:16: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:39:16: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:39:16: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:39:16: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:45:36: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:45:36: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:45:36: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:45:36: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:45:56: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:45:56: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:45:56: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:45:56: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 11:55:32: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:55:32: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:55:43: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:55:43: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:59:51: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 11:59:51: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:00:09: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:00:09: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:03:27: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:03:27: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:03:39: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:03:39: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:08:24: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:08:24: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:09:58: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:09:58: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:10:10: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:10:10: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:11:06: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:11:49: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:12:34: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:12:34: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:12:52: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:12:52: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:12:58: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:12:58: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:13:17: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:13:17: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:13:25: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:13:25: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:17:21: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:17:21: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:17:31: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:17:32: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:17:41: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:17:41: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:20:40: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:20:40: Selected chunking strategy: Diary
+Stack trace:
+NoneType: None
+
+2025-03-19 12:20:40: Found preset: {'name': 'Diary', 'model': 'gemini-2.0-flash-thinking-exp-01-21', 'temperature': '0.2', 'general_instructions': 'You are an expert in historical document analysis. You will be provided with a page from a historical diary that may contain part of a diary entry that continues from a previous page and/or onto the next page, or it may contain multiple diary entries.\n\nYour task is to insert an entry break marker ("*****") on a new line immediately before the beginning of each new diary entry (including the first entry on the page if it begins on this page). To do this accurately, follow these guidelines:\n\n1. Identify a New Diary Entry Opening:\n\nDate Indicators: Look for temporal markers that typically begin a new entry (e.g., "January 23, 1789", "Monday 4th", "Saturday 4th", etc). These date markers will always be found at the beginning of a paragraph.\n\nFormatting Cues: Notice any clear changes in formatting such as marginal notations, paragraphing, indentation, line breaks, or that consistently indicate a new entry in this diary.\n\n2. Contextual Analysis:\n\nChunk Boundaries: Be aware that the text you\'re analyzing might begin in the middle of an entry. If the text begins without a clear date marker but seems to continue from a previous page, it likely belongs to an entry that started on the previous page.\n\n3. Avoiding False Breaks:\n\nNo Break on Topic Changes: Do not insert an entry break marker when the diarist merely changes topics within the same day\'s entry.\n\nNo Break on New Paragraphs that Do Not Begin With Some Sort of Date Indicator: Do not insert an entry break marker when the diarist merely starts a new paragraph that does not begin a new entry, as identified by the Date Indicators above.\n\nHandling Uncertainty: If you cannot determine with reasonable confidence whether text represents a new entry, err on the side of continuity and do not insert a break marker.\n\nIn your response, begin by providing a brief explanation of how you identified entry breaks. Then on a new line write "Processed Diary Text:" followed by the exact text of the provided page with entry break markers ("*****") inserted on a new line immediately before each new diary entry.\n\nYour objective is to preserve the original diary structure as accurately as possible, ensuring entries are properly delineated for future analysis.', 'specific_instructions': 'Document Text: {text_to_process}', 'val_text': 'Processed Diary Text:', 'use_images': False, 'current_image': 'No'}
+Stack trace:
+NoneType: None
+
+2025-03-19 12:20:40: Using model from preset: gemini-2.0-flash-thinking-exp-01-21
+Stack trace:
+NoneType: None
+
+2025-03-19 12:20:40: Final parameters: {'temp': 0.2, 'val_text': 'Processed Diary Text:', 'engine': 'gemini-2.0-flash-thinking-exp-01-21', 'user_prompt': 'Document Text: {text_to_process}', 'system_prompt': 'You are an expert in historical document analysis. You will be provided with a page from a historical diary that may contain part of a diary entry that continues from a previous page and/or onto the next page, or it may contain multiple diary entries.\n\nYour task is to insert an entry break marker ("*****") on a new line immediately before the beginning of each new diary entry (including the first entry on the page if it begins on this page). To do this accurately, follow these guidelines:\n\n1. Identify a New Diary Entry Opening:\n\nDate Indicators: Look for temporal markers that typically begin a new entry (e.g., "January 23, 1789", "Monday 4th", "Saturday 4th", etc). These date markers will always be found at the beginning of a paragraph.\n\nFormatting Cues: Notice any clear changes in formatting such as marginal notations, paragraphing, indentation, line breaks, or that consistently indicate a new entry in this diary.\n\n2. Contextual Analysis:\n\nChunk Boundaries: Be aware that the text you\'re analyzing might begin in the middle of an entry. If the text begins without a clear date marker but seems to continue from a previous page, it likely belongs to an entry that started on the previous page.\n\n3. Avoiding False Breaks:\n\nNo Break on Topic Changes: Do not insert an entry break marker when the diarist merely changes topics within the same day\'s entry.\n\nNo Break on New Paragraphs that Do Not Begin With Some Sort of Date Indicator: Do not insert an entry break marker when the diarist merely starts a new paragraph that does not begin a new entry, as identified by the Date Indicators above.\n\nHandling Uncertainty: If you cannot determine with reasonable confidence whether text represents a new entry, err on the side of continuity and do not insert a break marker.\n\nIn your response, begin by providing a brief explanation of how you identified entry breaks. Then on a new line write "Processed Diary Text:" followed by the exact text of the provided page with entry break markers ("*****") inserted on a new line immediately before each new diary entry.\n\nYour objective is to preserve the original diary structure as accurately as possible, ensuring entries are properly delineated for future analysis.', 'batch_size': 50, 'use_images': False}
+Stack trace:
+NoneType: None
+
+2025-03-19 12:20:40: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:20:40: Selected chunking strategy: Diary
+Stack trace:
+NoneType: None
+
+2025-03-19 12:20:40: Found preset: {'name': 'Diary', 'model': 'gemini-2.0-flash-thinking-exp-01-21', 'temperature': '0.2', 'general_instructions': 'You are an expert in historical document analysis. You will be provided with a page from a historical diary that may contain part of a diary entry that continues from a previous page and/or onto the next page, or it may contain multiple diary entries.\n\nYour task is to insert an entry break marker ("*****") on a new line immediately before the beginning of each new diary entry (including the first entry on the page if it begins on this page). To do this accurately, follow these guidelines:\n\n1. Identify a New Diary Entry Opening:\n\nDate Indicators: Look for temporal markers that typically begin a new entry (e.g., "January 23, 1789", "Monday 4th", "Saturday 4th", etc). These date markers will always be found at the beginning of a paragraph.\n\nFormatting Cues: Notice any clear changes in formatting such as marginal notations, paragraphing, indentation, line breaks, or that consistently indicate a new entry in this diary.\n\n2. Contextual Analysis:\n\nChunk Boundaries: Be aware that the text you\'re analyzing might begin in the middle of an entry. If the text begins without a clear date marker but seems to continue from a previous page, it likely belongs to an entry that started on the previous page.\n\n3. Avoiding False Breaks:\n\nNo Break on Topic Changes: Do not insert an entry break marker when the diarist merely changes topics within the same day\'s entry.\n\nNo Break on New Paragraphs that Do Not Begin With Some Sort of Date Indicator: Do not insert an entry break marker when the diarist merely starts a new paragraph that does not begin a new entry, as identified by the Date Indicators above.\n\nHandling Uncertainty: If you cannot determine with reasonable confidence whether text represents a new entry, err on the side of continuity and do not insert a break marker.\n\nIn your response, begin by providing a brief explanation of how you identified entry breaks. Then on a new line write "Processed Diary Text:" followed by the exact text of the provided page with entry break markers ("*****") inserted on a new line immediately before each new diary entry.\n\nYour objective is to preserve the original diary structure as accurately as possible, ensuring entries are properly delineated for future analysis.', 'specific_instructions': 'Document Text: {text_to_process}', 'val_text': 'Processed Diary Text:', 'use_images': False, 'current_image': 'No'}
+Stack trace:
+NoneType: None
+
+2025-03-19 12:20:40: Using model from preset: gemini-2.0-flash-thinking-exp-01-21
+Stack trace:
+NoneType: None
+
+2025-03-19 12:20:40: Final parameters: {'temp': 0.2, 'val_text': 'Processed Diary Text:', 'engine': 'gemini-2.0-flash-thinking-exp-01-21', 'user_prompt': 'Document Text: {text_to_process}', 'system_prompt': 'You are an expert in historical document analysis. You will be provided with a page from a historical diary that may contain part of a diary entry that continues from a previous page and/or onto the next page, or it may contain multiple diary entries.\n\nYour task is to insert an entry break marker ("*****") on a new line immediately before the beginning of each new diary entry (including the first entry on the page if it begins on this page). To do this accurately, follow these guidelines:\n\n1. Identify a New Diary Entry Opening:\n\nDate Indicators: Look for temporal markers that typically begin a new entry (e.g., "January 23, 1789", "Monday 4th", "Saturday 4th", etc). These date markers will always be found at the beginning of a paragraph.\n\nFormatting Cues: Notice any clear changes in formatting such as marginal notations, paragraphing, indentation, line breaks, or that consistently indicate a new entry in this diary.\n\n2. Contextual Analysis:\n\nChunk Boundaries: Be aware that the text you\'re analyzing might begin in the middle of an entry. If the text begins without a clear date marker but seems to continue from a previous page, it likely belongs to an entry that started on the previous page.\n\n3. Avoiding False Breaks:\n\nNo Break on Topic Changes: Do not insert an entry break marker when the diarist merely changes topics within the same day\'s entry.\n\nNo Break on New Paragraphs that Do Not Begin With Some Sort of Date Indicator: Do not insert an entry break marker when the diarist merely starts a new paragraph that does not begin a new entry, as identified by the Date Indicators above.\n\nHandling Uncertainty: If you cannot determine with reasonable confidence whether text represents a new entry, err on the side of continuity and do not insert a break marker.\n\nIn your response, begin by providing a brief explanation of how you identified entry breaks. Then on a new line write "Processed Diary Text:" followed by the exact text of the provided page with entry break markers ("*****") inserted on a new line immediately before each new diary entry.\n\nYour objective is to preserve the original diary structure as accurately as possible, ensuring entries are properly delineated for future analysis.', 'batch_size': 50, 'use_images': False}
+Stack trace:
+NoneType: None
+
+2025-03-19 12:23:18: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:23:18: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:31:48: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:31:48: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:31:56: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:31:56: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:32:24: Setting up job parameters for Identify_Errors
+Stack trace:
+NoneType: None
+
+2025-03-19 12:32:24: Setting up job parameters for Identify_Errors
+Stack trace:
+NoneType: None
+
+2025-03-19 12:33:14: Setting up job parameters for Identify_Errors
+Stack trace:
+NoneType: None
+
+2025-03-19 12:33:14: Setting up job parameters for Identify_Errors
+Stack trace:
+NoneType: None
+
+2025-03-19 12:33:38: Setting up job parameters for Correct_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:34:19: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:34:19: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:35:01: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:35:01: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:38:50: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 12:38:50: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 13:05:37: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 13:05:37: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 13:09:33: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 13:09:33: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 13:10:38: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 13:10:38: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 13:10:38: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 13:10:38: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 13:11:07: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 13:11:07: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 13:11:07: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 13:11:07: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 13:11:48: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 13:11:48: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 13:11:48: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 13:11:48: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+

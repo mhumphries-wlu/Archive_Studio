@@ -162,11 +162,6 @@ class App(TkinterDnD.Tk):
         # Initialize settings now (after the top frame is created)
         self.settings = Settings()
         
-        # Initialize temp directory
-        self.initialize_temp_directory()
-        if not hasattr(self, 'project_directory') or not self.project_directory:
-            self.project_directory = self.temp_directory
-        
         # Initialize the main DataFrame
         self.initialize_main_df()
         
@@ -2327,6 +2322,9 @@ class App(TkinterDnD.Tk):
     
     def setup_job_parameters(self, ai_job):
         """Set up parameters for different AI jobs"""
+        self.error_logging(f"Setting up job parameters for {ai_job}")
+        self.error_logging(f"Available presets: {[p['name'] for p in self.settings.function_presets]}")
+        
         if ai_job == "HTR":
             preset = next((p for p in self.settings.function_presets if p['name'] == "HTR"), None)
             if preset:
@@ -2350,6 +2348,24 @@ class App(TkinterDnD.Tk):
                     "batch_size": self.settings.batch_size,
                     "use_images": False
                 }
+        elif ai_job == "Chunk_Text":
+            # Get the selected chunking strategy
+            selected_strategy = self.chunking_strategy_var.get()
+            preset = next((p for p in self.settings.chunk_text_presets if p['name'] == selected_strategy), None)
+            
+            if preset:
+                return {
+                    "temp": float(preset.get('temperature', 0.7)),
+                    "val_text": preset.get('val_text', ''),
+                    "engine": preset.get('model', self.settings.model_list[0]),
+                    "user_prompt": preset.get('specific_instructions', ''),
+                    "system_prompt": preset.get('general_instructions', ''),
+                    "batch_size": self.settings.batch_size,
+                    "use_images": preset.get('use_images', False)
+                }
+            else:
+                self.error_logging(f"Chunk text preset not found for strategy: {selected_strategy}")
+                raise ValueError(f"Chunk text preset not found for strategy: {selected_strategy}")
         else:
             # Existing logic for function-based AI jobs
             preset = next((p for p in self.settings.function_presets if p['name'] == ai_job), None)
@@ -2364,6 +2380,7 @@ class App(TkinterDnD.Tk):
                     "use_images": preset.get('use_images', True)
                 }
             else:
+                self.error_logging(f"Preset not found for job: {ai_job}")
                 raise ValueError(f"Preset not found for job: {ai_job}")
         
     def get_images_for_job(self, ai_job, index, row_data, job_params):
