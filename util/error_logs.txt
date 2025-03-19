@@ -24941,3 +24941,1602 @@ NoneType: None
 Stack trace:
 NoneType: None
 
+2025-03-19 13:37:41: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 13:37:41: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 13:37:41: Setting up job parameters for Chunk_Text
+Stack trace:
+NoneType: None
+
+2025-03-19 13:37:41: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text']
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:47: Registered CSV_Metadata job with model: gemini-2.0-flash
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:47: Setting up job parameters for CSV_Metadata
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:47: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text', 'CSV_Metadata']
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:47: Setting up job parameters for CSV_Metadata
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:47: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text', 'CSV_Metadata']
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 10: **
+Document Type:
+Author:
+Correspondent:
+Correspondent Place:
+Date: 01/01/1798
+Place of Creation:
+Pe...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 10
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 10, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 29: Document Type: Letter
+Author: Cobb, John
+Correspondent: 
+Correspondent Place: 
+Date: 21/05/1799
+Plac...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 29
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 29, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 7: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 30/10/1798
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 7
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 7, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 8: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 08/11/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 8
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 8, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 24: Document Type: Diary Entry
+Author: 
+Correspondent: 
+Correspondent Place: 
+Date: 30/03/1799
+Place of ...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 24
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 24, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 16: Document Type: Diary Entry
+Author: 
+Correspondent: 
+Correspondent Place: 
+Date: 08/02/1799
+Place of ...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 16
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 16, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 25: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 08/04/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 25
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 25, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 5: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 10/10/1798
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 5
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 5, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 13: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 09/01/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 13
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 13, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 11: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 09/12/1798
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 11
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 11, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 19: Document Type: Diary Entry
+Author: 
+Correspondent: 
+Correspondent Place: 
+Date: 25/02/1799
+Place of ...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 19
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 19, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 28: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 03/05/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 28
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 28, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 15: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 21/01/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 15
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 15, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 18: Document Type: Diary Entry
+Author:  
+Correspondent: 
+Correspondent Place: 
+Date: 20/02/1799
+Place of...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 18
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 18, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 22: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 30/03/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 22
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 22, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 17: Document Type: Diary Entry
+Author:
+Correspondent: Anderson, James
+Correspondent Place: Portage De Is...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 17
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 17, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 3: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 1/10/1798
+Place of Crea...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 3
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 3, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 23: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 1799
+Place of Creation:...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 23
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 23, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 6: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 21/02/1798
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 6
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 6, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 30: Document Type: Letter
+Author: Cobb, John
+Correspondent:
+Correspondent Place:
+Date: 21/05/1799
+Place ...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 30
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 30, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 21: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 17/03/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 21
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 21, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 20: Document Type: Diary Entry
+Author: 
+Correspondent: Anderson, James
+Correspondent Place: Portage De L...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 20
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 20, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 2: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 20/09/1798
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 2
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 2, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 14: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 10/01/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 14
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 14, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processing metadata response for idx 27: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 25/04/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Successfully processed 9 metadata fields for idx 27
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:48: Processed metadata for CSV at idx 27, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Processing metadata response for idx 1: Document Type: Diary Entry
+Author: 
+Correspondent: 
+Correspondent Place: 
+Date: 11/09/----
+Place of ...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Successfully processed 9 metadata fields for idx 1
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Processed metadata for CSV at idx 1, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Processing metadata response for idx 9: Document Type: Diary Entry
+Author: Tulloch, William
+Correspondent:
+Correspondent Place:
+Date: 17/11/...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Successfully processed 9 metadata fields for idx 9
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Processed metadata for CSV at idx 9, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Processing metadata response for idx 26: Document Type: Diary Entry
+Author: 
+Correspondent: 
+Correspondent Place: 
+Date: 16/04/1799
+Place of ...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Successfully processed 9 metadata fields for idx 26
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Processed metadata for CSV at idx 26, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Processing metadata response for idx 4: Document Type: Diary Entry
+Author: 
+Correspondent: 
+Correspondent Place: 
+Date: 02/10/1798
+Place of ...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Successfully processed 9 metadata fields for idx 4
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Processed metadata for CSV at idx 4, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Processing metadata response for idx 12: Document Type: Diary Entry
+Author:
+Correspondent: Isle, Belage De
+Correspondent Place:
+Date: 20/12/1...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Successfully processed 9 metadata fields for idx 12
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Processed metadata for CSV at idx 12, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Processing metadata response for idx 0: Document Type: Diary Entry
+Author: Cobb, John
+Correspondent:
+Correspondent Place:
+Date: 07/09/1798
+P...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Successfully processed 9 metadata fields for idx 0
+Stack trace:
+NoneType: None
+
+2025-03-19 14:04:49: Processed metadata for CSV at idx 0, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:46: Registered CSV_Metadata job with model: gemini-2.0-flash
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:46: Setting up job parameters for CSV_Metadata
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:46: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text', 'CSV_Metadata']
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:46: Setting up job parameters for CSV_Metadata
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:46: Available presets: ['HTR', 'Correct_Text', 'Identify_Errors', 'Single_Page_Pagination', 'Multiple_Page_Pagination', 'Get_Names_and_Places', 'Auto_Rotate', 'Chunk_Text', 'CSV_Metadata']
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:47: Processing metadata response for idx 10: **
+Document Type:
+Author:
+Correspondent:
+Correspondent Place:
+Date: 01/01/1798
+Place of Creation:
+Pe...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:47: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:47: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:47: Successfully processed 9 metadata fields for idx 10
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:47: Processed metadata for CSV at idx 10, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 8: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 08/11/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 8
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 8, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 13: Document Type: Diary Entry
+Author: 
+Correspondent: 
+Correspondent Place: 
+Date: 01/01/1799
+Place of ...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 13
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 13, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 29: Document Type: Letter
+Author: Cobb, John
+Correspondent: 
+Correspondent Place: 
+Date: 21/05/1799
+Plac...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 29
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 29, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 19: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 25/02/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 19
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 19, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 7: Document Type: Diary Entry
+Author: 
+Correspondent: 
+Correspondent Place: 
+Date: 30/10/1798
+Place of ...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 7
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 7, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 22: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 30/03/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 22
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 22, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 20: Document Type: Diary Entry
+Author: 
+Correspondent: Anderson, James
+Correspondent Place: Portage De L...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 20
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 20, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 25: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 15/04/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 25
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 25, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 23: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 1799
+Place of Creation:...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 23
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 23, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 9: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 17/11/1798
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 9
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 9, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 24: Document Type: Diary Entry
+Author: 
+Correspondent: 
+Correspondent Place: 
+Date: 30/03/1799
+Place of ...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 24
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 24, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 11: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 09/12/1798
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 11
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 11, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 30: Document Type: Letter
+Author: Cobb, John
+Correspondent: 
+Correspondent Place: 
+Date: 21/05/1799
+Plac...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 30
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 30, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 16: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 08/02/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 16
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 16, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 17: Document Type: Diary Entry
+Author:
+Correspondent: Anderson, James
+Correspondent Place: Portage De Is...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 17
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 17, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 5: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 10/10/1798
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 5
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 5, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 15: Document Type: Diary Entry
+Author: 
+Correspondent: 
+Correspondent Place: 
+Date: 21/01/1799
+Place of ...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 15
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 15, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 4: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 09/10/1798
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 4
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 4, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 21: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 17/03/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 21
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 21, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 6: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 21/02/1798
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 6
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 6, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 0: Document Type: Diary Entry
+Author: Cobb, John
+Correspondent:
+Correspondent Place:
+Date: 07/09/1798
+P...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 0
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 0, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 26: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 16/04/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 26
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 26, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 28: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 03/05/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 28
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 28, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 3: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 25/09/1798
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 3
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 3, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 12: Document Type: Diary Entry
+Author:
+Correspondent: Isle, Belage De
+Correspondent Place:
+Date: 20/12/1...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 12
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 12, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 1: Document Type: Diary Entry
+Author: 
+Correspondent: 
+Correspondent Place: 
+Date: 11/09/----
+Place of ...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 1
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 1, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 2: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 20/09/1798
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 2
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 2, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 27: Document Type: Diary Entry
+Author:
+Correspondent:
+Correspondent Place:
+Date: 25/04/1799
+Place of Cre...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 27
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 27, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 18: Document Type: Diary Entry
+Author:  
+Correspondent: 
+Correspondent Place: 
+Date: 20/02/1799
+Place of...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 18
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 18, result: True
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processing metadata response for idx 14: Document Type: Diary Entry
+Author: 
+Correspondent: 
+Correspondent Place: 
+Date: 20/01/1799
+Place of ...
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: No marker found, using full response as it contains metadata fields
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Found metadata fields: Document Type, Author, Correspondent, Correspondent Place, Date, Place of Creation, People, Places, Summary
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Successfully processed 9 metadata fields for idx 14
+Stack trace:
+NoneType: None
+
+2025-03-19 14:24:48: Processed metadata for CSV at idx 14, result: True
+Stack trace:
+NoneType: None
+

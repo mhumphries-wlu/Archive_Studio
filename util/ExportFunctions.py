@@ -255,8 +255,8 @@ class ExportManager:
             messagebox.showerror("Error", f"Failed to export PDF: {str(e)}")
             self.app.error_logging(f"PDF export error: {str(e)}")
 
-    def export_as_csv(self):
-        """Export metadata for each document as a CSV file. Only available when documents are separated."""
+    def export_as_csv(self, use_custom_separation=False):
+        """Export metadata for each document as a CSV file."""
         if self.app.main_df.empty:
             messagebox.showwarning("No Data", "No documents to export.")
             return
@@ -272,17 +272,48 @@ class ExportManager:
             return
             
         try:
-            # Create analyzer to access compile_documents functionality
-            from util.AnalyzeDocuments import AnalyzeDocuments
-            analyzer = AnalyzeDocuments(self.app)
+            # Check if Custom Separation is requested and available
+            documents_separated = False
+            if use_custom_separation:
+                try:
+                    # Check if any text contains the separator
+                    combined_text = ""
+                    for index, row in self.app.main_df.iterrows():
+                        text = self.app.find_right_text(index)
+                        combined_text += text + " "
+                    
+                    documents_separated = "*****" in combined_text
+                except:
+                    documents_separated = False
+                
+                if not documents_separated:
+                    # Warn the user that Custom Separation was requested but not available
+                    messagebox.showwarning(
+                        "Warning", 
+                        "No document separators found. Falling back to Basic Pagination."
+                    )
+                    use_custom_separation = False
             
-            # Compile documents into dataframe
-            compiled_df = analyzer.compile_documents(force_recompile=True)
+            # If using custom separation, use the existing document analyzer method
+            if use_custom_separation and documents_separated:
+                # Create analyzer to access compile_documents functionality
+                from util.AnalyzeDocuments import AnalyzeDocuments
+                analyzer = AnalyzeDocuments(self.app)
+                
+                # Compile documents into dataframe using document separators
+                compiled_df = analyzer.compile_documents(force_recompile=True)
+                
+                if compiled_df is None or compiled_df.empty:
+                    messagebox.showwarning("Warning", "No documents were found to export. Please check if your documents are properly separated.")
+                    return
+            else:
+                # Basic Pagination: Each page is its own row in the CSV
+                compiled_df = self.app.main_df.copy()
+                
+                # Make sure we have a Document_Page column
+                if 'Document_Page' not in compiled_df.columns:
+                    compiled_df['Document_Page'] = compiled_df.index + 1
             
-            if compiled_df is None or compiled_df.empty:
-                messagebox.showwarning("Warning", "No documents were found to export. Please check if your documents are properly separated.")
-                return
-
             # Ensure all required columns exist in the DataFrame
             required_columns = [
                 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place',
@@ -355,9 +386,14 @@ class ExportManager:
             
             # List of columns to exclude from the export
             columns_to_exclude = [
-                'Original_Image', 'Image_Path', 'Index', 'Document_Page', 
-                'Translation', 'Data_Analysis', 'Relevance', 'Notes', 'Query_Memory'
+                'Original_Image', 'Image_Path', 'Index', 'Query_Memory'
             ]
+            
+            # If we're using Basic Pagination, keep the Document_Page column
+            if not use_custom_separation or not documents_separated:
+                # Remove Document_Page from the exclusion list if it exists there
+                if 'Document_Page' in columns_to_exclude:
+                    columns_to_exclude.remove('Document_Page')
             
             # Create a copy with only the desired columns
             export_df = compiled_df.copy()
@@ -367,8 +403,44 @@ class ExportManager:
                 if col in export_df.columns:
                     export_df = export_df.drop(col, axis=1)
             
+            # Add a column for the page text if it doesn't exist
+            if 'Text' not in export_df.columns:
+                # Find the text for each page from the original dataframe
+                export_df['Text'] = ""
+                for idx in export_df.index:
+                    if idx < len(self.app.main_df):
+                        export_df.at[idx, 'Text'] = self.app.find_right_text(idx)
+            
+            # Add Page column if using Basic Pagination
+            if not use_custom_separation and 'Document_Page' in export_df.columns:
+                export_df['Page'] = export_df['Document_Page']
+            elif 'Document_Page' not in export_df.columns:
+                export_df['Page'] = export_df.index + 1
+                
+            # Add Citation column if it doesn't exist
+            if 'Citation' not in export_df.columns:
+                export_df['Citation'] = ""
+                
+            # Reorder columns to match the requested order
+            ordered_columns = ['Page', 'Document_Type', 'Author', 'Correspondent', 
+                              'Creation_Place', 'Date', 'People', 'Places', 
+                              'Summary', 'Text', 'Citation']
+            
+            # Filter to only include columns that exist in the dataframe
+            available_columns = [col for col in ordered_columns if col in export_df.columns]
+            
+            # Remove completely empty columns
+            final_columns = []
+            for col in available_columns:
+                # Check if column has any non-empty values
+                if not export_df[col].isna().all() and not (export_df[col] == "").all():
+                    final_columns.append(col)
+            
+            # Create final dataframe with only the desired columns in the specified order
+            final_export_df = export_df[final_columns]
+            
             # Save the filtered dataframe to CSV
-            export_df.to_csv(file_path, index=False, encoding='utf-8')
+            final_export_df.to_csv(file_path, index=False, encoding='utf-8')
             
             messagebox.showinfo("Success", "CSV exported successfully!")
             
@@ -542,7 +614,7 @@ class ExportManager:
         # Create the export window
         export_window = tk.Toplevel(self.app)
         export_window.title("Export...")
-        export_window.geometry("400x300")  # Increased height for the new option
+        export_window.geometry("400x300")
         export_window.transient(self.app)  # Make window modal
         export_window.grab_set()  # Make window modal
 
@@ -595,7 +667,7 @@ class ExportManager:
         except:
             documents_separated = False
         
-        # Add CSV export option, enabled only if documents are separated
+        # Add CSV export option - now always enabled
         csv_radio = ttk.Radiobutton(
             options_frame, 
             text="CSV with Document Metadata", 
@@ -604,15 +676,59 @@ class ExportManager:
         )
         csv_radio.grid(row=3, column=0, sticky="w", pady=5)
         
-        if not documents_separated:
-            csv_radio.configure(state="disabled")
-            # Add tooltip or hint
-            ttk.Label(
-                options_frame,
-                text="(Only available when documents are separated)",
-                font=("Arial", 8),
-                foreground="gray"
-            ).grid(row=4, column=0, sticky="w", padx=20, pady=(0, 5))
+        # Create a frame for pagination options (initially hidden)
+        pagination_frame = ttk.Frame(options_frame)
+        pagination_frame.grid(row=4, column=0, sticky="w", padx=20, pady=5)
+        pagination_frame.grid_remove()  # Hide initially
+        
+        # Pagination method variable
+        pagination_var = tk.StringVar(value="basic")
+        
+        # Add label for pagination dropdown
+        ttk.Label(
+            pagination_frame,
+            text="Pagination Method:",
+            font=("Arial", 9)
+        ).grid(row=0, column=0, sticky="w", pady=2)
+        
+        # Add dropdown for pagination method
+        pagination_combobox = ttk.Combobox(
+            pagination_frame,
+            textvariable=pagination_var,
+            state="readonly",
+            width=25
+        )
+        
+        # Set combobox values
+        if documents_separated:
+            pagination_combobox['values'] = ["Basic Pagination", "Custom Separation"]
+        else:
+            pagination_combobox['values'] = ["Basic Pagination"]
+            
+        pagination_combobox.current(0)  # Set default to first option
+        pagination_combobox.grid(row=0, column=1, sticky="w", pady=2, padx=5)
+        
+        # Add description label
+        pagination_desc = ttk.Label(
+            pagination_frame,
+            text="Basic Pagination: Each page as separate row\nCustom Separation: Use document separators",
+            font=("Arial", 8),
+            justify=tk.LEFT
+        )
+        pagination_desc.grid(row=1, column=0, columnspan=2, sticky="w", pady=2)
+
+        def on_export_selection_change(*args):
+            if export_var.get() == "csv":
+                # Show pagination options and resize window
+                pagination_frame.grid()
+                export_window.geometry("400x380")
+            else:
+                # Hide pagination options and restore window size
+                pagination_frame.grid_remove()
+                export_window.geometry("400x300")
+                
+        # Track changes to export_var
+        export_var.trace_add("write", on_export_selection_change)
 
         # Add buttons frame
         button_frame = ttk.Frame(export_window)
@@ -629,7 +745,9 @@ class ExportManager:
             elif export_type == "pdf":
                 self.export_as_pdf()
             elif export_type == "csv":
-                self.export_as_csv()
+                # Pass pagination method to export_as_csv - use StringVar instead of widget
+                use_custom_separation = (pagination_var.get() == "Custom Separation")
+                self.export_as_csv(use_custom_separation=use_custom_separation)
 
         # Add buttons
         ttk.Button(
