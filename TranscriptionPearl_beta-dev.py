@@ -91,12 +91,9 @@ class App(TkinterDnD.Tk):
         # --- New: Chunking Strategy Dropdown in Middle Group ---
         self.chunking_strategy_var = tk.StringVar()
         # For now, initialize with an empty list; it will be updated after self.settings is set.
-        self.chunking_dropdown = ttk.Combobox(middle_group, textvariable=self.chunking_strategy_var,
-                                            values=[], state="readonly", width=30)
-        # Add a label for clarity.
-        chunking_label = tk.Label(middle_group, text="Document Type:")
-        chunking_label.pack(side="left", padx=5)
-        self.chunking_dropdown.pack(side="left", padx=5)
+        
+        # Remove the dropdown and label from the middle group
+        # Keep only the variable for use in other functions
         
         # Right group elements (navigation)
         self.button1 = tk.Button(right_group, text="<<", command=lambda: self.navigate_images(-2))
@@ -167,7 +164,6 @@ class App(TkinterDnD.Tk):
         
         # --- Update Chunking Dropdown with Actual Presets ---
         preset_names = [p['name'] for p in self.settings.chunk_text_presets] if self.settings.chunk_text_presets else []
-        self.chunking_dropdown['values'] = preset_names
         if preset_names:
             self.chunking_strategy_var.set(preset_names[0])
         else:
@@ -270,11 +266,9 @@ class App(TkinterDnD.Tk):
         self.process_menu.add_command(label="Get Names and Places on All Pages", command=lambda: self.ai_function(all_or_one_flag="All Pages", ai_job="Get_Names_and_Places"))
         self.process_menu.add_separator()
         self.process_menu.add_command(label="Separate Documents on Current Page", 
-                                    command=lambda: self.ai_function(all_or_one_flag="Current Page", 
-                                                                ai_job="Chunk_Text"))
+                                    command=lambda: self.create_chunk_text_window("Current Page"))
         self.process_menu.add_command(label="Separate Documents on All Pages", 
-                                    command=lambda: self.ai_function(all_or_one_flag="All Pages", 
-                                                                ai_job="Chunk_Text"))
+                                    command=lambda: self.create_chunk_text_window("All Pages"))
         self.process_menu.add_separator()
         self.process_menu.add_command(label="Find Errors on Current Page", 
                                     command=lambda: self.ai_function(all_or_one_flag="Current Page", 
@@ -361,6 +355,10 @@ class App(TkinterDnD.Tk):
         self.bind("<Control-Shift-1>", lambda event: self.ai_function(all_or_one_flag="All Pages", ai_job="HTR"))
         self.bind("<Control-2>", lambda event: self.ai_function(all_or_one_flag="Current Page", ai_job="Correct_Text"))
         self.bind("<Control-Shift-2>", lambda event: self.ai_function(all_or_one_flag="All Pages", ai_job="Correct_Text"))
+        
+        # Add key bindings for Chunk_Text
+        self.bind("<Control-3>", lambda event: self.create_chunk_text_window("Current Page"))
+        self.bind("<Control-Shift-3>", lambda event: self.create_chunk_text_window("All Pages"))
 
         # Mouse bindings
         self.image_display.bind("<Control-MouseWheel>", self.image_handler.zoom)
@@ -1344,7 +1342,6 @@ class App(TkinterDnD.Tk):
             print(f"Error logging failed: {e}")
 
 # GUI Actions / Toggles
-
 
     def run_collation_and_open_window(self):
         # 1) Collect suggestions from the LLM automatically
@@ -2647,6 +2644,86 @@ class App(TkinterDnD.Tk):
             except Exception as e:
                 self.error_logging(f"Error in final UI update: {str(e)}")# Main Loop
                 
+    def create_chunk_text_window(self, all_or_one_flag):
+        """
+        Creates a window for selecting document type before running Chunk_Text
+        """
+        # Create the window
+        chunk_window = tk.Toplevel(self)
+        chunk_window.title("Select Document Type")
+        chunk_window.geometry("400x200")
+        chunk_window.grab_set()  # Make window modal
+        
+        # Message explaining purpose
+        message_label = tk.Label(chunk_window, 
+            text="Select the document type for text chunking:",
+            font=("Calibri", 12))
+        message_label.pack(pady=15)
+        
+        # Create the chunking strategy dropdown in this window
+        dropdown_frame = tk.Frame(chunk_window)
+        dropdown_frame.pack(pady=10)
+        
+        chunking_label = tk.Label(dropdown_frame, text="Document Type:")
+        chunking_label.pack(side="left", padx=5)
+        
+        # Create a new StringVar for this window's dropdown
+        window_chunking_var = tk.StringVar()
+        
+        # If there's already a selected strategy, use it as default
+        if hasattr(self, 'chunking_strategy_var') and self.chunking_strategy_var.get():
+            window_chunking_var.set(self.chunking_strategy_var.get())
+        
+        # Get preset names for the dropdown
+        preset_names = [p['name'] for p in self.settings.chunk_text_presets] if self.settings.chunk_text_presets else []
+        
+        # Create the dropdown
+        chunking_dropdown = ttk.Combobox(dropdown_frame, 
+                                      textvariable=window_chunking_var,
+                                      values=preset_names, 
+                                      state="readonly", 
+                                      width=30)
+        chunking_dropdown.pack(side="left", padx=5)
+        
+        # Set a default value if available
+        if preset_names and not window_chunking_var.get():
+            window_chunking_var.set(preset_names[0])
+        
+        # Buttons frame
+        button_frame = tk.Frame(chunk_window)
+        button_frame.pack(pady=20)
+        
+        # Function to handle OK button
+        def on_ok():
+            # Set the main window's chunking strategy variable
+            self.chunking_strategy_var.set(window_chunking_var.get())
+            # Close the window
+            chunk_window.destroy()
+            # Run the AI function with the selected parameters
+            self.ai_function(all_or_one_flag=all_or_one_flag, ai_job="Chunk_Text")
+        
+        # Function to handle Cancel button
+        def on_cancel():
+            chunk_window.destroy()
+        
+        # Create buttons
+        ok_button = tk.Button(button_frame, text="OK", command=on_ok, width=10)
+        ok_button.pack(side="left", padx=10)
+        
+        cancel_button = tk.Button(button_frame, text="Cancel", command=on_cancel, width=10)
+        cancel_button.pack(side="left", padx=10)
+        
+        # Center the window on the screen
+        chunk_window.update_idletasks()
+        width = chunk_window.winfo_width()
+        height = chunk_window.winfo_height()
+        x = (chunk_window.winfo_screenwidth() // 2) - (width // 2)
+        y = (chunk_window.winfo_screenheight() // 2) - (height // 2)
+        chunk_window.geometry(f'{width}x{height}+{x}+{y}')
+        
+        # Wait for the window to be closed
+        self.wait_window(chunk_window)
+
 if __name__ == "__main__":
     try:
         app = App()
