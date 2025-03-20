@@ -32,6 +32,10 @@ class Settings:
             self.load_settings()
 
     def restore_defaults(self):
+        # Save current API keys
+        saved_openai_key = getattr(self, 'openai_api_key', "")
+        saved_anthropic_key = getattr(self, 'anthropic_api_key', "")
+        saved_google_key = getattr(self, 'google_api_key', "")
         
         self.chunk_text_presets = [
             {
@@ -122,7 +126,7 @@ In your response, write any notes you need to that will help you. Then write "Tr
         self.function_presets = [
             {
                 'name': "HTR",
-                'model': "gemini-1.5-pro-002",
+                'model': "gemini-2.0-flash",
                 'temperature': "0.3",
                 'general_instructions': '''Your task is to accurately transcribe handwritten historical documents, minimizing the CER and WER. Work character by character, word by word, line by line, transcribing the text exactly as it appears on the page. To maintain the authenticity of the historical text, retain spelling errors, grammar, syntax, and punctuation as well as line breaks. Transcribe all the text on the page including headers, footers, marginalia, insertions, page numbers, etc. If these are present, insert them where indicated by the author (as applicable). In your response, write: "Transcription:" followed only by your accurate transcription''',
                 'specific_instructions': '''Carefully transcribe this page from an 18th/19th century document. In your response, write: "Transcription:" followed only by your accurate transcription.''',
@@ -134,7 +138,7 @@ In your response, write any notes you need to that will help you. Then write "Tr
             },
             {
                 'name': "Correct_Text",
-                'model': "claude-3-5-sonnet-20240620",
+                'model': "claude-3-7-sonnet-20250219",
                 'temperature': "0.2",
                 'general_instructions': '''Your task is to compare handwritten pages of text with corresponding draft transcriptions, correcting the transcription to produce an accurate, publishable transcript. Be sure that the spelling, syntax, punctuation, and line breaks in the transcription match those on the handwritten page to preserve the historical integrity of the document. Numbers also easily misread, so pay close attention to digits. You must also ensure that the transcription begins and ends in the same place as the handwritten document. Include any catchwords at the bottom of the page. In your response write "Corrected Transcript:" followed by your corrected transcription.''',
                 'specific_instructions': '''Your task is to use the handwritten page image to correct the following transcription, retaining the spelling, syntax, punctuation, line breaks, catchwords, etc of the original.\n\n{text_to_process}''',
@@ -146,7 +150,7 @@ In your response, write any notes you need to that will help you. Then write "Tr
             },
             {
                 'name': "Identify_Errors",
-                'model': "claude-3-5-sonnet-20240620",
+                'model': "claude-3-7-sonnet-20250219",
                 'temperature': "0.2",
                 'general_instructions': '''Your task is to compare draft transcriptions with the original handwritten document. You will identify all the single words and multiple-word phrases exactly as written in the transcription where you are less than 90% certain the transcription is correct. In your response, write "Errors:" followed by a semi-colon delineated list of all the errors you have identified.''',
                 'specific_instructions': '''Here is the text to analyze:\n\n{text_to_process}''',
@@ -155,41 +159,6 @@ In your response, write any notes you need to that will help you. Then write "Tr
                 'num_prev_images': "0",
                 'num_after_images': "0",
                 'val_text': "Errors:"
-            },
-
-            {
-                'name': "Single_Page_Pagination",
-                'model': "gpt-4o",
-                'temperature': "0.7",
-                'general_instructions': '''You read a series of pages from an archival document sent by a user in order to group pages together. You will receive two pages: the previous page and the current page.
-
-Your task is to answer Yes or No to each of the following questions:
-
-1. Does the last sentence that begins on the previous page, carry over to the current page? <Yes/No>
-
-2. Is the first text on the current page in any way a continuation of a diary entry, letter, parish record, or other discreet document that began on the previous page? This might include the complementary close, signatures, addresses, or other text that "belongs" with the text at the end of the previous page?
-
-3. Does the initial text on the current page begin a completely new sentence or standalone document—one that does not continue, wrap up, or otherwise connect directly to any sentence or document that ended on the previous page?
-
-If you answered No to BOTH questions 1 and 2 and YES to quesiton 3, end your response by writing "Pagination: New", otherwise end it with "Pagination: Continues".''',
-                'specific_instructions': "Document Text: {text_to_process}",
-                'use_images': True,
-                'current_image': "Yes",
-                'num_prev_images': "1",
-                'num_after_images': "0",
-                'val_text': "Pagination:"
-            },
-            {
-                'name': "Multiple_Page_Pagination",
-                'model': "gpt-4o",
-                'temperature': "0.7",
-                'general_instructions': '''You read a series of archival documents sent by a user. You will receive the active page (which is what you need to focus on) and for context the previous pages and the next page. Your task is to determine whether the active page continues the same document from the previous page or whether it starts a new document. Pay close attention to the handwriting, paper, and words at the end of the previous page, the start and end of the active page, and at the start of the next page. Look for clues like salutations, dates, headers, addresses, footers, etc. In your response, write "Pagination:" followed only by your answer, choosing one of: "Continues Previous Document", "Continues from Unknown Document" or "Start of New Document".''',
-                'specific_instructions': "Document Text: {text_to_process}",
-                'use_images': True,
-                'current_image': "Yes",
-                'num_prev_images': "2",
-                'num_after_images': "1",
-                'val_text': "Pagination:"
             },
             {
                 'name': "Get_Names_and_Places",
@@ -213,6 +182,55 @@ End your response after finishing the second list.'''
                 'num_after_images': "0",
                 'val_text': "None"
             },
+
+            {
+                'name': "Metadata",
+                'model': "gemini-2.0-flash",
+                'temperature': "0.2",
+                'general_instructions': '''You analyze historical documments to extract information. Read the document and then make any notes you require. Then, in your response, write "Metadata:" and then on new lines output the following headings, filling in the information beside each one:
+
+Document Type: <Letter/Baptismal Record/Diary Entry/Will/etc.>
+Author: <Last Name, First Name> - Note: for letters, memos, etc. use the name of the author of document. For other documents where the primary purposes if official or semi-official documentation of an individual(s), like a parish Birth, Marriage or Death Record, prison record, military service file, etc, use the name of the person(s) who the record is about.
+Correspondent: <Last Name, First Name>
+Correspondent Place: <Place where the correspondent is located>
+Date: <DD/MM/YYYY>
+Place of Creation: <Place where the document was created>
+People: <Last Name, First Name; Last Name, First Name;...>
+Places: <Last Name, First Name; Last Name, First Name;...>
+Summary:
+
+For People, list all the names of people mentioned in the document. For Places, list all the places mentioned in the document. For Summary, write a brief summary of the document.
+
+If you don't have information for a heading or don't know, leave it blank.''',
+                'specific_instructions': '''Text to analyze:\n\n{text_to_process}''',
+                'use_images': False,
+                'current_image': "No",
+                'num_prev_images': "0",
+                'num_after_images': "0",
+                'val_text': "Metadata:"
+            },
+
+            {
+                'name': "Sequence_Dates",
+                'model': "gemini-2.0-flash",
+                'temperature': "0.2",
+                'general_instructions': '''You analyze a historical document in a sequence of documents (like a diary or letterbook) to identify the date when the document was written. You will be provided with a document to analyze, the date of the previous document (when its available) in the sequence, and/or the text of previous documents in the sequence.
+
+Read the document you are to analyze, use any of the context provided, and identify the date when the document was written. You might find a partial date in the current document (a day of the week, day of the month, etc). Fill in the missing information from previous documents.
+
+If you don't have enough information to determine the date, write "More information required" and you will be provided with more context. Othwerwise, write "Date:" followed by the date when the document was written in the format YYYY/MM/DD.''',
+                'specific_instructions': '''{previous_data}
+
+{previous_date}
+
+Document to analyze: {text_to_process}''',
+                'use_images': False,
+                'current_image': "No",  
+                'num_prev_images': "0",
+                'num_after_images': "0",
+                'val_text': "None"
+            },
+
             {
                 'name': "Auto_Rotate",
                 'model': "gemini-1.5-pro",
@@ -225,26 +243,6 @@ End your response after finishing the second list.'''
                 'num_after_images': "0",
                 'val_text': "Orientation:"
             },
-            {
-                'name': "Chunk_Text",
-                'model': "claude-3-5-sonnet-20241022",
-                'temperature': "0.7",
-                'general_instructions': '''You are an expert in historical document analysis, specialized in identifying boundaries between distinct entries in a parish register of baptisms marriages, and burials. When presented with transcribed text and its corresponding page image, your task is to re-transcribe the text exactly as written, although any marginalia, spacing, etc should be standardized and formatted as follows:
-
-Title of entry
-Content
-Signatures etc
-
-Preceed each new entry that begins on the current page with "*****" written on a new line. Skip this step when the first lines on a page began on the previous page.
-
-In your response, write any notes you need to that will help you. Then write "Final Response: " followed by your re-formatted transcription and nothing else.''',
-                'specific_instructions': '''{text_to_process}''',
-                'use_images': False,
-                'current_image': "No",
-                'num_prev_images': "0",
-                'num_after_images': "0",
-                'val_text': "None"
-            }
         ]
 
         self.analysis_presets = [
@@ -263,43 +261,6 @@ In your response, write any notes you need to that will help you. Then write "Fi
             },          
         ] # List of dictionaries for analysis presets
         
-        self.metadata_system_prompt = '''You analyze historical documments to extract information. Read the document and then make any notes you require. Then, in your response, write "Metadata:" and then on new lines output the following headings, filling in the information beside each one:
-
-Document Type: <Letter/Baptismal Record/Diary Entry/Will/etc.>
-Author: <Last Name, First Name> - Note: for letters, memos, etc. use the name of the author of document. For other documents where the primary purposes if official or semi-official documentation of an individual(s), like a parish Birth, Marriage or Death Record, prison record, military service file, etc, use the name of the person(s) who the record is about.
-Correspondent: <Last Name, First Name>
-Correspondent Place: <Place where the correspondent is located>
-Date: <DD/MM/YYYY>
-Place of Creation: <Place where the document was created>
-People: <Last Name, First Name; Last Name, First Name;...>
-Places: <Last Name, First Name; Last Name, First Name;...>
-Summary:
-
-For People, list all the names of people mentioned in the document. For Places, list all the places mentioned in the document. For Summary, write a brief summary of the document.
-
-If you don't have information for a heading or don't know, leave it blank.'''
-        self.metadata_user_prompt = '''Text to analyze:\n\n{text_to_process}'''
-        self.metadata_val_text = "Metadata:"
-        self.metadata_model = "gemini-2.0-flash"
-
-        self.sequence_dates_system_prompt = '''You analyze a historical document in a sequence of documents (like a diary or letterbook) to identify the date when the document was written. You will be provided with a document to analyze, the date of the previous document (when its available) in the sequence, and/or the text of previous documents in the sequence.
-
-Read the document you are to analyze, use any of the context provided, and to identify the date when the document was written. You might find a partial date in the current document (a day of the week, day of the month, etc). Fill in the missing information from previous documents.
-
-If you don't have enough information to determine the date, write "More information required" and you will be provided with more context.
-
-When you are reasonably sure of the date, write "Date:" followed by the date in the format YYYY/MM/DD.'''
-
-
-        self.sequence_dates_user_prompt = '''{previous_data}
-
-{previous_date}
-
-Document to analyze: {text_to_process}'''
-        self.sequence_dates_temp = 0.2
-        self.sequence_dates_val_text = 'None'
-        self.sequence_dates_model = 'gemini-2.0-flash-lite'
-
         self.batch_size = 50
         self.check_orientation = False
         
@@ -318,9 +279,10 @@ Document to analyze: {text_to_process}'''
 
         ]
 
-        self.openai_api_key = ""
-        self.anthropic_api_key = ""
-        self.google_api_key = ""
+        # Restore API keys
+        self.openai_api_key = saved_openai_key
+        self.anthropic_api_key = saved_anthropic_key
+        self.google_api_key = saved_google_key
 
         self.ghost_system_prompt = ""
         self.ghost_user_prompt = ""
@@ -334,16 +296,11 @@ Document to analyze: {text_to_process}'''
             'anthropic_api_key': self.anthropic_api_key,
             'google_api_key': self.google_api_key,
             'model_list': self.model_list,                                              # List of models
-            'metadata_system_prompt': self.metadata_system_prompt,                      # Metadata = Extracting Metadata
-            'metadata_user_prompt': self.metadata_user_prompt,
-            'metadata_val_text': self.metadata_val_text,
-            'metadata_model': self.metadata_model,
             'batch_size': self.batch_size,                                              # Batch size for processing
             'check_orientation': self.check_orientation,                                # Check orientation of text
             'analysis_presets': self.analysis_presets,
             'function_presets': self.function_presets,
             'chunk_text_presets': self.chunk_text_presets
-
         }
         
         with open(self.settings_file_path, 'w') as f:

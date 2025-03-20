@@ -81,7 +81,7 @@ class SettingsWindow:
                 "APIs and Login Settings",
                 "Models and Import Settings",
                 "",
-                "Default Functions",
+                "Processing Functions",
                 "Seperate Documents Presets",
                 "",
                 "Load Settings",
@@ -105,29 +105,28 @@ class SettingsWindow:
                 "Restore Defaults",
                 "Done"
             ]
-
+            
+        # Create a vertical row of buttons for each option
         for i, option in enumerate(menu_options):
-            if option == "":
-                empty_label = tk.Label(self.left_frame, text="", height=1)
-                empty_label.grid(row=i, column=0)
-            else:
+            if option:  # Skip empty strings which act as spacers
                 button = tk.Button(self.left_frame, text=option, width=30,
-                                   command=lambda opt=option: self.show_settings(opt))
+                                command=lambda opt=option: self.show_settings(opt))
                 button.grid(row=i, column=0, padx=10, pady=5, sticky="w")
 
     def show_settings(self, option):
+        # Clear right frame
         for widget in self.right_frame.winfo_children():
             widget.destroy()
             
         # Handle settings display based on mode
-        if self.mode == "DB_VIEWER" and option in ["Default Functions", "Seperate Documents Presets"]:
+        if self.mode == "DB_VIEWER" and option in ["Processing Functions", "Seperate Documents Presets"]:
             return  # Don't show these options in DB_VIEWER mode
             
         if option == "APIs and Login Settings":
             self.show_api_settings()
         elif option == "Models and Import Settings":
             self.show_models_and_import_settings()
-        elif option == "Default Functions" and self.mode == "T_PEARL":
+        elif option == "Processing Functions" and self.mode == "T_PEARL":
             self.show_preset_functions_settings()
         elif option == "Custom Functions":
             self.show_analysis_presets_settings()

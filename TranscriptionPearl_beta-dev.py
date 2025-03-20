@@ -81,7 +81,7 @@ class App(TkinterDnD.Tk):
         self.text_display_dropdown = ttk.Combobox(
             left_group, 
             textvariable=self.text_display_var,
-            values=["None", "Original_Text", "First Draft", "Final Draft"],
+            values=["None", "Original_Text", "First_Draft", "Final_Draft"],
             width=15,
             state="readonly"
         )
@@ -195,6 +195,12 @@ class App(TkinterDnD.Tk):
         # Initialize the export manager
         self.export_manager = ExportManager(self)
 
+        # Configure highlight tags
+        self.text_display.tag_config("name_highlight", background="lightblue")
+        self.text_display.tag_config("place_highlight", background="wheat1")
+        self.text_display.tag_config("change_highlight", background="lightgreen")
+        self.text_display.tag_config("error_highlight", background="cyan")
+
         # Create menus and key bindings
         self.create_menus()
         self.create_key_bindings()
@@ -304,6 +310,12 @@ class App(TkinterDnD.Tk):
         self.document_menu.add_checkbutton(label="Highlight Errors", 
                                         variable=self.highlight_errors_var,
                                         command=self.toggle_highlight_options)
+        
+        # After adding the checkbuttons, set debug commands to print state
+        print(f"Menu setup - highlight_names_var: {self.highlight_names_var.get()}")
+        print(f"Menu setup - highlight_places_var: {self.highlight_places_var.get()}")
+        print(f"Menu setup - highlight_changes_var: {self.highlight_changes_var.get()}")
+        print(f"Menu setup - highlight_errors_var: {self.highlight_errors_var.get()}")
         
         # Tools Menu
 
@@ -650,9 +662,8 @@ class App(TkinterDnD.Tk):
                 messagebox.showerror("Error", "Invalid image path in database")
                 return
                 
-            # Convert to absolute path if necessary
-            if not os.path.isabs(image_path):
-                image_path = os.path.join(self.project_directory, image_path)
+            # Use get_full_path to resolve relative paths
+            image_path = self.get_full_path(image_path)
                 
             if not os.path.exists(image_path):
                 messagebox.showerror("Error", f"Image file not found: {image_path}")
@@ -691,9 +702,8 @@ class App(TkinterDnD.Tk):
                     messagebox.showerror("Error", "Invalid image path in database")
                     return
                     
-                # Convert to absolute path if necessary
-                if not os.path.isabs(image_path):
-                    image_path = os.path.join(self.project_directory, image_path)
+                # Use get_full_path to resolve relative paths
+                image_path = self.get_full_path(image_path)
                     
                 if not os.path.exists(image_path):
                     messagebox.showerror("Error", f"Image file not found: {image_path}")
@@ -1050,8 +1060,8 @@ class App(TkinterDnD.Tk):
         display_map = {
             "None": "None",
             "Original_Text": "Original_Text",
-            "First_Draft": "First Draft",
-            "Final_Draft": "Final Draft"
+            "First_Draft": "First_Draft",
+            "Final_Draft": "Final_Draft"
         }
         self.text_display_var.set(display_map.get(current_toggle, "None"))
 
@@ -1060,9 +1070,9 @@ class App(TkinterDnD.Tk):
             text = ""
         elif self.text_display_var.get() == "Original_Text":
             text = self.main_df.loc[index, 'Original_Text'] if pd.notna(self.main_df.loc[index, 'Original_Text']) else ""
-        elif self.text_display_var.get() == "First Draft":
+        elif self.text_display_var.get() == "First_Draft":
             text = self.main_df.loc[index, 'First_Draft'] if pd.notna(self.main_df.loc[index, 'First_Draft']) else ""
-        elif self.text_display_var.get() == "Final Draft":
+        elif self.text_display_var.get() == "Final_Draft":
             text = self.main_df.loc[index, 'Final_Draft'] if pd.notna(self.main_df.loc[index, 'Final_Draft']) else ""
         else:
             text = ""
@@ -1076,9 +1086,9 @@ class App(TkinterDnD.Tk):
         if pd.notna(self.main_df.loc[index, 'Original_Text']) and self.main_df.loc[index, 'Original_Text'].strip():
             available_options.append("Original_Text")
         if pd.notna(self.main_df.loc[index, 'First_Draft']) and self.main_df.loc[index, 'First_Draft'].strip():
-            available_options.append("First Draft")
+            available_options.append("First_Draft")
         if pd.notna(self.main_df.loc[index, 'Final_Draft']) and self.main_df.loc[index, 'Final_Draft'].strip():
-            available_options.append("Final Draft")
+            available_options.append("Final_Draft")
         self.text_display_dropdown['values'] = available_options
 
         if self.find_replace.find_replace_toggle:
@@ -1263,6 +1273,34 @@ class App(TkinterDnD.Tk):
             return os.path.join(self.project_directory, path)
         # Fallback: return the absolute path relative to the current directory.
         return os.path.abspath(path)
+        
+    def get_relative_path(self, path, base_path=None):
+        """
+        Convert an absolute path to a path relative to base_path.
+        If base_path is not provided, use self.project_directory.
+        """
+        # If the path isn't a string or is empty, return an empty string
+        if not isinstance(path, str) or not path:
+            return ""
+            
+        # If the path is already relative, return it as is
+        if not os.path.isabs(path):
+            return path
+            
+        # Use project_directory as base_path if not provided
+        if base_path is None:
+            if hasattr(self, 'project_directory') and self.project_directory:
+                base_path = self.project_directory
+            else:
+                # No base path to make relative to, return the path as is
+                return path
+                
+        try:
+            # Convert absolute path to path relative to base_path
+            return os.path.relpath(path, base_path)
+        except ValueError:
+            # Handle case where paths are on different drives in Windows
+            return path
 
     def parse_collation_response(self, response_text):
         """
@@ -1406,6 +1444,9 @@ class App(TkinterDnD.Tk):
         
         # Reload the text
         self.load_text()
+        
+        # Apply highlighting based on current settings
+        self.highlight_text()
   
     def toggle_text(self):
         if self.main_df.empty:
@@ -1434,12 +1475,17 @@ class App(TkinterDnD.Tk):
 # Highlighting Functions
 
     def toggle_highlight_options(self):
+        print("\nToggling highlight options:")
+        print(f"Before toggle - Names: {self.highlight_names_var.get()}, Places: {self.highlight_places_var.get()}, Changes: {self.highlight_changes_var.get()}, Errors: {self.highlight_errors_var.get()}")
+        
         if self.highlight_changes_var.get():
             self.highlight_names_var.set(False)
             self.highlight_places_var.set(False)
             self.highlight_errors_var.set(False)
         elif self.highlight_names_var.get() or self.highlight_places_var.get() or self.highlight_errors_var.get():
             self.highlight_changes_var.set(False)
+        
+        print(f"After toggle - Names: {self.highlight_names_var.get()}, Places: {self.highlight_places_var.get()}, Changes: {self.highlight_changes_var.get()}, Errors: {self.highlight_errors_var.get()}")
         
         self.highlight_text()
 
@@ -1451,95 +1497,121 @@ class App(TkinterDnD.Tk):
         
         # If neither highlighting option is selected, return early
         if not self.highlight_names_var.get() and not self.highlight_places_var.get():
+            print("No highlighting options selected")
             return
-        
-        # Configure the highlight tags
-        self.text_display.tag_config("name_highlight", background="lightblue")
-        self.text_display.tag_config("place_highlight", background="wheat1")
+            
+        print(f"Highlight names: {self.highlight_names_var.get()}")
+        print(f"Highlight places: {self.highlight_places_var.get()}")
         
         # Get current page index
         current_index = self.page_counter
+        print(f"Current page index: {current_index}")
         
         try:
             # Check if we have names or places data in the main DataFrame
             if 'People' not in self.main_df.columns or 'Places' not in self.main_df.columns:
+                print("People or Places column missing in DataFrame")
+                return
+                
+            # Check if we're at a valid index
+            if current_index not in self.main_df.index:
+                print(f"Invalid index {current_index} in DataFrame")
                 return
                 
             def process_entities(entities_str, tag):
-                if pd.notna(entities_str) and entities_str:
-                    entities = [entity.strip() for entity in entities_str.split(';')]
-                    for entity in entities:
-                        # Skip entries with square brackets
-                        if '[' in entity or ']' in entity:
-                            continue
+                print(f"Processing entities for {tag}: {entities_str}")
+                
+                if pd.isna(entities_str) or not entities_str:
+                    print(f"No {tag} data to highlight")
+                    return
+                    
+                entities = [entity.strip() for entity in entities_str.split(';')]
+                print(f"Entities to highlight: {entities}")
+                
+                for entity in entities:
+                    # Skip entries with square brackets
+                    if '[' in entity or ']' in entity:
+                        continue
+                    
+                    print(f"Highlighting entity: '{entity}'")
+                    # First try to highlight the complete entity
+                    self.highlight_term(entity, tag, exact_match=True)
+                    
+                    # Get all text content
+                    full_text = self.text_display.get("1.0", tk.END)
+                    
+                    # Handle hyphenated words
+                    if '-' in entity:
+                        # Split the entity into parts
+                        parts = entity.split('-')
                         
-                        # First try to highlight the complete entity
-                        self.highlight_term(entity, tag, exact_match=True)
-                        
-                        # Get all text content
-                        full_text = self.text_display.get("1.0", tk.END)
-                        
-                        # Handle hyphenated words
-                        if '-' in entity:
-                            # Split the entity into parts
-                            parts = entity.split('-')
+                        # Look for parts separated by newline
+                        for i in range(len(parts)-1):
+                            part1 = parts[i].strip()
+                            part2 = parts[i+1].strip()
                             
-                            # Look for parts separated by newline
-                            for i in range(len(parts)-1):
-                                part1 = parts[i].strip()
-                                part2 = parts[i+1].strip()
+                            # Create pattern to match part1 at end of line and part2 at start of next line
+                            pattern = f"{part1}-?\n+{part2}"
+                            matches = re.finditer(pattern, full_text, re.IGNORECASE)
+                            
+                            for match in matches:
+                                # Convert string index to line.char format
+                                start_pos = "1.0"
+                                match_start = match.start()
+                                match_end = match.end()
                                 
-                                # Create pattern to match part1 at end of line and part2 at start of next line
-                                pattern = f"{part1}-?\n+{part2}"
-                                matches = re.finditer(pattern, full_text, re.IGNORECASE)
+                                # Find the line and character position for start and end
+                                start_line = 1
+                                start_char = 0
+                                current_pos = 0
                                 
-                                for match in matches:
-                                    # Convert string index to line.char format
-                                    start_pos = "1.0"
-                                    match_start = match.start()
-                                    match_end = match.end()
-                                    
-                                    # Find the line and character position for start and end
-                                    start_line = 1
-                                    start_char = 0
-                                    current_pos = 0
-                                    
-                                    for line_num, line in enumerate(full_text.split('\n'), 1):
-                                        if current_pos + len(line) + 1 > match_start:
-                                            start_line = line_num
-                                            start_char = match_start - current_pos
-                                            break
-                                        current_pos += len(line) + 1
-                                    
-                                    end_line = start_line
-                                    for line in full_text[match_start:match_end].split('\n'):
-                                        if line:
-                                            end_line += 1
-                                    
-                                    # Add tags to both parts
-                                    start_index = f"{start_line}.{start_char}"
-                                    end_index = f"{end_line}.{len(part2)}"
-                                    self.text_display.tag_add(tag, start_index, f"{start_line}.end")
-                                    self.text_display.tag_add(tag, f"{end_line}.0", end_index)
-                        
-                        # Also highlight individual words for names (except very short ones and common words)
-                        if tag == "name_highlight":  # Only for names, not places
-                            parts = entity.split()
-                            for part in parts:
-                                if len(part) > 2 and part.lower() not in ['the', 'and', 'of', 'in', 'on', 'at', 'la', 'le', 'les', 'de', 'du', 'des']:
-                                    self.highlight_term(part, tag, exact_match=False)
+                                for line_num, line in enumerate(full_text.split('\n'), 1):
+                                    if current_pos + len(line) + 1 > match_start:
+                                        start_line = line_num
+                                        start_char = match_start - current_pos
+                                        break
+                                    current_pos += len(line) + 1
+                                
+                                end_line = start_line
+                                for line in full_text[match_start:match_end].split('\n'):
+                                    if line:
+                                        end_line += 1
+                                
+                                # Add tags to both parts
+                                start_index = f"{start_line}.{start_char}"
+                                end_index = f"{end_line}.{len(part2)}"
+                                print(f"Adding hyphenated tag from {start_index} to {start_line}.end")
+                                print(f"Adding hyphenated tag from {end_line}.0 to {end_index}")
+                                self.text_display.tag_add(tag, start_index, f"{start_line}.end")
+                                self.text_display.tag_add(tag, f"{end_line}.0", end_index)
+                    
+                    # Also highlight individual words for names (except very short ones and common words)
+                    if tag == "name_highlight":  # Only for names, not places
+                        parts = entity.split()
+                        for part in parts:
+                            if len(part) > 2 and part.lower() not in ['the', 'and', 'of', 'in', 'on', 'at', 'la', 'le', 'les', 'de', 'du', 'des']:
+                                print(f"Highlighting name part: '{part}'")
+                                self.highlight_term(part, tag, exact_match=False)
             
             # Process names if the highlight names option is checked
             if self.highlight_names_var.get():
+                print(f"Getting names from index {current_index}")
                 names = self.main_df.loc[current_index, 'People']
-                if pd.notna(names):
+                print(f"Names data: {names}")
+                if pd.notna(names) and names.strip():
                     process_entities(names, "name_highlight")
+                else:
+                    print("No names data available")
             
             # Process places if the highlight places option is checked
             if self.highlight_places_var.get():
+                print(f"Getting places from index {current_index}")
                 places = self.main_df.loc[current_index, 'Places']
-                if pd.notna(places):
+                print(f"Places data: {places}")
+                if pd.notna(places) and places.strip():
                     process_entities(places, "place_highlight")
+                else:
+                    print("No places data available")
         
         except Exception as e:
             print(f"Error in highlight_names_or_places: {str(e)}")
@@ -1547,34 +1619,49 @@ class App(TkinterDnD.Tk):
 
     def highlight_term(self, term, tag, exact_match=False):
         """Helper function to highlight a specific term in the text"""
+        if not term or len(term) < 1:
+            print(f"Skipping empty or too short term")
+            return
+            
         text_widget = self.text_display
         start_index = "1.0"
+        
+        print(f"Highlighting term: '{term}' with tag '{tag}', exact_match={exact_match}")
         
         # Escape special regex characters
         escaped_term = re.escape(term)
         
-        while True:
-            try:
-                if exact_match:
-                    # For exact matches (like place names), don't use word boundaries
-                    start_index = text_widget.search(escaped_term, start_index, tk.END, 
-                                                regexp=True, nocase=True)
-                else:
-                    # For individual words, use word boundaries
-                    start_index = text_widget.search(r'\y' + escaped_term + r'\y', 
-                                                start_index, tk.END, 
-                                                regexp=True, nocase=True)
-                
-                if not start_index:
-                    break
+        found_count = 0
+        try:
+            while True:
+                try:
+                    if exact_match:
+                        # For exact matches (like place names), don't use word boundaries
+                        start_index = text_widget.search(escaped_term, start_index, tk.END, 
+                                                    regexp=True, nocase=True)
+                    else:
+                        # For individual words, use word boundaries
+                        start_index = text_widget.search(r'\b' + escaped_term + r'\b', 
+                                                    start_index, tk.END, 
+                                                    regexp=True, nocase=True)
                     
-                end_index = f"{start_index}+{len(term)}c"
-                text_widget.tag_add(tag, start_index, end_index)
-                start_index = end_index
-                
-            except Exception as e:
-                print(f"Error highlighting term '{term}': {str(e)}")
-                break
+                    if not start_index:
+                        break
+                        
+                    end_index = f"{start_index}+{len(term)}c"
+                    text_widget.tag_add(tag, start_index, end_index)
+                    start_index = end_index
+                    found_count += 1
+                    
+                except Exception as e:
+                    print(f"Error in search iteration for term '{term}': {str(e)}")
+                    break
+            
+            print(f"Found and highlighted {found_count} instances of '{term}'")
+            
+        except Exception as e:
+            print(f"Error highlighting term '{term}': {str(e)}")
+            self.error_logging(f"Error highlighting term '{term}': {str(e)}")
 
     def highlight_text(self):
         # Clear all existing highlights
@@ -1597,8 +1684,6 @@ class App(TkinterDnD.Tk):
 
         if pd.isna(first_draft) or self.main_df.loc[index, 'Text_Toggle'] != "First_Draft":
             return
-
-        self.text_display.tag_config("change_highlight", background="lightgreen")
 
         # Use difflib to find differences
         differ = difflib.Differ()
@@ -1624,8 +1709,6 @@ class App(TkinterDnD.Tk):
         """Highlight error terms from the Errors column"""
         try:
             print("\nIn highlight_errors function:")
-            # Configure error highlight style
-            self.text_display.tag_configure("error_highlight", background="cyan")
             
             # Get current page index and text
             index = self.page_counter
@@ -1638,12 +1721,12 @@ class App(TkinterDnD.Tk):
             selected = self.text_display_var.get()
             print(f"Current text display mode: {selected}")
             
-            # Map display names to DataFrame columns
+            # Map display names to DataFrame columns - fixed to match actual values
             text_map = {
-                "Original Text": "Original_Text",
-                "First Draft": "First_Draft",
-                "Final Draft": "Final_Draft",
-                "None": None
+                "None": None,
+                "Original_Text": "Original_Text",
+                "First_Draft": "First_Draft", 
+                "Final_Draft": "Final_Draft"
             }
             
             # Get the current text column
@@ -1713,13 +1796,51 @@ class App(TkinterDnD.Tk):
                 self.main_df.loc[index, 'First_Draft'] = response
                 self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
             elif ai_job == "Get_Names_and_Places":
-                # Split response into Names and Places sections
-                sections = response.split('\n')
-                for section in sections:
-                    if section.startswith("Names:"):
-                        self.main_df.loc[index, 'People'] = section[6:].strip()
-                    elif section.startswith("Places:"):
-                        self.main_df.loc[index, 'Places'] = section[7:].strip()
+                print(f"\nProcessing Names and Places response: {response}")
+                # Make sure the People and Places columns exist
+                if 'People' not in self.main_df.columns:
+                    self.main_df['People'] = ""
+                if 'Places' not in self.main_df.columns:
+                    self.main_df['Places'] = ""
+                
+                # Initialize empty values
+                names = ""
+                places = ""
+                
+                # New parsing approach for multi-line format
+                lines = response.split('\n')
+                
+                # Find positions of headers
+                names_idx = -1
+                places_idx = -1
+                
+                for i, line in enumerate(lines):
+                    if line.lower().strip() == "names:":
+                        names_idx = i
+                    elif line.lower().strip() == "places:":
+                        places_idx = i
+                
+                # Extract names (everything between "Names:" and "Places:" or end)
+                if names_idx >= 0:
+                    names_end = places_idx if places_idx > names_idx else len(lines)
+                    names_lines = [line.strip() for line in lines[names_idx+1:names_end] if line.strip()]
+                    names = "; ".join(names_lines)
+                
+                # Extract places (everything after "Places:")
+                if places_idx >= 0:
+                    places_lines = [line.strip() for line in lines[places_idx+1:] if line.strip()]
+                    places = "; ".join(places_lines)
+                
+                print(f"Extracted Names: '{names}'")
+                print(f"Extracted Places: '{places}'")
+                
+                # Update the DataFrame
+                self.main_df.loc[index, 'People'] = names
+                self.main_df.loc[index, 'Places'] = places
+                
+                print(f"Updated DataFrame - People: '{self.main_df.loc[index, 'People']}'")
+                print(f"Updated DataFrame - Places: '{self.main_df.loc[index, 'Places']}'")
+                
             elif ai_job == "Chunk_Text":
                 self.main_df.loc[index, 'Final_Draft'] = response
                 self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
@@ -1760,9 +1881,8 @@ class App(TkinterDnD.Tk):
     def update_image_rotation(self, index, response):
         # Get the image path from the DataFrame.
         image_path = self.main_df.loc[index, 'Image_Path']
-        # Convert relative path to absolute if necessary.
-        if self.project_directory and not os.path.isabs(image_path):
-            image_path = os.path.join(self.project_directory, image_path)
+        # Use get_full_path to resolve relative paths
+        image_path = self.get_full_path(image_path)
         
         # Dictionary mapping responses to orientation in degrees.
         orientation_map = {
@@ -1953,8 +2073,8 @@ class App(TkinterDnD.Tk):
             # Copy all images to temp directory using absolute paths
             for index, row in self.main_df.iterrows():
                 current_image_path = row['Image_Path']
-                if not os.path.isabs(current_image_path):
-                    current_image_path = os.path.join(self.project_directory, current_image_path)
+                # Use get_full_path to resolve relative paths
+                current_image_path = self.get_full_path(current_image_path)
                 
                 if os.path.exists(current_image_path):
                     temp_image_name = f"{index+1:04d}.jpg"

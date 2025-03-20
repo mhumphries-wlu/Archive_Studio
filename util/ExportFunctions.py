@@ -191,8 +191,8 @@ class ExportManager:
                     
                     # Get image path and ensure it's absolute
                     image_path = row['Image_Path']
-                    if not os.path.isabs(image_path):
-                        image_path = os.path.join(self.app.project_directory, image_path)
+                    # Use get_full_path to resolve relative paths
+                    image_path = self.app.get_full_path(image_path)
 
                     # Get associated text based on Text_Toggle
                     text = self.app.find_right_text(index)
@@ -336,7 +336,7 @@ class ExportManager:
                 original_df = self.app.main_df.copy()
                 
                 try:
-                    # Create a temporary metadata job
+                    # Create a temporary metadata job - this MUST be called before processing metadata
                     self.register_metadata_job()
                     
                     # Make a copy of compiled_df to avoid modifying the original
@@ -583,18 +583,33 @@ class ExportManager:
         # Remove any existing metadata job
         self.app.settings.function_presets = [p for p in self.app.settings.function_presets if p.get('name') != "CSV_Metadata"]
         
-        # Create a new preset based on metadata settings
+        # Find the Metadata preset in function_presets
+        metadata_preset = next((p for p in self.app.settings.function_presets if p.get('name') == "Metadata"), None)
+        
+        if not metadata_preset:
+            self.app.error_logging("Metadata preset not found in function_presets. CSV export may fail.")
+            # Create a minimal fallback preset
+            metadata_preset = {
+                'model': "gemini-2.0-flash",
+                'temperature': "0.2",
+                'general_instructions': "Extract metadata from the document.",
+                'specific_instructions': "Text to analyze:\n\n{text_to_process}",
+                'val_text': "Metadata:",
+                'use_images': False
+            }
+        
+        # Create a new preset based on the Metadata preset
         metadata_job = {
             'name': "CSV_Metadata",
-            'model': self.app.settings.metadata_model,
-            'temperature': "0.3",
-            'general_instructions': self.app.settings.metadata_system_prompt,
-            'specific_instructions': self.app.settings.metadata_user_prompt,
+            'model': metadata_preset.get('model', "gemini-2.0-flash"),
+            'temperature': metadata_preset.get('temperature', "0.2"),
+            'general_instructions': metadata_preset.get('general_instructions', ""),
+            'specific_instructions': metadata_preset.get('specific_instructions', ""),
             'use_images': False,
             'current_image': "No",
             'num_prev_images': "0",
             'num_after_images': "0",
-            'val_text': self.app.settings.metadata_val_text
+            'val_text': metadata_preset.get('val_text', "Metadata:")
         }
         
         # Add to function presets temporarily
@@ -646,9 +661,12 @@ class ExportManager:
             response_preview = response[:100] + "..." if len(response) > 100 else response
             self.app.error_logging(f"Processing metadata response for idx {idx}: {response_preview}")
             
+            # Find the CSV_Metadata job to get the validation text
+            csv_metadata_job = next((p for p in self.app.settings.function_presets if p.get('name') == "CSV_Metadata"), None)
+            val_text = csv_metadata_job.get('val_text', "Metadata:") if csv_metadata_job else "Metadata:"
+            
             # Try to find metadata even if the specific marker is not present
             metadata_text = ""
-            val_text = self.app.settings.metadata_val_text
             
             # First try with the expected marker
             if val_text in response:

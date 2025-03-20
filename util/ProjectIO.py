@@ -27,8 +27,21 @@ class ProjectIO:
             project_name = os.path.basename(self.app.project_directory)
             project_file = os.path.join(self.app.project_directory, f"{project_name}.pbf")
 
-            # Save the updated DataFrame back to the project file.
-            self.app.main_df.to_csv(project_file, index=False, encoding='utf-8')
+            # Create a copy of the DataFrame to prevent modifying the original
+            save_df = self.app.main_df.copy()
+            
+            # Convert all absolute paths to relative paths
+            for idx, row in save_df.iterrows():
+                # Convert Image_Path to relative path
+                if pd.notna(row['Image_Path']) and row['Image_Path']:
+                    save_df.at[idx, 'Image_Path'] = self.app.get_relative_path(row['Image_Path'])
+                
+                # Convert Text_Path to relative path if it exists
+                if pd.notna(row['Text_Path']) and row['Text_Path']:
+                    save_df.at[idx, 'Text_Path'] = self.app.get_relative_path(row['Text_Path'])
+
+            # Save the updated DataFrame with relative paths to the project file
+            save_df.to_csv(project_file, index=False, encoding='utf-8')
 
             messagebox.showinfo("Success", f"Project saved successfully to {self.app.project_directory}")
         except Exception as e:
@@ -49,8 +62,9 @@ class ProjectIO:
             return
 
         try:
-            # Read and process the project CSV file, update paths, etc.
+            # Read and process the project CSV file
             self.app.main_df = pd.read_csv(project_file, encoding='utf-8')
+            
             # Ensure required text columns exist...
             for col in ["Original_Text", "First_Draft", "Final_Draft", "Text_Toggle"]:
                 if col not in self.app.main_df.columns:
@@ -58,19 +72,20 @@ class ProjectIO:
                 else:
                     self.app.main_df[col] = self.app.main_df[col].astype('object')
 
+            # Set project directory before resolving paths
             self.app.project_directory = project_directory
             self.app.images_directory = images_directory
-
-            # Convert relative paths to absolute paths
-            self.app.main_df['Image_Path'] = self.app.main_df['Image_Path'].apply(
-                lambda x: os.path.join(self.app.project_directory, x) if pd.notna(x) else x)
-            self.app.main_df['Text_Path'] = self.app.main_df['Text_Path'].apply(
-                lambda x: os.path.join(self.app.project_directory, x) if pd.notna(x) else x)
+            
+            # The paths in the DataFrame are already relative to the project directory,
+            # so we don't need to convert them again. The get_full_path method
+            # will handle proper resolution when images and texts are loaded.
 
             # Reset page counter and load the first image and text.
             self.app.page_counter = 0
             if not self.app.main_df.empty:
-                self.app.current_image_path = self.app.main_df.loc[0, 'Image_Path']
+                # Use get_full_path to resolve the relative path
+                image_path = self.app.main_df.loc[0, 'Image_Path']
+                self.app.current_image_path = self.app.get_full_path(image_path)
                 self.app.image_handler.load_image(self.app.current_image_path)
                 self.app.load_text()
             self.app.counter_update()

@@ -98,26 +98,33 @@ class DateAnalyzer:
             return subject_df  # Return original if we failed
     
     async def _process_row(self, df, current_index):
-        """Process a single row with multiple retry attempts"""
-        max_attempts = 5
+        """Process a single row to determine its date"""
+        row = df.iloc[current_index]
         
+        # Already has a date, no need to process
+        if row['Date'] and row['Date'].strip():
+            return row['Date']
+            
+        max_attempts = 2
         for attempt in range(max_attempts):
             try:
-                self.log(f"Attempt {attempt+1} of {max_attempts} for row {current_index}")
-                
-                # Prepare previous data context
+                # Get previous context and date from earlier entries
                 previous_data, previous_date = self._prepare_context(df, current_index, attempt)
                 
-                # Current text to process
-                text_to_process = df.at[current_index, 'Text'] if not pd.isna(df.at[current_index, 'Text']) else ""
-                
-                # Skip empty text
+                # Get text to process
+                text_to_process = row.get('Text', '')
                 if not text_to_process:
                     self.log(f"Empty text for row {current_index}, skipping")
                     return ""
                 
+                # Get Sequence_Dates preset from function_presets
+                sequence_dates_preset = next((p for p in self.settings.function_presets if p.get('name') == "Sequence_Dates"), None)
+                if not sequence_dates_preset:
+                    self.log(f"Sequence_Dates preset not found, cannot process date for row {current_index}")
+                    return ""
+                
                 # Format the user prompt with the appropriate context
-                user_prompt = self.settings.sequence_dates_user_prompt.format(
+                user_prompt = sequence_dates_preset.get('specific_instructions', '').format(
                     previous_data=previous_data,
                     previous_date=previous_date,
                     text_to_process=text_to_process
@@ -127,37 +134,46 @@ class DateAnalyzer:
                 
                 # Call the API
                 api_response, _ = await self.api_handler.route_api_call(
-                    engine=self.settings.sequence_dates_model,
-                    system_prompt=self.settings.sequence_dates_system_prompt,
+                    engine=sequence_dates_preset.get('model', 'gemini-2.0-flash'),
+                    system_prompt=sequence_dates_preset.get('general_instructions', ''),
                     user_prompt=user_prompt,
-                    temp=self.settings.sequence_dates_temp,
+                    temp=float(sequence_dates_preset.get('temperature', '0.2')),
                     text_to_process=None,  # Already formatted in user_prompt
-                    val_text=self.settings.sequence_dates_val_text,
+                    val_text=sequence_dates_preset.get('val_text', 'None'),
                     index=current_index,
                     is_base64=False,
                     formatting_function=True
                 )
                 
-                self.log(f"API response for row {current_index}, attempt {attempt+1}:\n{api_response[:200] if api_response != 'Error' else 'Error'}")
+                # Update our progress callback if provided
+                if self.progress_callback:
+                    self.progress_callback(current_index + 1, len(df))
                 
-                # Check if we got a successful response with a date
-                if api_response != "Error" and "Date:" in api_response:
-                    # Extract date using regex
-                    date_match = re.search(r'Date:\s*(.+?)(?:\n|$)', api_response)
-                    if date_match:
-                        extracted_date = date_match.group(1).strip()
-                        self.log(f"Successfully extracted date: {extracted_date}")
-                        return extracted_date
-                
-                # Short pause before retrying
-                await asyncio.sleep(1)
+                # Process the response
+                if api_response:
+                    self.log(f"API response for row {current_index}: {api_response[:100]}...")
+                    
+                    # Extract the date from the response
+                    date_detected = self._extract_date_from_response(api_response)
+                    if date_detected:
+                        self.log(f"Extracted date '{date_detected}' for row {current_index}")
+                        return date_detected
+                    else:
+                        if "More information required" in api_response:
+                            if attempt < max_attempts - 1:
+                                self.log(f"More information required for row {current_index}, retrying with more context...")
+                                continue
+                            else:
+                                self.log(f"Still need more information after all attempts for row {current_index}")
+                                return ""
+                        self.log(f"Could not extract date from response for row {current_index}")
+                else:
+                    self.log(f"No API response for row {current_index}")
                 
             except Exception as e:
-                self.log(f"Error in attempt {attempt+1} for row {current_index}: {str(e)}")
-                self.log(traceback.format_exc())
-                continue
-        
-        return ""  # Return empty string if all attempts fail
+                self.log(f"Error processing row {current_index}: {str(e)}")
+                
+        return ""
     
     def _prepare_context(self, df, current_index, attempt_number):
         """
@@ -211,15 +227,44 @@ class DateAnalyzer:
             return "", ""
     
     def _get_ordinal(self, n):
-        """Convert number to ordinal string (1->First, 2->Second, etc.)"""
-        ordinals = {
-            1: "First",
-            2: "Second", 
-            3: "Third",
-            4: "Fourth",
-            5: "Fifth"
-        }
+        """Convert a number to its ordinal form (1st, 2nd, 3rd, etc.)"""
+        ordinals = {1: "1st", 2: "2nd", 3: "3rd", 21: "21st", 22: "22nd", 23: "23rd"}
+        if 11 <= n % 100 <= 13:
+            return f"{n}th"
         return ordinals.get(n, f"{n}th")
+        
+    def _extract_date_from_response(self, response):
+        """Extract date from API response"""
+        if not response:
+            return ""
+            
+        # Check for standard Date: format
+        date_match = re.search(r'Date:\s*(.+?)(?:\n|$)', response)
+        if date_match:
+            return date_match.group(1).strip()
+            
+        # Look for date patterns
+        date_patterns = [
+            # DD/MM/YYYY
+            r'(\d{1,2}/\d{1,2}/\d{4})',
+            # YYYY/MM/DD
+            r'(\d{4}/\d{1,2}/\d{1,2})',
+            # Month Day, Year
+            r'(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}',
+            # Day Month Year
+            r'(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December),?\s+\d{4})'
+        ]
+        
+        for pattern in date_patterns:
+            match = re.search(pattern, response, re.IGNORECASE)
+            if match:
+                return match.group(0).strip()
+                
+        # If no date pattern found but response looks like a precise date statement
+        if len(response.strip()) < 30 and re.search(r'\b\d{4}\b', response):
+            return response.strip()
+            
+        return ""
 
 async def analyze_dates(subject_df, api_handler, settings):
     """
