@@ -5,6 +5,7 @@ from tkinter import ttk, filedialog, messagebox, simpledialog
 import fitz
 from PIL import Image
 import pandas as pd
+import asyncio
 
 class ExportManager:
     def __init__(self, app):
@@ -383,6 +384,131 @@ class ExportManager:
                 finally:
                     # Restore the original main_df
                     self.app.main_df = original_df
+            
+            # Ask user if they want to analyze dates sequentially
+            analyze_dates_sequentially = messagebox.askyesno(
+                "Analyze Dates Sequentially", 
+                "Do you want to analyze dates sequentially based on document context? This may take some time."
+            )
+            
+            if analyze_dates_sequentially:
+                try:
+                    # Use the existing progress bar using the same approach as in TranscriptionPearl_beta-dev.py
+                    progress_window, progress_bar, progress_label = self.app.progress_bar.create_progress_window("Analyzing Dates Sequentially")
+                    
+                    # Update progress initially
+                    total_rows = len(compiled_df)
+                    self.app.progress_bar.update_progress(0, total_rows)
+                    progress_label.config(text="Preparing date analysis...")
+                    self.app.update_idletasks()
+                    
+                    # Import required modules
+                    from util.AnalyzeDate import analyze_dates, DateAnalyzer
+                    from util.APIHandler import APIHandler
+                    
+                    # Log the start of date analysis
+                    self.app.error_logging("Starting date analysis sequence")
+                    
+                    # Clear the Date column in compiled_df to ensure fresh date analysis
+                    self.app.error_logging("Clearing existing dates for fresh date analysis")
+                    compiled_df['Date'] = ""
+                    
+                    # Create a date analysis dataframe from the COMPILED_DF (after metadata generation)
+                    # This is important - we use the dataframe that already has metadata
+                    date_df = pd.DataFrame()
+                    date_df['Page'] = compiled_df.index
+                    
+                    # Get text for each row - we're using find_right_text on the pages
+                    text_values = []
+                    for idx in compiled_df.index:
+                        try:
+                            # Use compiled_df's text directly or find it in main_df if needed
+                            if 'Text' in compiled_df.columns and not pd.isna(compiled_df.at[idx, 'Text']):
+                                text_values.append(compiled_df.at[idx, 'Text'])
+                            else:
+                                # Fallback to find_right_text with the corresponding main_df index
+                                main_idx = idx if idx < len(self.app.main_df) else len(self.app.main_df) - 1
+                                text_values.append(self.app.find_right_text(main_idx))
+                        except Exception as text_err:
+                            self.app.error_logging(f"Error getting text for idx {idx}: {str(text_err)}")
+                            text_values.append("")
+                    
+                    date_df['Text'] = text_values
+                    
+                    # Get existing dates from compiled_df if any
+                    date_df['Date'] = compiled_df['Date'].apply(lambda x: str(x) if not pd.isna(x) else "")
+                    
+                    # Log dataframe creation
+                    self.app.error_logging(f"Created date analysis dataframe with {len(date_df)} rows")
+                    
+                    # Initialize API handler
+                    api_handler = APIHandler(
+                        self.app.settings.openai_api_key,
+                        self.app.settings.anthropic_api_key,
+                        self.app.settings.google_api_key
+                    )
+                    
+                    # Update progress
+                    progress_label.config(text="Starting date analysis...")
+                    self.app.update_idletasks()
+                    
+                    # Create a function to run in the main thread
+                    def run_date_analysis():
+                        try:
+                            self.app.error_logging("Setting up asyncio event loop for date analysis")
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            
+                            # Process rows and update progress bar
+                            async def process_with_progress():
+                                analyzer = DateAnalyzer(api_handler, self.app.settings)
+                                analyzer.set_progress_callback(lambda current, total: 
+                                    self.app.progress_bar.update_progress(current, total))
+                                return await analyzer.process_dataframe(date_df)
+                            
+                            result = loop.run_until_complete(process_with_progress())
+                            loop.close()
+                            self.app.error_logging("Date analysis completed successfully")
+                            return result
+                        except Exception as loop_err:
+                            self.app.error_logging(f"Error in asyncio loop: {str(loop_err)}")
+                            return None
+                    
+                    # Run the function in the main thread
+                    result_df = run_date_analysis()
+                    
+                    # Update progress
+                    progress_label.config(text="Finalizing date analysis...")
+                    self.app.update_idletasks()
+                    
+                    # Copy the dates back to compiled_df if we got results
+                    if result_df is not None:
+                        update_count = 0
+                        for idx in result_df.index:
+                            try:
+                                if idx < len(compiled_df) and result_df.at[idx, 'Date']:
+                                    compiled_df.at[idx, 'Date'] = result_df.at[idx, 'Date']
+                                    update_count += 1
+                            except Exception as update_err:
+                                self.app.error_logging(f"Error updating date at idx {idx}: {str(update_err)}")
+                                continue
+                        
+                        self.app.error_logging(f"Updated {update_count} dates in the compiled dataframe")
+                    else:
+                        self.app.error_logging("No date analysis results returned")
+                    
+                    # Close progress window
+                    self.app.progress_bar.close_progress_window()
+                    
+                except Exception as e:
+                    # Close progress window if open
+                    try:
+                        self.app.progress_bar.close_progress_window()
+                    except:
+                        pass
+                    
+                    self.app.error_logging(f"Date analysis failed: {str(e)}")
+                    messagebox.showerror("Error", f"Failed to analyze dates: {str(e)}")
             
             # List of columns to exclude from the export
             columns_to_exclude = [

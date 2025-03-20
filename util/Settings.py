@@ -282,6 +282,24 @@ If you don't have information for a heading or don't know, leave it blank.'''
         self.metadata_val_text = "Metadata:"
         self.metadata_model = "gemini-2.0-flash"
 
+        self.sequence_dates_system_prompt = '''You analyze a historical document in a sequence of documents (like a diary or letterbook) to identify the date when the document was written. You will be provided with a document to analyze, the date of the previous document (when its available) in the sequence, and/or the text of previous documents in the sequence.
+
+Read the document you are to analyze, use any of the context provided, and to identify the date when the document was written. You might find a partial date in the current document (a day of the week, day of the month, etc). Fill in the missing information from previous documents.
+
+If you don't have enough information to determine the date, write "More information required" and you will be provided with more context.
+
+When you are reasonably sure of the date, write "Date:" followed by the date in the format YYYY/MM/DD.'''
+
+
+        self.sequence_dates_user_prompt = '''{previous_data}
+
+{previous_date}
+
+Document to analyze: {text_to_process}'''
+        self.sequence_dates_temp = 0.2
+        self.sequence_dates_val_text = 'None'
+        self.sequence_dates_model = 'gemini-2.0-flash-lite'
+
         self.batch_size = 50
         self.check_orientation = False
         
@@ -292,7 +310,7 @@ If you don't have information for a heading or don't know, leave it blank.'''
             "o1",
             "claude-3-5-sonnet-20241022",
             "claude-3-5-sonnet-20240620",
-            "claude-3-5-sonnet-20250219",
+            "claude-3-7-sonnet-20250219",
             "claude-3-opus-20240229",
             "gemini-2.0-pro-exp-02-05",
             "gemini-2.0-flash",
