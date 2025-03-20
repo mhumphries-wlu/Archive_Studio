@@ -19,6 +19,7 @@ from util.AnalyzeDocuments import AnalyzeDocuments
 from util.ImageHandler import ImageHandler
 from util.ProjectIO import ProjectIO
 from util.ExportFunctions import ExportManager
+from util.AdvancedDiffHighlighting import highlight_text_differences
 
 class App(TkinterDnD.Tk):
 
@@ -1715,37 +1716,10 @@ class App(TkinterDnD.Tk):
         else:
             # Unrecognized toggle value
             return
-
-        # Use difflib to find differences
-        differ = difflib.Differ()
-        diff = list(differ.compare(previous_text.splitlines(), current_text.splitlines()))
-
-        # Track which lines in the current text should be highlighted
-        highlight_lines = []
-        current_line = 0
         
-        for line in diff:
-            if line.startswith('+ '):
-                # This is a new line in the current text that wasn't in the previous text
-                highlight_lines.append(current_line)
-                current_line += 1
-            elif line.startswith('- '):
-                # This line was in previous text but not in current text
-                # We don't highlight it because it's not in the current text
-                continue
-            elif line.startswith('? '):
-                # This line indicates where changes occurred within a line
-                continue
-            else:
-                # This is an unchanged line
-                current_line += 1
-        
-        # Apply highlights to the text display
-        for line_num in highlight_lines:
-            start = f"{line_num + 1}.0"  # +1 because Text widget is 1-indexed
-            end = f"{line_num + 1}.end"
-            self.text_display.tag_add("change_highlight", start, end)
-    
+        # Use the advanced highlighting
+        highlight_text_differences(self.text_display, current_text, previous_text)
+
     def highlight_errors(self):
         """Highlight error terms from the Errors column"""
         try:

@@ -1,0 +1,218 @@
+import difflib
+import tkinter as tk
+import re
+
+class AdvancedDiffHighlighter:
+    """
+    A class for more precise difference highlighting between text versions.
+    Instead of highlighting entire lines, this identifies and highlights
+    specific characters that have changed.
+    """
+    
+    def __init__(self, text_widget):
+        """
+        Initialize with the text widget where highlighting will be applied.
+        
+        Args:
+            text_widget: tkinter Text widget where highlighting will be applied
+        """
+        self.text_widget = text_widget
+        
+        # Configure the highlight tag if it doesn't exist
+        try:
+            self.text_widget.tag_configure("change_highlight", background="lightgreen")
+        except:
+            # Tag might already be configured
+            pass
+            
+        # Configure word-level tag for more specific highlights
+        try:
+            self.text_widget.tag_configure("word_change_highlight", background="lightgreen")
+        except:
+            pass
+    
+    def highlight_differences(self, previous_text, current_text):
+        """
+        Highlight specific differences between previous and current text.
+        
+        Args:
+            previous_text: The older version of the text
+            current_text: The current version of the text to highlight in
+        """
+        # Clear existing highlights
+        self.text_widget.tag_remove("change_highlight", "1.0", tk.END)
+        self.text_widget.tag_remove("word_change_highlight", "1.0", tk.END)
+        
+        # If either text is None or empty, return early
+        if not previous_text or not current_text:
+            return
+        
+        # First do line-level comparison to find which lines need detailed analysis
+        previous_lines = previous_text.splitlines()
+        current_lines = current_text.splitlines()
+        
+        # Use difflib to find line-level differences
+        matcher = difflib.SequenceMatcher(None, previous_lines, current_lines)
+        
+        # Track current line number in the text widget
+        widget_line = 1
+        
+        # Process each operation from the matcher
+        for op, i1, i2, j1, j2 in matcher.get_opcodes():
+            # 'equal' means the lines match, no highlighting needed
+            if op == 'equal':
+                widget_line += (j2 - j1)
+                continue
+                
+            # 'replace' means lines are different but correspond
+            elif op == 'replace':
+                # Process each pair of different lines
+                for idx, (prev_line, curr_line) in enumerate(zip(previous_lines[i1:i2], current_lines[j1:j2])):
+                    curr_widget_line = widget_line + idx
+                    self._highlight_word_differences(prev_line, curr_line, curr_widget_line)
+                
+                # If lengths mismatch, handle remaining lines
+                if (i2 - i1) < (j2 - j1):
+                    # More current lines than previous - additional lines were inserted
+                    for idx in range(i2 - i1, j2 - j1):
+                        line_num = widget_line + (i2 - i1) + idx
+                        start = f"{line_num}.0"
+                        end = f"{line_num}.end"
+                        self.text_widget.tag_add("change_highlight", start, end)
+                
+                widget_line += (j2 - j1)
+                
+            # 'delete' means lines were deleted, nothing to highlight in current text
+            elif op == 'delete':
+                # Lines were in previous text but not in current text
+                # No highlighting needed as they don't exist in current display
+                pass
+                
+            # 'insert' means new lines were added
+            elif op == 'insert':
+                # Highlight all newly inserted lines
+                for idx in range(j2 - j1):
+                    line_num = widget_line + idx
+                    start = f"{line_num}.0"
+                    end = f"{line_num}.end"
+                    self.text_widget.tag_add("change_highlight", start, end)
+                
+                widget_line += (j2 - j1)
+    
+    def _highlight_word_differences(self, prev_line, curr_line, line_num):
+        """
+        Highlight specific word or character differences within a line.
+        
+        Args:
+            prev_line: Previous version of the line
+            curr_line: Current version of the line
+            line_num: Line number in the text widget
+        """
+        # Split lines into words
+        prev_words = self._tokenize_line(prev_line)
+        curr_words = self._tokenize_line(curr_line)
+        
+        # Use sequence matcher to find word-level differences
+        matcher = difflib.SequenceMatcher(None, prev_words, curr_words)
+        
+        # Track position in the line
+        char_pos = 0
+        
+        for op, i1, i2, j1, j2 in matcher.get_opcodes():
+            if op == 'equal':
+                # Words match, advance position
+                for word in curr_words[j1:j2]:
+                    char_pos += len(word)
+            
+            elif op in ('replace', 'insert'):
+                # Words were replaced or inserted, highlight them
+                for word in curr_words[j1:j2]:
+                    start = f"{line_num}.{char_pos}"
+                    end = f"{line_num}.{char_pos + len(word)}"
+                    self.text_widget.tag_add("word_change_highlight", start, end)
+                    char_pos += len(word)
+            
+            elif op == 'delete':
+                # Words were deleted, nothing to highlight
+                pass
+    
+    def _tokenize_line(self, line):
+        """
+        Split a line into meaningful tokens for comparison.
+        Includes whitespace as separate tokens to preserve spacing.
+        
+        Args:
+            line: The text line to tokenize
+            
+        Returns:
+            List of tokens (words and whitespace)
+        """
+        # Pattern to split by word boundaries but keep whitespace
+        tokens = []
+        
+        # Pattern to match words or sequences of whitespace
+        for match in re.finditer(r'(\s+|\S+)', line):
+            tokens.append(match.group(0))
+            
+        return tokens
+
+
+def highlight_text_differences(text_widget, current_level, previous_level):
+    """
+    Highlight differences between two text levels in the text widget.
+    
+    Args:
+        text_widget: tkinter Text widget where highlighting will be applied
+        current_level: The text currently displayed
+        previous_level: The text to compare against (previous version)
+    """
+    # Create highlighter
+    highlighter = AdvancedDiffHighlighter(text_widget)
+    
+    # Apply highlighting
+    highlighter.highlight_differences(previous_level, current_level)
+
+
+# Function that could be integrated into the main application
+def highlight_text_changes(self):
+    """
+    A function that could be used in the main application to highlight differences
+    between the current text level and the previous level.
+    
+    This would replace the existing highlight_changes method in the main App class.
+    """
+    index = self.page_counter
+    current_toggle = self.main_df.loc[index, 'Text_Toggle']
+    
+    # Early exit if we're at the Original_Text level (no previous text to compare with)
+    if current_toggle == "Original_Text" or current_toggle == "None":
+        return
+        
+    # Determine which texts to compare based on current level
+    if current_toggle == "First_Draft":
+        # Compare First_Draft with Original_Text
+        current_text = self.main_df.loc[index, 'First_Draft']
+        previous_text = self.main_df.loc[index, 'Original_Text']
+        
+        # Skip if either text is missing
+        if pd.isna(current_text) or pd.isna(previous_text):
+            return
+            
+    elif current_toggle == "Final_Draft":
+        # Compare Final_Draft with First_Draft
+        current_text = self.main_df.loc[index, 'Final_Draft']
+        previous_text = self.main_df.loc[index, 'First_Draft']
+        
+        # If First_Draft is empty, compare with Original_Text instead
+        if pd.isna(previous_text) or previous_text.strip() == '':
+            previous_text = self.main_df.loc[index, 'Original_Text']
+            
+        # Skip if either text is missing
+        if pd.isna(current_text) or pd.isna(previous_text):
+            return
+    else:
+        # Unrecognized toggle value
+        return
+    
+    # Use the advanced highlighting
+    highlight_text_differences(self.text_display, current_text, previous_text) 
