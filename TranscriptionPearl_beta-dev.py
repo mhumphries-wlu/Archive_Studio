@@ -49,6 +49,7 @@ class App(TkinterDnD.Tk):
         self.highlight_places_var = tk.BooleanVar()
         self.highlight_changes_var = tk.BooleanVar()
         self.highlight_errors_var = tk.BooleanVar()
+        self.skip_completed_pages = tk.BooleanVar(value=True)  # Default to skipping completed pages
                
         self.current_scale = 1    
 
@@ -264,26 +265,52 @@ class App(TkinterDnD.Tk):
         self.process_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Process", menu=self.process_menu)
 
-        self.process_menu.add_command(label="Recognize Text on Current Page", command=lambda: self.ai_function(all_or_one_flag="Current Page", ai_job="HTR"))        
-        self.process_menu.add_command(label="Recognize Text on All Pages", command=lambda: self.ai_function(all_or_one_flag="All Pages", ai_job="HTR"))
+        # Add process mode toggle (Current Page vs All Pages)
+        self.process_mode = tk.StringVar(value="Current Page")  # Default to Current Page
+        
+        # Mode selection submenu
+        mode_menu = tk.Menu(self.process_menu, tearoff=0)
+        
+        # Page mode options
+        mode_menu.add_radiobutton(label="Current Page", variable=self.process_mode, value="Current Page")
+        mode_menu.add_radiobutton(label="All Pages", variable=self.process_mode, value="All Pages")
+        
+        # Add separator in the submenu
+        mode_menu.add_separator()
+        
+        # Add Skip/Redo toggle as checkbutton
+        mode_menu.add_checkbutton(
+            label="Skip Completed Pages", 
+            variable=self.skip_completed_pages,
+            onvalue=True,
+            offvalue=False
+        )
+        
+        self.process_menu.add_cascade(label="Processing Mode", menu=mode_menu)
+        
         self.process_menu.add_separator()
-        self.process_menu.add_command(label="Correct Text on Current Page", command=lambda: self.ai_function(all_or_one_flag="Current Page", ai_job="Correct_Text"))
-        self.process_menu.add_command(label="Correct Text on All Pages", command=lambda: self.ai_function(all_or_one_flag="All Pages", ai_job="Correct_Text"))
+        
+        # Add simplified processing commands that use the selected mode
+        self.process_menu.add_command(label="Recognize Text", 
+                                     command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="HTR"))
+        
+        self.process_menu.add_command(label="Correct Text", 
+                                     command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Correct_Text"))
+        
         self.process_menu.add_separator()
-        self.process_menu.add_command(label="Get Names and Places on Current Page", command=lambda: self.ai_function(all_or_one_flag="Current Page", ai_job="Get_Names_and_Places"))
-        self.process_menu.add_command(label="Get Names and Places on All Pages", command=lambda: self.ai_function(all_or_one_flag="All Pages", ai_job="Get_Names_and_Places"))
+        
+        self.process_menu.add_command(label="Get Names and Places", 
+                                     command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Get_Names_and_Places"))
+        
         self.process_menu.add_separator()
-        self.process_menu.add_command(label="Separate Documents on Current Page", 
-                                    command=lambda: self.create_chunk_text_window("Current Page"))
-        self.process_menu.add_command(label="Separate Documents on All Pages", 
-                                    command=lambda: self.create_chunk_text_window("All Pages"))
+        
+        self.process_menu.add_command(label="Separate Documents", 
+                                     command=lambda: self.create_chunk_text_window(self.process_mode.get()))
+        
         self.process_menu.add_separator()
-        self.process_menu.add_command(label="Find Errors on Current Page", 
-                                    command=lambda: self.ai_function(all_or_one_flag="Current Page", 
-                                                                ai_job="Identify_Errors"))
-        self.process_menu.add_command(label="Find Errors on All Pages", 
-                                    command=lambda: self.ai_function(all_or_one_flag="All Pages", 
-                                                                ai_job="Identify_Errors"))
+        
+        self.process_menu.add_command(label="Find Errors", 
+                                     command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Identify_Errors"))
         
         # Document Menu
 
@@ -2243,59 +2270,102 @@ class App(TkinterDnD.Tk):
             processed_rows = 0
             total_rows = 0
 
+            # Get the Skip Completed Pages toggle value
+            skip_completed = self.skip_completed_pages.get()
+
             # Modified batch_df setup for different job types
             if ai_job == "HTR":
                 if all_or_one_flag == "Current Page":
-                    # Only process current page if it has no Original_Text
+                    # Only process current page if it has no Original_Text or if we're not skipping completed
                     row = self.page_counter
-                    if pd.isna(self.main_df.loc[row, 'Original_Text']) or self.main_df.loc[row, 'Original_Text'].strip() == '':
+                    if (skip_completed and (pd.isna(self.main_df.loc[row, 'Original_Text']) or self.main_df.loc[row, 'Original_Text'].strip() == '')) or not skip_completed:
                         batch_df = self.main_df.loc[[row]]
                     else:
                         messagebox.showinfo("Skip", "This page already has recognized text.")
                         return
                 else:
-                    # Filter for pages without Original_Text
-                    batch_df = self.main_df[
-                        (self.main_df['Image_Path'].notna()) & 
-                        (self.main_df['Image_Path'] != '') & 
-                        ((self.main_df['Original_Text'].isna()) | (self.main_df['Original_Text'] == ''))
-                    ]
-# In the ai_function method, modify the batch_df setup section:
+                    if skip_completed:
+                        # Filter for pages without Original_Text
+                        batch_df = self.main_df[
+                            (self.main_df['Image_Path'].notna()) & 
+                            (self.main_df['Image_Path'] != '') & 
+                            ((self.main_df['Original_Text'].isna()) | (self.main_df['Original_Text'] == ''))
+                        ]
+                    else:
+                        # Process all pages with images regardless of content
+                        batch_df = self.main_df[
+                            (self.main_df['Image_Path'].notna()) & 
+                            (self.main_df['Image_Path'] != '')
+                        ]
 
             elif ai_job == "Correct_Text":
                 if all_or_one_flag == "Current Page":
-                    # Only process current page if it has Original_Text but no First_Draft
+                    # Logic for Current Page with Skip Completed option
                     row = self.page_counter
-                    if pd.notna(self.main_df.loc[row, 'Original_Text']) and \
-                    (pd.isna(self.main_df.loc[row, 'First_Draft']) or self.main_df.loc[row, 'First_Draft'].strip() == ''):
-                        batch_df = self.main_df.loc[[row]]
+                    if skip_completed:
+                        # Only process if it has Original_Text but no First_Draft
+                        if pd.notna(self.main_df.loc[row, 'Original_Text']) and \
+                        (pd.isna(self.main_df.loc[row, 'First_Draft']) or self.main_df.loc[row, 'First_Draft'].strip() == ''):
+                            batch_df = self.main_df.loc[[row]]
+                        else:
+                            messagebox.showinfo("Skip", "This page either lacks Original_Text or already has corrections.")
+                            return
                     else:
-                        messagebox.showinfo("Skip", "This page either lacks Original_Text or already has corrections.")
-                        return
+                        # Process regardless of First_Draft status as long as Original_Text exists
+                        if pd.notna(self.main_df.loc[row, 'Original_Text']):
+                            batch_df = self.main_df.loc[[row]]
+                        else:
+                            messagebox.showinfo("Skip", "This page lacks Original_Text.")
+                            return
                 else:
-                    # Filter for pages with Original_Text but without First_Draft
-                    batch_df = self.main_df[
-                        (self.main_df['Original_Text'].notna()) & 
-                        (self.main_df['Original_Text'] != '') & 
-                        ((self.main_df['First_Draft'].isna()) | (self.main_df['First_Draft'] == ''))
-                    ]
+                    # Logic for All Pages with Skip Completed option
+                    if skip_completed:
+                        # Filter for pages with Original_Text but without First_Draft
+                        batch_df = self.main_df[
+                            (self.main_df['Original_Text'].notna()) & 
+                            (self.main_df['Original_Text'] != '') & 
+                            ((self.main_df['First_Draft'].isna()) | (self.main_df['First_Draft'] == ''))
+                        ]
+                    else:
+                        # Process all pages with Original_Text regardless of First_Draft status
+                        batch_df = self.main_df[
+                            (self.main_df['Original_Text'].notna()) & 
+                            (self.main_df['Original_Text'] != '')
+                        ]
             elif ai_job == "Create_Final_Draft":
                 if all_or_one_flag == "Current Page":
-                    # Only process current page if it has First_Draft but no Final_Draft
+                    # Logic for Current Page with Skip Completed option
                     row = self.page_counter
-                    if pd.notna(self.main_df.loc[row, 'First_Draft']) and \
-                    (pd.isna(self.main_df.loc[row, 'Final_Draft']) or self.main_df.loc[row, 'Final_Draft'].strip() == ''):
-                        batch_df = self.main_df.loc[[row]]
+                    if skip_completed:
+                        # Only process if it has First_Draft but no Final_Draft
+                        if pd.notna(self.main_df.loc[row, 'First_Draft']) and \
+                        (pd.isna(self.main_df.loc[row, 'Final_Draft']) or self.main_df.loc[row, 'Final_Draft'].strip() == ''):
+                            batch_df = self.main_df.loc[[row]]
+                        else:
+                            messagebox.showinfo("Skip", "This page either lacks First_Draft or already has Final_Draft.")
+                            return
                     else:
-                        messagebox.showinfo("Skip", "This page either lacks First_Draft or already has Final_Draft.")
-                        return
+                        # Process regardless of Final_Draft status as long as First_Draft exists
+                        if pd.notna(self.main_df.loc[row, 'First_Draft']):
+                            batch_df = self.main_df.loc[[row]]
+                        else:
+                            messagebox.showinfo("Skip", "This page lacks First_Draft.")
+                            return
                 else:
-                    # Filter for pages with First_Draft but without Final_Draft
-                    batch_df = self.main_df[
-                        (self.main_df['First_Draft'].notna()) & 
-                        (self.main_df['First_Draft'] != '') & 
-                        ((self.main_df['Final_Draft'].isna()) | (self.main_df['Final_Draft'] == ''))
-                    ]
+                    # Logic for All Pages with Skip Completed option
+                    if skip_completed:
+                        # Filter for pages with First_Draft but without Final_Draft
+                        batch_df = self.main_df[
+                            (self.main_df['First_Draft'].notna()) & 
+                            (self.main_df['First_Draft'] != '') & 
+                            ((self.main_df['Final_Draft'].isna()) | (self.main_df['Final_Draft'] == ''))
+                        ]
+                    else:
+                        # Process all pages with First_Draft regardless of Final_Draft status
+                        batch_df = self.main_df[
+                            (self.main_df['First_Draft'].notna()) & 
+                            (self.main_df['First_Draft'] != '')
+                        ]
             # In the ai_function method, modify the batch_df setup section:
             elif ai_job == "Get_Names_and_Places":
                 if all_or_one_flag == "Current Page":

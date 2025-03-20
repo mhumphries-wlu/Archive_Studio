@@ -419,11 +419,9 @@ class ExportManager:
             if generate_metadata:
                 # Store the original main_df temporarily
                 original_df = self.app.main_df.copy()
+                original_update_func = self.app.update_df_with_ai_job_response
                 
                 try:
-                    # Create a temporary metadata job - this MUST be called before processing metadata
-                    self.register_metadata_job()
-                    
                     # Make a copy of compiled_df to avoid modifying the original
                     temp_df = compiled_df.copy()
                     
@@ -445,30 +443,39 @@ class ExportManager:
                     # Replace the app's main_df with our temp_df temporarily
                     self.app.main_df = temp_df
                     
-                    # Register update function
-                    self.app.update_df_with_ai_job_response = self.update_df_with_csv_metadata
+                    # Create a wrapper for the update_df_with_ai_job_response function
                     original_update_func = self.app.update_df_with_ai_job_response
                     
-                    try:
-                        # Call the app's AI function with our custom metadata job
-                        self.app.ai_function(all_or_one_flag="All Pages", ai_job="CSV_Metadata")
+                    # Create a wrapper function to handle and extract metadata
+                    def metadata_response_handler(ai_job, idx, response):
+                        # First call the original function to do its normal processing
+                        result = original_update_func(ai_job, idx, response)
                         
-                        # Retrieve the updated dataframe
-                        updated_df = self.app.main_df.copy()
+                        # Then extract and structure metadata from the response
+                        self.extract_and_map_metadata(temp_df, idx, response)
                         
-                        # Copy only the metadata columns back to compiled_df
-                        metadata_columns = ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place',
-                                            'Creation_Place', 'Date', 'Places', 'People', 'Summary']
-                        for col in metadata_columns:
-                            if col in updated_df.columns:
-                                compiled_df[col] = updated_df[col]
-                    finally:
-                        # Restore the original update function
-                        self.app.update_df_with_ai_job_response = original_update_func
+                        return result
+                    
+                    # Replace the app's update function with our wrapper
+                    self.app.update_df_with_ai_job_response = metadata_response_handler
+                    
+                    # Call the app's AI function with the standard Metadata job
+                    self.app.ai_function(all_or_one_flag="All Pages", ai_job="Metadata")
+                    
+                    # Retrieve the updated dataframe
+                    updated_df = self.app.main_df.copy()
+                    
+                    # Copy only the metadata columns back to compiled_df
+                    metadata_columns = ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place',
+                                        'Creation_Place', 'Date', 'Places', 'People', 'Summary']
+                    for col in metadata_columns:
+                        if col in updated_df.columns:
+                            compiled_df[col] = updated_df[col]
                     
                 finally:
-                    # Restore the original main_df
+                    # Restore the original main_df and update function
                     self.app.main_df = original_df
+                    self.app.update_df_with_ai_job_response = original_update_func
             
             # If single_author was set, reapply it to override AI-generated values
             if single_author:
@@ -667,14 +674,15 @@ class ExportManager:
             # Filter to only include columns that exist in the dataframe
             available_columns = [col for col in ordered_columns if col in export_df.columns]
             
-            # Remove completely empty columns
-            final_columns = []
-            for col in available_columns:
-                # Check if column has any non-empty values
-                if not export_df[col].isna().all() and not (export_df[col] == "").all():
-                    final_columns.append(col)
+            # Always include all metadata columns, even if they're empty
+            for col in ['Document_Type', 'Author', 'Correspondent', 'Creation_Place', 
+                        'Date', 'People', 'Places', 'Summary', 'Citation']:
+                if col not in available_columns and col in export_df.columns:
+                    available_columns.append(col)
             
             # Create final dataframe with only the desired columns in the specified order
+            # Make sure the ordered_columns values exist in available_columns
+            final_columns = [col for col in ordered_columns if col in available_columns]
             final_export_df = export_df[final_columns]
             
             # Save the filtered dataframe to CSV
@@ -690,70 +698,9 @@ class ExportManager:
             if 'original_df' in locals():
                 self.app.main_df = original_df
 
-    def register_metadata_job(self):
-        """Register a metadata job in the app's function presets."""
-        # Remove any existing metadata job
-        self.app.settings.function_presets = [p for p in self.app.settings.function_presets if p.get('name') != "CSV_Metadata"]
-        
-        # Find the Metadata preset in function_presets
-        metadata_preset = next((p for p in self.app.settings.function_presets if p.get('name') == "Metadata"), None)
-        
-        if not metadata_preset:
-            self.app.error_logging("Metadata preset not found in function_presets. CSV export may fail.")
-            # Create a minimal fallback preset
-            metadata_preset = {
-                'model': "gemini-2.0-flash",
-                'temperature': "0.2",
-                'general_instructions': "Extract metadata from the document.",
-                'specific_instructions': "Text to analyze:\n\n{text_to_process}",
-                'val_text': "Metadata:",
-                'use_images': False
-            }
-        
-        # Create a new preset based on the Metadata preset
-        metadata_job = {
-            'name': "CSV_Metadata",
-            'model': metadata_preset.get('model', "gemini-2.0-flash"),
-            'temperature': metadata_preset.get('temperature', "0.2"),
-            'general_instructions': metadata_preset.get('general_instructions', ""),
-            'specific_instructions': metadata_preset.get('specific_instructions', ""),
-            'use_images': False,
-            'current_image': "No",
-            'num_prev_images': "0",
-            'num_after_images': "0",
-            'val_text': metadata_preset.get('val_text', "Metadata:")
-        }
-        
-        # Add to function presets temporarily
-        self.app.settings.function_presets.append(metadata_job)
-        
-        # Log for debugging
-        self.app.error_logging(f"Registered CSV_Metadata job with model: {metadata_job['model']}")
-            
-    def update_df_with_csv_metadata(self, ai_job, idx, response):
+    def extract_and_map_metadata(self, df, idx, response):
         """
-        Special handler to process metadata responses into the DataFrame
-        
-        Args:
-            ai_job (str): The AI job being performed (should be "CSV_Metadata")
-            idx (int): Index in the DataFrame
-            response (str): Response text from the API
-            
-        Returns:
-            bool: True if processing was successful
-        """
-        try:
-            # Process the metadata using the existing function
-            result = self.process_metadata_for_csv(self.app.main_df, idx, response)
-            self.app.error_logging(f"Processed metadata for CSV at idx {idx}, result: {result}")
-            return result
-        except Exception as e:
-            self.app.error_logging(f"Error in update_df_with_csv_metadata: {str(e)}")
-            return False
-
-    def process_metadata_for_csv(self, df, idx, response):
-        """
-        Process metadata response and update the dataframe.
+        Extract metadata from an AI response and map it to the DataFrame columns.
         
         Args:
             df (pd.DataFrame): The DataFrame to update
@@ -761,7 +708,7 @@ class ExportManager:
             response (str): The API response text
             
         Returns:
-            bool: True if metadata was successfully processed, False otherwise
+            bool: True if metadata was successfully processed
         """
         try:
             # Check if response is None or empty
@@ -769,13 +716,12 @@ class ExportManager:
                 self.app.error_logging(f"Empty response for idx {idx}")
                 return False
                 
-            # Log the first part of the response for debugging
-            response_preview = response[:100] + "..." if len(response) > 100 else response
-            self.app.error_logging(f"Processing metadata response for idx {idx}: {response_preview}")
-            
-            # Find the CSV_Metadata job to get the validation text
-            csv_metadata_job = next((p for p in self.app.settings.function_presets if p.get('name') == "CSV_Metadata"), None)
-            val_text = csv_metadata_job.get('val_text', "Metadata:") if csv_metadata_job else "Metadata:"
+            # Log the entire response for debugging
+            self.app.error_logging(f"Raw metadata response for idx {idx}:\n{response}")
+                
+            # Get metadata preset to find validation text
+            metadata_preset = next((p for p in self.app.settings.function_presets if p.get('name') == "Metadata"), None)
+            val_text = metadata_preset.get('val_text', "Metadata:") if metadata_preset else "Metadata:"
             
             # Try to find metadata even if the specific marker is not present
             metadata_text = ""
@@ -793,7 +739,9 @@ class ExportManager:
                 metadata_text = response.strip()
                 self.app.error_logging("No marker found, using full response as it contains metadata fields")
             else:
-                self.app.error_logging(f"No recognizable metadata format in response for idx {idx}")
+                self.app.error_logging(f"No recognizable metadata format in response for idx {idx}. Full response:\n{response}")
+                # Print to console as well for immediate visibility
+                print(f"ERROR: No recognizable metadata format in response for idx {idx}. Full response:\n{response}")
                 return False
                 
             # Parse the metadata
@@ -858,11 +806,17 @@ class ExportManager:
                 self.app.error_logging(f"Successfully processed {fields_updated} metadata fields for idx {idx}")
                 return True
             else:
-                self.app.error_logging(f"No fields were updated for idx {idx}")
+                self.app.error_logging(f"No fields were updated for idx {idx}. Parsed metadata text:\n{metadata_text}")
+                # Print to console as well for immediate visibility
+                print(f"ERROR: No fields were updated for idx {idx}. Parsed metadata text:\n{metadata_text}")
                 return False
             
         except Exception as e:
-            self.app.error_logging(f"Error processing metadata for CSV at idx {idx}: {str(e)}")
+            self.app.error_logging(f"Error extracting metadata at idx {idx}: {str(e)}")
+            self.app.error_logging(f"Response that caused error:\n{response}")
+            # Print to console as well for immediate visibility
+            print(f"ERROR: Exception extracting metadata at idx {idx}: {str(e)}")
+            print(f"Response that caused error:\n{response}")
             return False
 
     def show_csv_export_options(self):

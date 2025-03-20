@@ -252,6 +252,18 @@ Current Document to Analyze: {text_to_process}''',
                 'num_after_images': "0",
                 'val_text': "Orientation:"
             },
+            {
+                'name': "Translation",
+                'model': "claude-3-7-sonnet-20250219",
+                'temperature': "0.2",
+                'general_instructions': '''You translate historical documents from other languages into English. In your response, write "Translation:" followed by a faithful, accurate translation of the document.''',
+                'specific_instructions': '''Text to translate:\n\n{text_to_process}''',
+                'use_images': False,
+                'current_image': "No",
+                'num_prev_images': "0",
+                'num_after_images': "0",
+                'val_text': "Translation:"
+            }
         ]
 
         self.analysis_presets = [
