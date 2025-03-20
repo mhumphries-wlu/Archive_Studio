@@ -191,10 +191,10 @@ End your response after finishing the second list.'''
 
 Document Type: <Letter/Baptismal Record/Diary Entry/Will/etc.>
 Author: <Last Name, First Name> - Note: for letters, memos, etc. use the name of the author of document. For other documents where the primary purposes if official or semi-official documentation of an individual(s), like a parish Birth, Marriage or Death Record, prison record, military service file, etc, use the name of the person(s) who the record is about.
-Correspondent: <Last Name, First Name>
-Correspondent Place: <Place where the correspondent is located>
+Correspondent: <Last Name, First Name> - Note: Only for letters; use the name of the person(s) who the document is addressed to
+Correspondent Place: <Place where the correspondent is located> - Note: Only for letters; use the place where the correspondent is located
 Date: <DD/MM/YYYY>
-Place of Creation: <Place where the document was created>
+Place of Creation: <Place where the document was written; for diary entries, use the place where the diarist was located at the end of the day of the entry>
 People: <Last Name, First Name; Last Name, First Name;...>
 Places: <Last Name, First Name; Last Name, First Name;...>
 Summary:
@@ -212,18 +212,27 @@ If you don't have information for a heading or don't know, leave it blank.''',
 
             {
                 'name': "Sequence_Dates",
-                'model': "gemini-2.0-flash",
+                'model': "gemini-2.0-flash-lite",
                 'temperature': "0.2",
-                'general_instructions': '''You analyze a historical document in a sequence of documents (like a diary or letterbook) to identify the date when the document was written. You will be provided with a document to analyze, the date of the previous document (when its available) in the sequence, and/or the text of previous documents in the sequence.
+#                 'general_instructions': '''You analyze a historical document in a sequence of documents (like a diary or letterbook) to identify the date it was written. You will be provided with a current document to analyze as well as the date and text of the previous document in the sequence.
 
-Read the document you are to analyze, use any of the context provided, and identify the date when the document was written. You might find a partial date in the current document (a day of the week, day of the month, etc). Fill in the missing information from previous documents.
+# Read the document. If you can establish the complete date (year, month, and day) from the information contained in the current document to analzye, use only this information to generate your response. If you can only find a partial date such as a day of the week, day of the month, etc in the current document to analyze, use the additional context provided by the date and text of the previous entry to fill in the missing information.
 
-If you don't have enough information to determine the date, write "More information required" and you will be provided with more context. Othwerwise, write "Date:" followed by the date when the document was written in the format YYYY/MM/DD.''',
-                'specific_instructions': '''{previous_data}
+# In your response, write "Date:" followed by the date of the current entry in the format YYYY/MM/DD. If you are less than 75% sure about the correctness of your answer, write "CHECK" on the next line and a human will verify your response.''',
 
-{previous_date}
+                'general_instructions': '''You analyze a historical document in a sequence of documents (like a diary or letterbook) to identify the date it was written and where it was written. You will be provided with a current document to analyze as well as the date, place it was written, and text of the previous document in the sequence.
 
-Document to analyze: {text_to_process}''',
+Read the document. If you can establish the complete date (year, month, and day) and the place it was writtenfrom the information contained in the current document, use only this information to generate your response. For the place a document was written, in letters this is often written at the top. For diaries, it is often the place where the diarist was located at the end of the day of the entry. If the location does not explicity change from the previous entry, you can use the same location as the previous entry.
+
+If you can only find a partial date such as a day of the week, day of the month, etc in the current document, use the additional context provided by the date and text of the previous entry to fill in the missing information.
+
+In your response, write "Date:" followed by the date of the current entry in the format YYYY/MM/DD. Then write "Place:" followed by the place where the document was written. If you are less than 90 percent sure about the correctness of either answer, write "CHECK" on the next line and a human will verify your response.''',
+                'specific_instructions': '''{previous_date}
+{previous_place} 
+
+{previous_data}
+
+Current Document to Analyze: {text_to_process}''',
                 'use_images': False,
                 'current_image': "No",  
                 'num_prev_images': "0",

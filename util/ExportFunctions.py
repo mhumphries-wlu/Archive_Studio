@@ -256,7 +256,80 @@ class ExportManager:
             messagebox.showerror("Error", f"Failed to export PDF: {str(e)}")
             self.app.error_logging(f"PDF export error: {str(e)}")
 
-    def export_as_csv(self, use_custom_separation=False):
+    def export_menu(self):
+        """Open a GUI window for choosing export options."""
+        # Create the export window
+        export_window = tk.Toplevel(self.app)
+        export_window.title("Export...")
+        export_window.geometry("400x300")
+        export_window.transient(self.app)  # Make window modal
+        export_window.grab_set()  # Make window modal
+
+        # Configure grid
+        export_window.grid_columnconfigure(0, weight=1)
+        
+        # Add title label
+        title_label = ttk.Label(export_window, text="Choose Export Format", font=("Arial", 12, "bold"))
+        title_label.grid(row=0, column=0, pady=20, padx=10)
+
+        # Create frame for export options
+        options_frame = ttk.Frame(export_window)
+        options_frame.grid(row=1, column=0, padx=20, pady=10, sticky="ew")
+
+        # Export option variable
+        export_var = tk.StringVar(value="single_text")
+
+        # Add radio buttons for different export options
+        ttk.Radiobutton(
+            options_frame, 
+            text="Single Text File (Combined)", 
+            variable=export_var, 
+            value="single_text"
+        ).grid(row=0, column=0, sticky="w", pady=5)
+
+        ttk.Radiobutton(
+            options_frame, 
+            text="Separate Text Files (One per page)", 
+            variable=export_var, 
+            value="separate_text"
+        ).grid(row=1, column=0, sticky="w", pady=5)
+
+        ttk.Radiobutton(
+            options_frame, 
+            text="PDF with Images and Searchable Text", 
+            variable=export_var, 
+            value="pdf"
+        ).grid(row=2, column=0, sticky="w", pady=5)
+
+        # Add buttons frame
+        button_frame = ttk.Frame(export_window)
+        button_frame.grid(row=2, column=0, pady=20)
+
+        def handle_export():
+            export_type = export_var.get()
+            export_window.destroy()
+            
+            if export_type == "single_text":
+                self.export()
+            elif export_type == "separate_text":
+                self.export_text_files()
+            elif export_type == "pdf":
+                self.export_as_pdf()
+
+        # Add buttons
+        ttk.Button(
+            button_frame, 
+            text="Export", 
+            command=handle_export
+        ).grid(row=0, column=0, padx=5)
+        
+        ttk.Button(
+            button_frame, 
+            text="Cancel", 
+            command=export_window.destroy
+        ).grid(row=0, column=1, padx=5)
+
+    def export_as_csv(self, use_custom_separation=False, generate_metadata=None, single_author=None, citation=None, analyze_dates=None):
         """Export metadata for each document as a CSV file."""
         if self.app.main_df.empty:
             messagebox.showwarning("No Data", "No documents to export.")
@@ -325,11 +398,23 @@ class ExportManager:
                 if col not in compiled_df.columns:
                     compiled_df[col] = ""
             
-            # Ask user if they want to generate metadata (this can be time-consuming)
-            generate_metadata = messagebox.askyesno(
-                "Generate Metadata", 
-                "Do you want to generate metadata for each document? This may take some time depending on the number of documents."
-            )
+            # If generate_metadata is None, it means the function was called directly
+            # and we need to ask the user
+            if generate_metadata is None:
+                generate_metadata = messagebox.askyesno(
+                    "Generate Metadata", 
+                    "Do you want to generate metadata for each document? This may take some time depending on the number of documents."
+                )
+            
+            # If single_author is provided, set it for all rows
+            if single_author:
+                compiled_df['Author'] = single_author
+                self.app.error_logging(f"Setting single author: {single_author} for all documents")
+            
+            # If citation is provided, set it for all rows
+            if citation:
+                compiled_df['Citation'] = citation
+                self.app.error_logging(f"Setting citation: {citation} for all documents")
             
             if generate_metadata:
                 # Store the original main_df temporarily
@@ -385,13 +470,18 @@ class ExportManager:
                     # Restore the original main_df
                     self.app.main_df = original_df
             
-            # Ask user if they want to analyze dates sequentially
-            analyze_dates_sequentially = messagebox.askyesno(
-                "Analyze Dates Sequentially", 
-                "Do you want to analyze dates sequentially based on document context? This may take some time."
-            )
+            # If single_author was set, reapply it to override AI-generated values
+            if single_author:
+                compiled_df['Author'] = single_author
             
-            if analyze_dates_sequentially:
+            # If analyze_dates is None, ask the user
+            if analyze_dates is None:
+                analyze_dates = messagebox.askyesno(
+                    "Analyze Dates Sequentially", 
+                    "Do you want to analyze dates sequentially based on document context? This may take some time."
+                )
+            
+            if analyze_dates:
                 try:
                     # Use the existing progress bar using the same approach as in TranscriptionPearl_beta-dev.py
                     progress_window, progress_bar, progress_label = self.app.progress_bar.create_progress_window("Analyzing Dates Sequentially")
@@ -437,6 +527,9 @@ class ExportManager:
                     
                     # Get existing dates from compiled_df if any
                     date_df['Date'] = compiled_df['Date'].apply(lambda x: str(x) if not pd.isna(x) else "")
+                    
+                    # Get existing Creation_Place from compiled_df if any
+                    date_df['Creation_Place'] = compiled_df['Creation_Place'].apply(lambda x: str(x) if not pd.isna(x) else "")
                     
                     # Log dataframe creation
                     self.app.error_logging(f"Created date analysis dataframe with {len(date_df)} rows")
@@ -484,16 +577,24 @@ class ExportManager:
                     # Copy the dates back to compiled_df if we got results
                     if result_df is not None:
                         update_count = 0
+                        place_update_count = 0
                         for idx in result_df.index:
                             try:
-                                if idx < len(compiled_df) and result_df.at[idx, 'Date']:
-                                    compiled_df.at[idx, 'Date'] = result_df.at[idx, 'Date']
-                                    update_count += 1
+                                if idx < len(compiled_df):
+                                    # Update Date field
+                                    if result_df.at[idx, 'Date']:
+                                        compiled_df.at[idx, 'Date'] = result_df.at[idx, 'Date']
+                                        update_count += 1
+                                    
+                                    # Update Creation_Place field
+                                    if 'Creation_Place' in result_df.columns and result_df.at[idx, 'Creation_Place']:
+                                        compiled_df.at[idx, 'Creation_Place'] = result_df.at[idx, 'Creation_Place']
+                                        place_update_count += 1
                             except Exception as update_err:
-                                self.app.error_logging(f"Error updating date at idx {idx}: {str(update_err)}")
+                                self.app.error_logging(f"Error updating date/place at idx {idx}: {str(update_err)}")
                                 continue
                         
-                        self.app.error_logging(f"Updated {update_count} dates in the compiled dataframe")
+                        self.app.error_logging(f"Updated {update_count} dates and {place_update_count} places in the compiled dataframe")
                     else:
                         self.app.error_logging("No date analysis results returned")
                     
@@ -546,6 +647,17 @@ class ExportManager:
             # Add Citation column if it doesn't exist
             if 'Citation' not in export_df.columns:
                 export_df['Citation'] = ""
+                
+            # Set citation for all rows if provided
+            if citation:
+                export_df['Citation'] = citation
+                
+            # Clear correspondent fields for non-letter document types
+            for idx in export_df.index:
+                doc_type = str(export_df.at[idx, 'Document_Type']).lower()
+                if doc_type != 'letter' and doc_type != '':
+                    export_df.at[idx, 'Correspondent'] = ""
+                    export_df.at[idx, 'Correspondent_Place'] = ""
                 
             # Reorder columns to match the requested order
             ordered_columns = ['Page', 'Document_Type', 'Author', 'Correspondent', 
@@ -753,51 +865,8 @@ class ExportManager:
             self.app.error_logging(f"Error processing metadata for CSV at idx {idx}: {str(e)}")
             return False
 
-    def export_menu(self):
-        """Open a GUI window for choosing export options."""
-        # Create the export window
-        export_window = tk.Toplevel(self.app)
-        export_window.title("Export...")
-        export_window.geometry("400x300")
-        export_window.transient(self.app)  # Make window modal
-        export_window.grab_set()  # Make window modal
-
-        # Configure grid
-        export_window.grid_columnconfigure(0, weight=1)
-        
-        # Add title label
-        title_label = ttk.Label(export_window, text="Choose Export Format", font=("Arial", 12, "bold"))
-        title_label.grid(row=0, column=0, pady=20, padx=10)
-
-        # Create frame for export options
-        options_frame = ttk.Frame(export_window)
-        options_frame.grid(row=1, column=0, padx=20, pady=10, sticky="ew")
-
-        # Export option variable
-        export_var = tk.StringVar(value="single_text")
-
-        # Add radio buttons for different export options
-        ttk.Radiobutton(
-            options_frame, 
-            text="Single Text File (Combined)", 
-            variable=export_var, 
-            value="single_text"
-        ).grid(row=0, column=0, sticky="w", pady=5)
-
-        ttk.Radiobutton(
-            options_frame, 
-            text="Separate Text Files (One per page)", 
-            variable=export_var, 
-            value="separate_text"
-        ).grid(row=1, column=0, sticky="w", pady=5)
-
-        ttk.Radiobutton(
-            options_frame, 
-            text="PDF with Images and Searchable Text", 
-            variable=export_var, 
-            value="pdf"
-        ).grid(row=2, column=0, sticky="w", pady=5)
-        
+    def show_csv_export_options(self):
+        """Open a window with CSV export options."""
         # Determine if documents are separated (have "*****" markers)
         documents_separated = False
         try:
@@ -810,34 +879,31 @@ class ExportManager:
             documents_separated = "*****" in combined_text
         except:
             documents_separated = False
+
+        # Create the CSV options window
+        csv_window = tk.Toplevel(self.app)
+        csv_window.title("CSV Export Options")
+        csv_window.geometry("450x400")
+        csv_window.transient(self.app)  # Make window modal
+        csv_window.grab_set()  # Make window modal
+
+        # Configure grid
+        csv_window.grid_columnconfigure(0, weight=1)
         
-        # Add CSV export option - now always enabled
-        csv_radio = ttk.Radiobutton(
-            options_frame, 
-            text="CSV with Document Metadata", 
-            variable=export_var, 
-            value="csv"
-        )
-        csv_radio.grid(row=3, column=0, sticky="w", pady=5)
-        
-        # Create a frame for pagination options (initially hidden)
-        pagination_frame = ttk.Frame(options_frame)
-        pagination_frame.grid(row=4, column=0, sticky="w", padx=20, pady=5)
-        pagination_frame.grid_remove()  # Hide initially
-        
-        # Pagination method variable
+        # Add title label
+        title_label = ttk.Label(csv_window, text="CSV Export Options", font=("Arial", 12, "bold"))
+        title_label.grid(row=0, column=0, pady=10, padx=10)
+
+        # Create frame for options
+        options_frame = ttk.Frame(csv_window)
+        options_frame.grid(row=1, column=0, padx=20, pady=10, sticky="ew")
+        options_frame.grid_columnconfigure(1, weight=1)
+
+        # Pagination method
+        ttk.Label(options_frame, text="Pagination Method:").grid(row=0, column=0, sticky="w", pady=5)
         pagination_var = tk.StringVar(value="basic")
-        
-        # Add label for pagination dropdown
-        ttk.Label(
-            pagination_frame,
-            text="Pagination Method:",
-            font=("Arial", 9)
-        ).grid(row=0, column=0, sticky="w", pady=2)
-        
-        # Add dropdown for pagination method
         pagination_combobox = ttk.Combobox(
-            pagination_frame,
+            options_frame,
             textvariable=pagination_var,
             state="readonly",
             width=25
@@ -850,58 +916,115 @@ class ExportManager:
             pagination_combobox['values'] = ["Basic Pagination"]
             
         pagination_combobox.current(0)  # Set default to first option
-        pagination_combobox.grid(row=0, column=1, sticky="w", pady=2, padx=5)
-        
-        # Add description label
+        pagination_combobox.grid(row=0, column=1, sticky="w", pady=5, padx=5)
+
+        # Description for pagination
         pagination_desc = ttk.Label(
-            pagination_frame,
+            options_frame,
             text="Basic Pagination: Each page as separate row\nCustom Separation: Use document separators",
             font=("Arial", 8),
             justify=tk.LEFT
         )
-        pagination_desc.grid(row=1, column=0, columnspan=2, sticky="w", pady=2)
+        pagination_desc.grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 10))
 
-        def on_export_selection_change(*args):
-            if export_var.get() == "csv":
-                # Show pagination options and resize window
-                pagination_frame.grid()
-                export_window.geometry("400x380")
+        # Metadata generation checkbox
+        generate_metadata_var = tk.BooleanVar(value=True)
+        generate_metadata_cb = ttk.Checkbutton(
+            options_frame,
+            text="Generate metadata for each document",
+            variable=generate_metadata_var
+        )
+        generate_metadata_cb.grid(row=2, column=0, columnspan=2, sticky="w", pady=5)
+
+        # Create a frame for metadata options (hidden initially)
+        metadata_frame = ttk.Frame(options_frame)
+        metadata_frame.grid(row=3, column=0, columnspan=2, padx=20, pady=5, sticky="ew")
+        metadata_frame.grid_columnconfigure(1, weight=1)
+
+        # Single Author checkbox and entry
+        single_author_var = tk.BooleanVar(value=False)
+        single_author_cb = ttk.Checkbutton(
+            metadata_frame,
+            text="Single Author",
+            variable=single_author_var
+        )
+        single_author_cb.grid(row=0, column=0, sticky="w", pady=5)
+
+        author_var = tk.StringVar()
+        author_entry = ttk.Entry(metadata_frame, textvariable=author_var, width=30)
+        author_entry.grid(row=0, column=1, sticky="w", pady=5, padx=5)
+        author_entry.config(state="disabled")  # Initially disabled
+
+        # Citation entry
+        ttk.Label(metadata_frame, text="Citation:").grid(row=1, column=0, sticky="w", pady=5)
+        citation_var = tk.StringVar()
+        citation_entry = ttk.Entry(metadata_frame, textvariable=citation_var, width=30)
+        citation_entry.grid(row=1, column=1, sticky="ew", pady=5, padx=5)
+
+        # Sequential dating checkbox
+        sequential_dating_var = tk.BooleanVar(value=False)
+        sequential_dating_cb = ttk.Checkbutton(
+            metadata_frame,
+            text="Document has sequential dating (i.e., a diary)",
+            variable=sequential_dating_var
+        )
+        sequential_dating_cb.grid(row=2, column=0, columnspan=2, sticky="w", pady=5)
+
+        # Function to toggle author entry based on checkbox
+        def toggle_author_entry():
+            if single_author_var.get():
+                author_entry.config(state="normal")
             else:
-                # Hide pagination options and restore window size
-                pagination_frame.grid_remove()
-                export_window.geometry("400x300")
-                
-        # Track changes to export_var
-        export_var.trace_add("write", on_export_selection_change)
+                author_entry.config(state="disabled")
+
+        # Function to toggle metadata options based on checkbox
+        def toggle_metadata_options():
+            if generate_metadata_var.get():
+                metadata_frame.grid()
+            else:
+                metadata_frame.grid_remove()
+
+        # Connect functions to checkboxes
+        single_author_var.trace_add("write", lambda *args: toggle_author_entry())
+        generate_metadata_var.trace_add("write", lambda *args: toggle_metadata_options())
 
         # Add buttons frame
-        button_frame = ttk.Frame(export_window)
+        button_frame = ttk.Frame(csv_window)
         button_frame.grid(row=2, column=0, pady=20)
 
-        def handle_export():
-            export_type = export_var.get()
-            export_window.destroy()
+        def handle_csv_export():
+            # Get all options
+            use_custom_separation = (pagination_var.get() == "Custom Separation")
+            generate_metadata = generate_metadata_var.get()
+            single_author = None
+            if generate_metadata and single_author_var.get():
+                single_author = author_var.get()
+            citation = citation_var.get() if generate_metadata else None
+            analyze_dates = sequential_dating_var.get() if generate_metadata else False
+
+            csv_window.destroy()
             
-            if export_type == "single_text":
-                self.export()
-            elif export_type == "separate_text":
-                self.export_text_files()
-            elif export_type == "pdf":
-                self.export_as_pdf()
-            elif export_type == "csv":
-                # Pass pagination method to export_as_csv - use StringVar instead of widget
-                use_custom_separation = (pagination_var.get() == "Custom Separation")
-                self.export_as_csv(use_custom_separation=use_custom_separation)
+            # Call export_as_csv with all options
+            self.export_as_csv(
+                use_custom_separation=use_custom_separation,
+                generate_metadata=generate_metadata,
+                single_author=single_author,
+                citation=citation,
+                analyze_dates=analyze_dates
+            )
 
         # Add buttons
         ttk.Button(
             button_frame, 
             text="Export", 
-            command=handle_export
+            command=handle_csv_export
         ).grid(row=0, column=0, padx=5)
         
         ttk.Button(
             button_frame, 
             text="Cancel", 
-            command=export_window.destroy
-        ).grid(row=0, column=1, padx=5) 
+            command=csv_window.destroy
+        ).grid(row=0, column=1, padx=5)
+
+        # Initialize the UI state
+        toggle_metadata_options() 
