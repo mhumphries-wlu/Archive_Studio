@@ -1435,8 +1435,8 @@ class App(TkinterDnD.Tk):
         display_map = {
             "None": "None",
             "Original_Text": "Original_Text",
-            "First Draft": "First_Draft",
-            "Final Draft": "Final_Draft"
+            "First_Draft": "First_Draft",
+            "Final_Draft": "Final_Draft"
         }
         
         # Update the Text_Toggle in the DataFrame
@@ -1678,32 +1678,73 @@ class App(TkinterDnD.Tk):
                 self.highlight_errors()
 
     def highlight_changes(self):
+        """
+        Highlight differences between the current text level and the previous level:
+        - When viewing First_Draft, highlight changes from Original_Text
+        - When viewing Final_Draft, highlight changes from First_Draft
+        """
         index = self.page_counter
-        original_text = self.main_df.loc[index, 'Original_Text']
-        first_draft = self.main_df.loc[index, 'First_Draft']
-
-        if pd.isna(first_draft) or self.main_df.loc[index, 'Text_Toggle'] != "First_Draft":
+        current_toggle = self.main_df.loc[index, 'Text_Toggle']
+        
+        # Early exit if we're at the Original_Text level (no previous text to compare with)
+        if current_toggle == "Original_Text" or current_toggle == "None":
+            return
+            
+        # Determine which texts to compare based on current level
+        if current_toggle == "First_Draft":
+            # Compare First_Draft with Original_Text
+            current_text = self.main_df.loc[index, 'First_Draft']
+            previous_text = self.main_df.loc[index, 'Original_Text']
+            
+            # Skip if either text is missing
+            if pd.isna(current_text) or pd.isna(previous_text):
+                return
+                
+        elif current_toggle == "Final_Draft":
+            # Compare Final_Draft with First_Draft
+            current_text = self.main_df.loc[index, 'Final_Draft']
+            previous_text = self.main_df.loc[index, 'First_Draft']
+            
+            # If First_Draft is empty, compare with Original_Text instead
+            if pd.isna(previous_text) or previous_text.strip() == '':
+                previous_text = self.main_df.loc[index, 'Original_Text']
+                
+            # Skip if either text is missing
+            if pd.isna(current_text) or pd.isna(previous_text):
+                return
+        else:
+            # Unrecognized toggle value
             return
 
         # Use difflib to find differences
         differ = difflib.Differ()
-        diff = list(differ.compare(original_text.splitlines(), first_draft.splitlines()))
+        diff = list(differ.compare(previous_text.splitlines(), current_text.splitlines()))
 
-        line_num = 1
+        # Track which lines in the current text should be highlighted
+        highlight_lines = []
+        current_line = 0
+        
         for line in diff:
             if line.startswith('+ '):
-                # This is a new line in First_Draft
-                start = f"{line_num}.0"
-                end = f"{line_num}.end"
-                self.text_display.tag_add("change_highlight", start, end)
+                # This is a new line in the current text that wasn't in the previous text
+                highlight_lines.append(current_line)
+                current_line += 1
             elif line.startswith('- '):
-                # This line was in original_text but not in First_Draft
+                # This line was in previous text but not in current text
                 # We don't highlight it because it's not in the current text
                 continue
             elif line.startswith('? '):
                 # This line indicates where changes occurred within a line
                 continue
-            line_num += 1
+            else:
+                # This is an unchanged line
+                current_line += 1
+        
+        # Apply highlights to the text display
+        for line_num in highlight_lines:
+            start = f"{line_num + 1}.0"  # +1 because Text widget is 1-indexed
+            end = f"{line_num + 1}.end"
+            self.text_display.tag_add("change_highlight", start, end)
     
     def highlight_errors(self):
         """Highlight error terms from the Errors column"""
