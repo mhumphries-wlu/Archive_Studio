@@ -83,7 +83,7 @@ class App(TkinterDnD.Tk):
         self.text_display_dropdown = ttk.Combobox(
             left_group, 
             textvariable=self.text_display_var,
-            values=["None", "Original_Text", "First_Draft", "Final_Draft"],
+            values=["None", "Original_Text", "First_Draft", "Final_Draft", "Translation"],
             width=15,
             state="readonly"
         )
@@ -299,6 +299,11 @@ class App(TkinterDnD.Tk):
         
         self.process_menu.add_separator()
         
+        self.process_menu.add_command(label="Translate Text", 
+                                     command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Translation"))
+        
+        self.process_menu.add_separator()
+        
         self.process_menu.add_command(label="Get Names and Places", 
                                      command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Get_Names_and_Places"))
         
@@ -386,6 +391,9 @@ class App(TkinterDnD.Tk):
         self.bind("<Control-r>", lambda event: self.revert_current_page())  # Added parentheses for method call
         self.bind("<Control-Shift-r>", lambda event: self.revert_all_pages())  # Added parentheses for method call
 
+        # Text display toggle binding
+        self.bind("<Control-Tab>", lambda event: self.toggle_text())
+
         # Image management bindings
         self.bind("<Control-d>", lambda event: self.delete_current_image())  # Added parentheses for method call
         self.bind("<Control-i>", lambda event: self.edit_single_image())  # Added parentheses for method call
@@ -396,6 +404,8 @@ class App(TkinterDnD.Tk):
         self.bind("<Control-Shift-1>", lambda event: self.ai_function(all_or_one_flag="All Pages", ai_job="HTR"))
         self.bind("<Control-2>", lambda event: self.ai_function(all_or_one_flag="Current Page", ai_job="Correct_Text"))
         self.bind("<Control-Shift-2>", lambda event: self.ai_function(all_or_one_flag="All Pages", ai_job="Correct_Text"))
+        self.bind("<Control-t>", lambda event: self.ai_function(all_or_one_flag="Current Page", ai_job="Translation"))
+        self.bind("<Control-Shift-t>", lambda event: self.ai_function(all_or_one_flag="All Pages", ai_job="Translation"))
         
         # Add key bindings for Chunk_Text
         self.bind("<Control-3>", lambda event: self.create_chunk_text_window("Current Page"))
@@ -614,6 +624,7 @@ class App(TkinterDnD.Tk):
             "Original_Text", 
             "First_Draft", 
             "Final_Draft",
+            "Translation",
             "Image_Path", 
             "Text_Path", 
             "Text_Toggle",
@@ -635,7 +646,7 @@ class App(TkinterDnD.Tk):
         
         # Initialize all text columns as empty strings instead of NaN
         text_columns = [
-            "Original_Text", "First_Draft", "Final_Draft",
+            "Original_Text", "First_Draft", "Final_Draft", "Translation",
             "People", "Places", "Document_Type", "Author",
             "Correspondent", "Creation_Place", "Summary", "Notes",
             "Errors"  # Add Errors to text columns
@@ -996,6 +1007,7 @@ class App(TkinterDnD.Tk):
                 "Original_Text": text_content,
                 "First_Draft": "",
                 "Final_Draft": "",
+                "Translation": "",
                 "Image_Path": image_path,
                 "Text_Path": text_path,
                 "Text_Toggle": text_toggle,
@@ -1057,6 +1069,7 @@ class App(TkinterDnD.Tk):
                     "Original_Text": "",
                     "First_Draft": "",
                     "Final_Draft": "",
+                    "Translation": "",
                     "Image_Path": image_path,
                     "Text_Path": text_path,
                     "Text_Toggle": "None",
@@ -1090,7 +1103,8 @@ class App(TkinterDnD.Tk):
             "None": "None",
             "Original_Text": "Original_Text",
             "First_Draft": "First_Draft",
-            "Final_Draft": "Final_Draft"
+            "Final_Draft": "Final_Draft",
+            "Translation": "Translation"
         }
         self.text_display_var.set(display_map.get(current_toggle, "None"))
 
@@ -1103,6 +1117,8 @@ class App(TkinterDnD.Tk):
             text = self.main_df.loc[index, 'First_Draft'] if pd.notna(self.main_df.loc[index, 'First_Draft']) else ""
         elif self.text_display_var.get() == "Final_Draft":
             text = self.main_df.loc[index, 'Final_Draft'] if pd.notna(self.main_df.loc[index, 'Final_Draft']) else ""
+        elif self.text_display_var.get() == "Translation":
+            text = self.main_df.loc[index, 'Translation'] if pd.notna(self.main_df.loc[index, 'Translation']) else ""
         else:
             text = ""
 
@@ -1118,6 +1134,8 @@ class App(TkinterDnD.Tk):
             available_options.append("First_Draft")
         if pd.notna(self.main_df.loc[index, 'Final_Draft']) and self.main_df.loc[index, 'Final_Draft'].strip():
             available_options.append("Final_Draft")
+        if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
+            available_options.append("Translation")
         self.text_display_dropdown['values'] = available_options
 
         if self.find_replace.find_replace_toggle:
@@ -1173,12 +1191,19 @@ class App(TkinterDnD.Tk):
         original_text = self.main_df.loc[index_no, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
         first_draft = self.main_df.loc[index_no, 'First_Draft'] if 'First_Draft' in self.main_df.columns else ""
         final_draft = self.main_df.loc[index_no, 'Final_Draft'] if 'Final_Draft' in self.main_df.columns else ""
+        translation = self.main_df.loc[index_no, 'Translation'] if 'Translation' in self.main_df.columns else ""
 
-        if pd.notna(final_draft) and self.main_df.loc[index_no, 'Text_Toggle'] == "Final_Draft":
+        # First check if there's a translation and if the current toggle is set to Translation
+        if pd.notna(translation) and translation.strip() and self.main_df.loc[index_no, 'Text_Toggle'] == "Translation":
+            text = translation
+        # Then check for final draft
+        elif pd.notna(final_draft) and final_draft.strip() and self.main_df.loc[index_no, 'Text_Toggle'] == "Final_Draft":
             text = final_draft
-        elif pd.notna(first_draft) and self.main_df.loc[index_no, 'Text_Toggle'] == "First_Draft":
+        # Then check for first draft
+        elif pd.notna(first_draft) and first_draft.strip() and self.main_df.loc[index_no, 'Text_Toggle'] == "First_Draft":
             text = first_draft
-        elif pd.notna(original_text):
+        # Finally use original text if available
+        elif pd.notna(original_text) and original_text.strip():
             text = original_text
         else:
             text = ""
@@ -1465,7 +1490,8 @@ class App(TkinterDnD.Tk):
             "None": "None",
             "Original_Text": "Original_Text",
             "First_Draft": "First_Draft",
-            "Final_Draft": "Final_Draft"
+            "Final_Draft": "Final_Draft",
+            "Translation": "Translation"
         }
         
         # Update the Text_Toggle in the DataFrame
@@ -1483,21 +1509,38 @@ class App(TkinterDnD.Tk):
 
         index = self.page_counter
         current_toggle = self.main_df.loc[index, 'Text_Toggle']
-        has_corrected = pd.notna(self.main_df.loc[index, 'First_Draft'])
-        has_second = pd.notna(self.main_df.loc[index, 'Final_Draft'])
+        has_translation = pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip()
+        has_corrected = pd.notna(self.main_df.loc[index, 'First_Draft']) and self.main_df.loc[index, 'First_Draft'].strip()
+        has_final = pd.notna(self.main_df.loc[index, 'Final_Draft']) and self.main_df.loc[index, 'Final_Draft'].strip()
+        has_original = pd.notna(self.main_df.loc[index, 'Original_Text']) and self.main_df.loc[index, 'Original_Text'].strip()
 
-        if current_toggle == "Original_Text":
+        # Prioritize Translation if it exists
+        if current_toggle == "Translation":
+            if has_final:
+                self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
+            elif has_corrected:
+                self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
+            elif has_original:
+                self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
+        elif current_toggle == "Original_Text":
             if has_corrected:
                 self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
-            elif has_second:
+            elif has_final:
                 self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
+            elif has_translation:
+                self.main_df.loc[index, 'Text_Toggle'] = "Translation"
         elif current_toggle == "First_Draft":
-            if has_second:
+            if has_final:
                 self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
+            elif has_translation:
+                self.main_df.loc[index, 'Text_Toggle'] = "Translation"
             else:
                 self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
         elif current_toggle == "Final_Draft":
-            self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
+            if has_translation:
+                self.main_df.loc[index, 'Text_Toggle'] = "Translation"
+            else:
+                self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
 
         self.load_text()
     
@@ -1815,12 +1858,15 @@ class App(TkinterDnD.Tk):
         if selected == "Original_Text":
             self.main_df.loc[index, 'Original_Text'] = text
             self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
-        elif selected == "First Draft":
+        elif selected == "First_Draft":
             self.main_df.loc[index, 'First_Draft'] = text
             self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
-        elif selected == "Final Draft":
+        elif selected == "Final_Draft":
             self.main_df.loc[index, 'Final_Draft'] = text
             self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
+        elif selected == "Translation":
+            self.main_df.loc[index, 'Translation'] = text
+            self.main_df.loc[index, 'Text_Toggle'] = "Translation"
 
     def update_df_with_ai_job_response(self, ai_job, index, response):
         """Update the DataFrame with the AI job response"""
@@ -1913,6 +1959,9 @@ class App(TkinterDnD.Tk):
                     
                     # Configure error highlight style
                     self.text_display.tag_configure("error_highlight", background="cyan")
+            elif ai_job == "Translation":
+                self.main_df.loc[index, 'Translation'] = response
+                self.main_df.loc[index, 'Text_Toggle'] = "Translation"
             
             # Load the updated text
             self.load_text()
@@ -1970,14 +2019,27 @@ class App(TkinterDnD.Tk):
         index = self.page_counter
         current_selection = self.text_display_var.get()
         
-        if current_selection == "Final Draft":
+        if current_selection == "Translation":
+            if messagebox.askyesno("Revert Text", 
+                                "Do you want to revert the Translation and return to the final draft version?"):
+                self.main_df.loc[index, 'Translation'] = ""
+                if pd.notna(self.main_df.loc[index, 'Final_Draft']) and self.main_df.loc[index, 'Final_Draft'].strip():
+                    self.text_display_var.set("Final_Draft")
+                    self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
+                elif pd.notna(self.main_df.loc[index, 'First_Draft']) and self.main_df.loc[index, 'First_Draft'].strip():
+                    self.text_display_var.set("First_Draft")
+                    self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
+                else:
+                    self.text_display_var.set("Original_Text")
+                    self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
+        elif current_selection == "Final_Draft":
             if messagebox.askyesno("Revert Text", 
                                 "Do you want to revert to the first draft version?"):
                 self.main_df.loc[index, 'Final_Draft'] = ""
-                self.text_display_var.set("First Draft")
+                self.text_display_var.set("First_Draft")
                 self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
                 
-        elif current_selection == "First Draft":
+        elif current_selection == "First_Draft":
             if messagebox.askyesno("Revert Text", 
                                 "Do you want to revert to the Original_Text version?"):
                 self.main_df.loc[index, 'First_Draft'] = ""
@@ -1995,9 +2057,10 @@ class App(TkinterDnD.Tk):
     def revert_all_pages(self):
         if messagebox.askyesno("Confirm Revert", 
                             "Are you sure you want to revert ALL pages to their Original_Text? "
-                            "This will remove all corrections and cannot be undone."):
+                            "This will remove all corrections, translations, and cannot be undone."):
             self.main_df['Final_Draft'] = ""
             self.main_df['First_Draft'] = ""
+            self.main_df['Translation'] = ""
             self.main_df['Text_Toggle'] = "Original_Text"
             self.text_display_var.set("Original_Text")
             
@@ -2434,6 +2497,8 @@ class App(TkinterDnD.Tk):
                     messagebox.showinfo("No Work Needed", "All pages already have recognized text.")
                 elif ai_job == "Correct_Text":
                     messagebox.showinfo("No Work Needed", "All pages either lack Original_Text or already have corrections.")
+                elif ai_job == "Translation":
+                    messagebox.showinfo("No Work Needed", "All pages either lack text to translate or already have translations.")
                 else:
                     messagebox.showwarning("No Images", "No images are available for processing.")
                 return
@@ -2457,6 +2522,8 @@ class App(TkinterDnD.Tk):
                             text_to_process = row_data['Original_Text']
                         elif ai_job == "Create_Final_Draft":
                             text_to_process = row_data['First_Draft']
+                        elif ai_job == "Translation":
+                            text_to_process = self.find_right_text(index)
                         else:
                             if row_data['Text_Toggle'] == "Original_Text":
                                 text_to_process = row_data['Original_Text']
