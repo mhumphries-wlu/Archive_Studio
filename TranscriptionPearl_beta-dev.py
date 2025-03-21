@@ -1931,8 +1931,18 @@ class App(TkinterDnD.Tk):
                 print(f"Updated DataFrame - Places: '{self.main_df.loc[index, 'Places']}'")
                 
             elif ai_job == "Chunk_Text":
+                # Store the response in Final_Draft
                 self.main_df.loc[index, 'Final_Draft'] = response
                 self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
+                
+                # If translation exists, also store a copy in Translation column
+                if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
+                    # We'll handle this in a separate AI job for translation chunking
+                    pass
+            elif ai_job == "Chunk_Translation":
+                # Special job type for chunking translations
+                if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
+                    self.main_df.loc[index, 'Translation'] = response
             elif ai_job == "Auto_Rotate":
                 self.update_image_rotation(index, response)
             elif ai_job == "Identify_Errors":
@@ -2459,17 +2469,44 @@ class App(TkinterDnD.Tk):
             elif ai_job == "Chunk_Text":
                 if all_or_one_flag == "Current Page":
                     row = self.page_counter
-                    # Check if there's text to process
-                    if self.find_right_text(row).strip():
+                    # Check if there's text to process using the new find_chunk_text method
+                    text_to_process, has_translation = self.find_chunk_text(row)
+                    if text_to_process.strip():
                         batch_df = self.main_df.loc[[row]]
                     else:
                         messagebox.showinfo("Skip", "This page has no text to chunk.")
                         return
                 else:
-                    # Process only pages that have text
+                    # Process only pages that have text using find_chunk_text
                     batch_df = self.main_df[
-                        self.main_df.apply(lambda row: bool(self.find_right_text(row.name).strip()), axis=1)
+                        self.main_df.apply(lambda row: bool(self.find_chunk_text(row.name)[0].strip()), axis=1)
                     ]
+                        
+                # First process normal text
+                self.process_chunk_text(batch_df, all_or_one_flag, "Chunk_Text")
+                
+                # Then process translations if they exist
+                if all_or_one_flag == "Current Page":
+                    # Check if current page has translation
+                    row = self.page_counter
+                    _, has_translation = self.find_chunk_text(row)
+                    if has_translation:
+                        # Process translation for current page
+                        self.process_translation_chunks(self.main_df.loc[[row]], all_or_one_flag)
+                else:
+                    # Find all pages with translations and process them
+                    translation_df = self.main_df[
+                        self.main_df.apply(lambda row: bool(self.find_chunk_text(row.name)[1]), axis=1)
+                    ]
+                    if not translation_df.empty:
+                        self.process_translation_chunks(translation_df, all_or_one_flag)
+                        
+                # Exit early since we've handled everything in the specialized methods
+                return
+                
+            elif ai_job == "Chunk_Translation":
+                # This is a special internal job type not directly called by users
+                pass
             elif ai_job == "Identify_Errors":
                 if all_or_one_flag == "Current Page":
                     row = self.page_counter
@@ -2996,6 +3033,325 @@ class App(TkinterDnD.Tk):
         
         # Wait for the window to be closed
         self.wait_window(chunk_window)
+
+    def find_chunk_text(self, index_no):
+        """
+        Special version of find_right_text specifically for Chunk_Text operations.
+        Prioritizes First_Draft -> Original_Text, never uses Translation.
+        Returns a tuple of (text_to_use, has_translation) where has_translation is a boolean.
+        """
+        first_draft = self.main_df.loc[index_no, 'First_Draft'] if 'First_Draft' in self.main_df.columns else ""
+        original_text = self.main_df.loc[index_no, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
+        translation = self.main_df.loc[index_no, 'Translation'] if 'Translation' in self.main_df.columns else ""
+        
+        # Check if translation exists and is non-empty
+        has_translation = pd.notna(translation) and translation.strip() != ""
+        
+        # First try First_Draft
+        if pd.notna(first_draft) and first_draft.strip():
+            return first_draft, has_translation
+        # Then try Original_Text
+        elif pd.notna(original_text) and original_text.strip():
+            return original_text, has_translation
+        # If neither is available, return empty string
+        else:
+            return "", has_translation
+
+    def update_df_with_ai_job_response(self, ai_job, index, response):
+        """Update the DataFrame with the AI job response"""
+        try:
+            if response == "Error":
+                return
+            
+            # Get the current text display mode
+            selected = self.text_display_var.get()
+            
+            # Update based on job type
+            if ai_job == "HTR":
+                self.main_df.loc[index, 'Original_Text'] = response
+                self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
+            elif ai_job == "Correct_Text":
+                self.main_df.loc[index, 'First_Draft'] = response
+                self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
+            elif ai_job == "Get_Names_and_Places":
+                print(f"\nProcessing Names and Places response: {response}")
+                # Make sure the People and Places columns exist
+                if 'People' not in self.main_df.columns:
+                    self.main_df['People'] = ""
+                if 'Places' not in self.main_df.columns:
+                    self.main_df['Places'] = ""
+                
+                # Initialize empty values
+                names = ""
+                places = ""
+                
+                # New parsing approach for multi-line format
+                lines = response.split('\n')
+                
+                # Find positions of headers
+                names_idx = -1
+                places_idx = -1
+                
+                for i, line in enumerate(lines):
+                    if line.lower().strip() == "names:":
+                        names_idx = i
+                    elif line.lower().strip() == "places:":
+                        places_idx = i
+                
+                # Extract names (everything between "Names:" and "Places:" or end)
+                if names_idx >= 0:
+                    names_end = places_idx if places_idx > names_idx else len(lines)
+                    names_lines = [line.strip() for line in lines[names_idx+1:names_end] if line.strip()]
+                    names = "; ".join(names_lines)
+                
+                # Extract places (everything after "Places:")
+                if places_idx >= 0:
+                    places_lines = [line.strip() for line in lines[places_idx+1:] if line.strip()]
+                    places = "; ".join(places_lines)
+                
+                print(f"Extracted Names: '{names}'")
+                print(f"Extracted Places: '{places}'")
+                
+                # Update the DataFrame
+                self.main_df.loc[index, 'People'] = names
+                self.main_df.loc[index, 'Places'] = places
+                
+                print(f"Updated DataFrame - People: '{self.main_df.loc[index, 'People']}'")
+                print(f"Updated DataFrame - Places: '{self.main_df.loc[index, 'Places']}'")
+                
+            elif ai_job == "Chunk_Text":
+                # Store the response in Final_Draft
+                self.main_df.loc[index, 'Final_Draft'] = response
+                self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
+                
+                # If translation exists, also store a copy in Translation column
+                if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
+                    # We'll handle this in a separate AI job for translation chunking
+                    pass
+            elif ai_job == "Chunk_Translation":
+                # Special job type for chunking translations
+                if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
+                    self.main_df.loc[index, 'Translation'] = response
+            elif ai_job == "Auto_Rotate":
+                self.update_image_rotation(index, response)
+            elif ai_job == "Identify_Errors":
+                print("\nProcessing Identify_Errors response:")
+                print(f"Raw response: {response}")
+                
+                # Take just the first line
+                errors = response.split('\n')[0].strip()
+                print(f"Extracted errors: {errors}")
+                self.main_df.loc[index, 'Errors'] = errors
+                
+                # If there are errors, highlight them in the text
+                if errors:
+                    # Split errors by semicolon and strip whitespace
+                    error_terms = [term.strip() for term in errors.split(';') if term.strip()]
+                    print(f"Error terms to highlight: {error_terms}")
+                    
+                    # Clear existing highlights
+                    self.text_display.tag_remove("error_highlight", "1.0", tk.END)
+                    
+                    # Add new error highlights
+                    for term in error_terms:
+                        self.highlight_term(term, "error_highlight", exact_match=True)
+                    
+                    # Configure error highlight style
+                    self.text_display.tag_configure("error_highlight", background="cyan")
+            elif ai_job == "Translation":
+                self.main_df.loc[index, 'Translation'] = response
+                self.main_df.loc[index, 'Text_Toggle'] = "Translation"
+            
+            # Load the updated text
+            self.load_text()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to update DataFrame: {str(e)}")
+            self.error_logging(f"Failed to update DataFrame: {str(e)}")
+
+    def process_chunk_text(self, batch_df, all_or_one_flag, ai_job_type):
+        """
+        Process text chunking for the standard text fields (First_Draft or Original_Text)
+        
+        Args:
+            batch_df: DataFrame containing rows to process
+            all_or_one_flag: "Current Page" or "All Pages" flag
+            ai_job_type: The AI job type to use (should be "Chunk_Text")
+        """
+        try:
+            # Get job parameters
+            job_params = self.setup_job_parameters(ai_job_type)
+            batch_size = job_params.get('batch_size', 50)
+            
+            # Show progress window
+            progress_title = f"Applying {ai_job_type} to {'Current Page' if all_or_one_flag == 'Current Page' else 'All Pages'}..."
+            progress_window, progress_bar, progress_label = self.progress_bar.create_progress_window(progress_title)
+            self.progress_bar.update_progress(0, 1)
+            
+            total_rows = len(batch_df)
+            processed_rows = 0
+            error_count = 0
+            processed_indices = set()
+            
+            # Process in batches
+            with ThreadPoolExecutor(max_workers=batch_size) as executor:
+                futures_to_index = {}
+                
+                for index, row_data in batch_df.iterrows():
+                    # Get text to process from the find_chunk_text method (use only the first element of the tuple)
+                    text_to_process, _ = self.find_chunk_text(index)
+                    
+                    # Get images
+                    images_data = self.get_images_for_job(ai_job_type, index, row_data, job_params)
+                    
+                    # Submit the API request
+                    future = executor.submit(
+                        asyncio.run,
+                        self.process_api_request(
+                            system_prompt=job_params['system_prompt'],
+                            user_prompt=job_params['user_prompt'],
+                            temp=job_params['temp'],
+                            image_data=images_data,
+                            text_to_process=text_to_process,
+                            val_text=job_params['val_text'],
+                            engine=job_params['engine'],
+                            index=index,
+                            is_base64=not "gemini" in job_params['engine'].lower()
+                        )
+                    )
+                    
+                    futures_to_index[future] = index
+                
+                # Process results
+                for future in as_completed(futures_to_index):
+                    try:
+                        response, index = future.result()
+                        
+                        # Only increment progress if this index hasn't been processed before
+                        if index not in processed_indices:
+                            processed_indices.add(index)
+                            processed_rows += 1
+                            self.progress_bar.update_progress(processed_rows, total_rows)
+                        
+                        # Process the response if there is no error
+                        if response == "Error":
+                            error_count += 1
+                        else:
+                            self.update_df_with_ai_job_response(ai_job_type, index, response)
+                    except Exception as e:
+                        error_count += 1
+                        self.error_logging(f"Error processing future for index {futures_to_index[future]}: {str(e)}")
+            
+            # Display error message if needed
+            if error_count > 0:
+                message = f"An error occurred while processing the current page." if all_or_one_flag == "Current Page" else f"Errors occurred while processing {error_count} page(s)."
+                messagebox.showwarning("Processing Error", message)
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred in process_chunk_text: {str(e)}")
+            self.error_logging(f"Error in process_chunk_text: {str(e)}")
+            
+        finally:
+            # Close progress window
+            self.progress_bar.close_progress_window()
+            self.load_text()
+            self.counter_update()
+    
+    def process_translation_chunks(self, translation_df, all_or_one_flag):
+        """
+        Process text chunking specifically for Translation field
+        
+        Args:
+            translation_df: DataFrame containing rows with translations to process
+            all_or_one_flag: "Current Page" or "All Pages" flag
+        """
+        try:
+            # If no translations to process, return early
+            if translation_df.empty:
+                return
+                
+            # Get job parameters - use the same as Chunk_Text
+            job_params = self.setup_job_parameters("Chunk_Text")
+            batch_size = job_params.get('batch_size', 50)
+            
+            # Show progress window
+            progress_title = f"Applying Chunking to Translation(s)..."
+            progress_window, progress_bar, progress_label = self.progress_bar.create_progress_window(progress_title)
+            self.progress_bar.update_progress(0, 1)
+            
+            total_rows = len(translation_df)
+            processed_rows = 0
+            error_count = 0
+            processed_indices = set()
+            
+            # Process in batches
+            with ThreadPoolExecutor(max_workers=batch_size) as executor:
+                futures_to_index = {}
+                
+                for index, row_data in translation_df.iterrows():
+                    # Get translation text
+                    text_to_process = row_data['Translation'] if pd.notna(row_data['Translation']) else ""
+                    
+                    # Skip if no translation
+                    if not text_to_process.strip():
+                        continue
+                    
+                    # Get images
+                    images_data = self.get_images_for_job("Chunk_Text", index, row_data, job_params)
+                    
+                    # Submit the API request - use Chunk_Translation as job type
+                    future = executor.submit(
+                        asyncio.run,
+                        self.process_api_request(
+                            system_prompt=job_params['system_prompt'],
+                            user_prompt=job_params['user_prompt'],
+                            temp=job_params['temp'],
+                            image_data=images_data,
+                            text_to_process=text_to_process,
+                            val_text=job_params['val_text'],
+                            engine=job_params['engine'],
+                            index=index,
+                            is_base64=not "gemini" in job_params['engine'].lower()
+                        )
+                    )
+                    
+                    futures_to_index[future] = index
+                
+                # Process results
+                for future in as_completed(futures_to_index):
+                    try:
+                        response, index = future.result()
+                        
+                        # Only increment progress if this index hasn't been processed before
+                        if index not in processed_indices:
+                            processed_indices.add(index)
+                            processed_rows += 1
+                            self.progress_bar.update_progress(processed_rows, total_rows)
+                        
+                        # Process the response if there is no error
+                        if response == "Error":
+                            error_count += 1
+                        else:
+                            # Use Chunk_Translation job type for updating
+                            self.update_df_with_ai_job_response("Chunk_Translation", index, response)
+                    except Exception as e:
+                        error_count += 1
+                        self.error_logging(f"Error processing translation future for index {futures_to_index[future]}: {str(e)}")
+            
+            # Display error message if needed
+            if error_count > 0:
+                message = f"An error occurred while processing translation." if all_or_one_flag == "Current Page" else f"Errors occurred while processing {error_count} translation(s)."
+                messagebox.showwarning("Processing Error", message)
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred in process_translation_chunks: {str(e)}")
+            self.error_logging(f"Error in process_translation_chunks: {str(e)}")
+            
+        finally:
+            # Close progress window
+            self.progress_bar.close_progress_window()
+            self.load_text()
+            self.counter_update()
 
 if __name__ == "__main__":
     try:
