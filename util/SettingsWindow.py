@@ -461,14 +461,18 @@ class SettingsWindow:
                                                 width=30)
         self.chunk_preset_dropdown.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
-        # Modify and delete buttons
+        # Create, Modify and delete buttons
+        create_button = tk.Button(main_settings_frame, text="Create New", 
+                               command=self.create_new_chunk_preset_window)
+        create_button.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+
         modify_button = tk.Button(main_settings_frame, text="Modify", 
                                 command=self.modify_chunk_preset)
-        modify_button.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        modify_button.grid(row=0, column=3, padx=5, pady=5, sticky="w")
 
         delete_button = tk.Button(main_settings_frame, text="Delete", 
                                 command=self.delete_chunk_preset)
-        delete_button.grid(row=0, column=3, padx=5, pady=5, sticky="w")
+        delete_button.grid(row=0, column=4, padx=5, pady=5, sticky="w")
 
         # Model selection
         tk.Label(main_settings_frame, text="Model:").grid(row=1, column=0, padx=5, pady=5, sticky="w")

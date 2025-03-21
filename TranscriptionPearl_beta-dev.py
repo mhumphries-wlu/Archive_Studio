@@ -321,9 +321,6 @@ class App(TkinterDnD.Tk):
 
         self.document_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Document", menu=self.document_menu)
-        self.document_menu.add_command(label="Remove Pagination", 
-                            command=self.remove_pagination,
-                            state="disabled")  # Initially disabled
 
         self.document_menu.add_separator()
 
@@ -344,13 +341,7 @@ class App(TkinterDnD.Tk):
         self.document_menu.add_checkbutton(label="Highlight Errors", 
                                         variable=self.highlight_errors_var,
                                         command=self.toggle_highlight_options)
-        
-        # After adding the checkbuttons, set debug commands to print state
-        print(f"Menu setup - highlight_names_var: {self.highlight_names_var.get()}")
-        print(f"Menu setup - highlight_places_var: {self.highlight_places_var.get()}")
-        print(f"Menu setup - highlight_changes_var: {self.highlight_changes_var.get()}")
-        print(f"Menu setup - highlight_errors_var: {self.highlight_errors_var.get()}")
-        
+                
         # Tools Menu
 
         self.tools_menu = tk.Menu(self.menubar, tearoff=0)
@@ -509,6 +500,86 @@ class App(TkinterDnD.Tk):
         text_widget.bind('<Control-f>', self.find_and_replace)
         text_widget.bind('<Control-z>', self.undo)
         text_widget.bind('<Control-y>', self.redo)
+           
+    def create_chunk_text_window(self, all_or_one_flag):
+        """
+        Creates a window for selecting document type before running Chunk_Text
+        """
+        # Create the window
+        chunk_window = tk.Toplevel(self)
+        chunk_window.title("Select Document Type")
+        chunk_window.geometry("400x200")
+        chunk_window.grab_set()  # Make window modal
+        
+        # Message explaining purpose
+        message_label = tk.Label(chunk_window, 
+            text="Select the document type for text chunking:",
+            font=("Calibri", 12))
+        message_label.pack(pady=15)
+        
+        # Create the chunking strategy dropdown in this window
+        dropdown_frame = tk.Frame(chunk_window)
+        dropdown_frame.pack(pady=10)
+        
+        chunking_label = tk.Label(dropdown_frame, text="Document Type:")
+        chunking_label.pack(side="left", padx=5)
+        
+        # Create a new StringVar for this window's dropdown
+        window_chunking_var = tk.StringVar()
+        
+        # If there's already a selected strategy, use it as default
+        if hasattr(self, 'chunking_strategy_var') and self.chunking_strategy_var.get():
+            window_chunking_var.set(self.chunking_strategy_var.get())
+        
+        # Get preset names for the dropdown
+        preset_names = [p['name'] for p in self.settings.chunk_text_presets] if self.settings.chunk_text_presets else []
+        
+        # Create the dropdown
+        chunking_dropdown = ttk.Combobox(dropdown_frame, 
+                                      textvariable=window_chunking_var,
+                                      values=preset_names, 
+                                      state="readonly", 
+                                      width=30)
+        chunking_dropdown.pack(side="left", padx=5)
+        
+        # Set a default value if available
+        if preset_names and not window_chunking_var.get():
+            window_chunking_var.set(preset_names[0])
+        
+        # Buttons frame
+        button_frame = tk.Frame(chunk_window)
+        button_frame.pack(pady=20)
+        
+        # Function to handle OK button
+        def on_ok():
+            # Set the main window's chunking strategy variable
+            self.chunking_strategy_var.set(window_chunking_var.get())
+            # Close the window
+            chunk_window.destroy()
+            # Run the AI function with the selected parameters
+            self.ai_function(all_or_one_flag=all_or_one_flag, ai_job="Chunk_Text")
+        
+        # Function to handle Cancel button
+        def on_cancel():
+            chunk_window.destroy()
+        
+        # Create buttons
+        ok_button = tk.Button(button_frame, text="OK", command=on_ok, width=10)
+        ok_button.pack(side="left", padx=10)
+        
+        cancel_button = tk.Button(button_frame, text="Cancel", command=on_cancel, width=10)
+        cancel_button.pack(side="left", padx=10)
+        
+        # Center the window on the screen
+        chunk_window.update_idletasks()
+        width = chunk_window.winfo_width()
+        height = chunk_window.winfo_height()
+        x = (chunk_window.winfo_screenwidth() // 2) - (width // 2)
+        y = (chunk_window.winfo_screenheight() // 2) - (height // 2)
+        chunk_window.geometry(f'{width}x{height}+{x}+{y}')
+        
+        # Wait for the window to be closed
+        self.wait_window(chunk_window)
 
 # Initialize Settings Functions
 
@@ -728,9 +799,7 @@ class App(TkinterDnD.Tk):
 
     def find_replace_navigate(self, direction):
         """Special navigation method for find/replace functionality"""
-        print(f"find_replace_navigate called with direction {direction}")
         if hasattr(self, 'find_replace') and hasattr(self.find_replace, 'link_nav'):
-            print(f"Setting page_counter to {self.find_replace.link_nav}")
             
             # Set the page counter
             self.page_counter = self.find_replace.link_nav
@@ -821,7 +890,7 @@ class App(TkinterDnD.Tk):
                 self.main_df = pd.concat([self.main_df, new_row], ignore_index=True)
                 successful_copies += 1
             except Exception as e:
-                print(f"Error processing file {source_path}: {e}")
+                self.error_logging(f"Error processing file {source_path}", f"{e}")
                 messagebox.showerror("Error", f"Failed to process the image {source_path}:\n{e}")
 
         if successful_copies > 0:
@@ -838,7 +907,7 @@ class App(TkinterDnD.Tk):
                 # Second rotation pass
                 self.ai_function(all_or_one_flag="All Pages", ai_job="Auto_Rotate")
         else:
-            print("No images were successfully processed")
+            self.error_logging("No images were successfully processed", level="INFO")
             messagebox.showinfo("Information", "No images were successfully processed")
 
     def delete_current_image(self):
@@ -1025,7 +1094,6 @@ class App(TkinterDnD.Tk):
         else:
             messagebox.showinfo("No Files", "No files found in the selected directory.")
 
-        self.get_doc_type_with_ai()
         self.counter_update()
 
     def load_files_from_folder_no_text(self):
@@ -1088,7 +1156,6 @@ class App(TkinterDnD.Tk):
             else:
                 messagebox.showinfo("No Files", "No files found in the selected directory.")
             
-            self.get_doc_type_with_ai()
             self.counter_update()
 
     def load_text(self):
@@ -1209,7 +1276,30 @@ class App(TkinterDnD.Tk):
             text = ""
 
         return text
+
+    def find_chunk_text(self, index_no):
+        """
+        Special version of find_right_text specifically for Chunk_Text operations.
+        Prioritizes First_Draft -> Original_Text, never uses Translation.
+        Returns a tuple of (text_to_use, has_translation) where has_translation is a boolean.
+        """
+        first_draft = self.main_df.loc[index_no, 'First_Draft'] if 'First_Draft' in self.main_df.columns else ""
+        original_text = self.main_df.loc[index_no, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
+        translation = self.main_df.loc[index_no, 'Translation'] if 'Translation' in self.main_df.columns else ""
         
+        # Check if translation exists and is non-empty
+        has_translation = pd.notna(translation) and translation.strip() != ""
+        
+        # First try First_Draft
+        if pd.notna(first_draft) and first_draft.strip():
+            return first_draft, has_translation
+        # Then try Original_Text
+        elif pd.notna(original_text) and original_text.strip():
+            return original_text, has_translation
+        # If neither is available, return empty string
+        else:
+            return "", has_translation 
+
     def toggle_button_state(self):
                 
         if self.button1['state'] == "normal" and self.button2['state'] == "normal" and self.button4['state'] == "normal" and self.button5['state'] == "normal":
@@ -1224,15 +1314,24 @@ class App(TkinterDnD.Tk):
             self.button4.config(state="normal")
             self.button5.config(state="normal")
 
-    def error_logging(self, error_message, additional_info=None):
+    def error_logging(self, error_message, additional_info=None, level="ERROR"):
+        """
+        Log errors, warnings, and information to the error log file.
+        
+        Args:
+            error_message (str): The main error message to log
+            additional_info (str, optional): Additional information to include
+            level (str, optional): Log level - ERROR, WARNING, INFO, or DEBUG
+        """
         try:
             error_logs_path = "util/error_logs.txt"
             os.makedirs(os.path.dirname(error_logs_path), exist_ok=True)
             
             with open(error_logs_path, "a", encoding='utf-8') as file:
-                stack = traceback.format_exc()
+                # Add stack trace for errors only
+                stack = traceback.format_exc() if level == "ERROR" else None
                 
-                log_message = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: {error_message}"
+                log_message = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} [{level}]: {error_message}"
                 if additional_info:
                     log_message += f" - Additional Info: {additional_info}"
                 if stack and stack != "NoneType: None\n":
@@ -1272,7 +1371,7 @@ class App(TkinterDnD.Tk):
                         img.convert('RGB').save(jpeg_path, 'JPEG', quality=95)
                         valid_images.append(jpeg_path)
                     except Exception as e:
-                        print(f"Error converting PNG file {file_path}: {e}")
+                        self.error_logging(f"Error converting PNG file {file_path}", f"{e}")
                         invalid_files.append(file_path)
                 elif lower_path.endswith('.pdf'):
                     pdf_files.append(file_path)
@@ -1285,11 +1384,6 @@ class App(TkinterDnD.Tk):
         if valid_images:
             self.process_new_images(valid_images)
             
-            # If new images added are at least 50% of the previous count, run document classification
-            if prev_count > 0 and len(valid_images) >= 0.5 * prev_count:
-                self.get_doc_type_with_ai()
-            elif prev_count == 0:  # If this is the first batch of images
-                self.get_doc_type_with_ai()
 
             # Clean up any temporary converted files
             for image_path in valid_images:
@@ -1297,7 +1391,7 @@ class App(TkinterDnD.Tk):
                     try:
                         os.remove(image_path)
                     except Exception as e:
-                        print(f"Error removing temporary file {image_path}: {e}")
+                        self.error_logging(f"Error removing temporary file {image_path}", f"{e}")
 
         # Process PDF files
         if pdf_files:
@@ -1305,13 +1399,13 @@ class App(TkinterDnD.Tk):
                 try:
                     self.open_pdf(pdf_file)
                 except Exception as e:
-                    print(f"Error processing PDF file {pdf_file}: {e}")
+                    self.error_logging(f"Error processing PDF file {pdf_file}", f"{e}")
                     messagebox.showerror("Error", f"Failed to process PDF file {pdf_file}: {e}")
         
         # Report invalid files
         if invalid_files:
             invalid_files_str = "\n".join(invalid_files)
-            print(f"Invalid files: {invalid_files_str}")
+            self.error_logging(f"Invalid files not processed: {invalid_files_str}", level="WARNING")
             messagebox.showwarning("Invalid Files", 
                 f"The following files were not processed because they are not valid image or PDF files:\n\n{invalid_files_str}")
                 
@@ -1364,21 +1458,74 @@ class App(TkinterDnD.Tk):
         ...
         Return a dict: { correct_spelling: [variant1, variant2...] }
         """
-        coll_dict = {}
-        lines = response_text.splitlines()
-        for ln in lines:
-            ln = ln.strip()
-            if ln.lower().startswith("response:"):
-                # skip "Response:" lines
-                continue
-            if '=' in ln:
-                parts = ln.split('=', 1)
-                correct = parts[0].strip()
-                variations = parts[1].split(';')
-                variations = [v.strip() for v in variations if v.strip()]
-                if correct:
-                    coll_dict[correct] = variations
-        return coll_dict
+        try:
+            if not response_text or not isinstance(response_text, str):
+                self.error_logging("Empty or invalid response text", level="WARNING")
+                return {}
+                
+            coll_dict = {}
+            lines = response_text.splitlines()
+            
+            # Debug logging
+            self.error_logging(f"Parsing {len(lines)} lines from response", level="DEBUG")
+            
+            response_found = False
+            for ln in lines:
+                ln = ln.strip()
+                if not ln:
+                    continue
+                    
+                # Check for "Response:" header and skip it
+                if ln.lower().startswith("response:"):
+                    response_found = True
+                    continue
+                
+                # Handle various formatting possibilities
+                if '=' in ln:
+                    # Standard format: correct = variant1; variant2
+                    parts = ln.split('=', 1)
+                    correct = parts[0].strip()
+                    variations_text = parts[1].strip()
+                    
+                    # Handle different delimiter styles
+                    if ';' in variations_text:
+                        variations = variations_text.split(';')
+                    elif ',' in variations_text:
+                        variations = variations_text.split(',')
+                    else:
+                        variations = [variations_text]
+                        
+                    variations = [v.strip() for v in variations if v.strip()]
+                    
+                    if correct and variations:
+                        # If the correct term already exists, merge the variations
+                        if correct in coll_dict:
+                            coll_dict[correct].extend(variations)
+                            # Remove duplicates
+                            coll_dict[correct] = list(set(coll_dict[correct]))
+                        else:
+                            coll_dict[correct] = variations
+                            
+                        self.error_logging(f"Parsed entry: {correct} = {variations}", level="DEBUG")
+                    
+                # Handle case where line might be a continuation with no '=' sign
+                elif response_found and len(coll_dict) > 0 and ln and ';' in ln:
+                    # This might be a continuation line
+                    last_key = list(coll_dict.keys())[-1]
+                    variations = [v.strip() for v in ln.split(';') if v.strip()]
+                    if variations:
+                        coll_dict[last_key].extend(variations)
+                        self.error_logging(f"Added continuation line to {last_key}: {variations}", level="DEBUG")
+            
+            # Final debugging info
+            total_variants = sum(len(variants) for variants in coll_dict.values())
+            self.error_logging(f"Parsed {len(coll_dict)} unique terms with {total_variants} total variants", level="DEBUG")
+            
+            return coll_dict
+            
+        except Exception as e:
+            self.error_logging(f"Error parsing collation response: {str(e)}")
+            return {}
 
     def apply_collation_dict(self, coll_dict, is_names=True):
         """
@@ -1413,25 +1560,6 @@ class App(TkinterDnD.Tk):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             self.quit()
             
-    def error_logging(self, error_message, additional_info=None):
-        """Log errors to the error log file"""
-        # Create a timestamp for the error
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        try:
-            error_logs_path = "util/error_logs.txt"
-            with open(error_logs_path, "a", encoding='utf-8') as file:
-                # Add stack trace
-                import traceback
-                stack = traceback.format_exc()
-                
-                log_message = f"{timestamp}: {error_message}"
-                if additional_info:
-                    log_message += f" - Additional Info: {additional_info}"
-                if stack:
-                    log_message += f"\nStack trace:\n{stack}"
-                file.write(log_message + "\n")
-        except Exception as e:
-            print(f"Error logging failed: {e}")
 
 # GUI Actions / Toggles
 
@@ -1547,8 +1675,7 @@ class App(TkinterDnD.Tk):
 # Highlighting Functions
 
     def toggle_highlight_options(self):
-        print("\nToggling highlight options:")
-        print(f"Before toggle - Names: {self.highlight_names_var.get()}, Places: {self.highlight_places_var.get()}, Changes: {self.highlight_changes_var.get()}, Errors: {self.highlight_errors_var.get()}")
+        self.error_logging("Toggling highlight options", f"Names: {self.highlight_names_var.get()}, Places: {self.highlight_places_var.get()}, Changes: {self.highlight_changes_var.get()}, Errors: {self.highlight_errors_var.get()}", level="DEBUG")
         
         if self.highlight_changes_var.get():
             self.highlight_names_var.set(False)
@@ -1557,7 +1684,7 @@ class App(TkinterDnD.Tk):
         elif self.highlight_names_var.get() or self.highlight_places_var.get() or self.highlight_errors_var.get():
             self.highlight_changes_var.set(False)
         
-        print(f"After toggle - Names: {self.highlight_names_var.get()}, Places: {self.highlight_places_var.get()}, Changes: {self.highlight_changes_var.get()}, Errors: {self.highlight_errors_var.get()}")
+        self.error_logging("After toggle", f"Names: {self.highlight_names_var.get()}, Places: {self.highlight_places_var.get()}, Changes: {self.highlight_changes_var.get()}, Errors: {self.highlight_errors_var.get()}", level="DEBUG")
         
         self.highlight_text()
 
@@ -1569,43 +1696,42 @@ class App(TkinterDnD.Tk):
         
         # If neither highlighting option is selected, return early
         if not self.highlight_names_var.get() and not self.highlight_places_var.get():
-            print("No highlighting options selected")
+            self.error_logging("No highlighting options selected", level="DEBUG")
             return
             
-        print(f"Highlight names: {self.highlight_names_var.get()}")
-        print(f"Highlight places: {self.highlight_places_var.get()}")
+        self.error_logging(f"Highlight names: {self.highlight_names_var.get()}, Highlight places: {self.highlight_places_var.get()}", level="DEBUG")
         
         # Get current page index
         current_index = self.page_counter
-        print(f"Current page index: {current_index}")
+        self.error_logging(f"Current page index: {current_index}", level="DEBUG")
         
         try:
             # Check if we have names or places data in the main DataFrame
             if 'People' not in self.main_df.columns or 'Places' not in self.main_df.columns:
-                print("People or Places column missing in DataFrame")
+                self.error_logging("People or Places column missing in DataFrame", level="WARNING")
                 return
                 
             # Check if we're at a valid index
             if current_index not in self.main_df.index:
-                print(f"Invalid index {current_index} in DataFrame")
+                self.error_logging(f"Invalid index {current_index} in DataFrame", level="WARNING")
                 return
                 
             def process_entities(entities_str, tag):
-                print(f"Processing entities for {tag}: {entities_str}")
+                self.error_logging(f"Processing entities for {tag}: {entities_str}", level="DEBUG")
                 
                 if pd.isna(entities_str) or not entities_str:
-                    print(f"No {tag} data to highlight")
+                    self.error_logging(f"No {tag} data to highlight", level="DEBUG")
                     return
                     
                 entities = [entity.strip() for entity in entities_str.split(';')]
-                print(f"Entities to highlight: {entities}")
+                self.error_logging(f"Entities to highlight: {entities}", level="DEBUG")
                 
                 for entity in entities:
                     # Skip entries with square brackets
                     if '[' in entity or ']' in entity:
                         continue
                     
-                    print(f"Highlighting entity: '{entity}'")
+                    self.error_logging(f"Highlighting entity: '{entity}'", level="DEBUG")
                     # First try to highlight the complete entity
                     self.highlight_term(entity, tag, exact_match=True)
                     
@@ -1652,8 +1778,8 @@ class App(TkinterDnD.Tk):
                                 # Add tags to both parts
                                 start_index = f"{start_line}.{start_char}"
                                 end_index = f"{end_line}.{len(part2)}"
-                                print(f"Adding hyphenated tag from {start_index} to {start_line}.end")
-                                print(f"Adding hyphenated tag from {end_line}.0 to {end_index}")
+                                self.error_logging(f"Adding hyphenated tag from {start_index} to {start_line}.end", level="DEBUG")
+                                self.error_logging(f"Adding hyphenated tag from {end_line}.0 to {end_index}", level="DEBUG")
                                 self.text_display.tag_add(tag, start_index, f"{start_line}.end")
                                 self.text_display.tag_add(tag, f"{end_line}.0", end_index)
                     
@@ -1662,43 +1788,42 @@ class App(TkinterDnD.Tk):
                         parts = entity.split()
                         for part in parts:
                             if len(part) > 2 and part.lower() not in ['the', 'and', 'of', 'in', 'on', 'at', 'la', 'le', 'les', 'de', 'du', 'des']:
-                                print(f"Highlighting name part: '{part}'")
+                                self.error_logging(f"Highlighting name part: '{part}'", level="DEBUG")
                                 self.highlight_term(part, tag, exact_match=False)
             
             # Process names if the highlight names option is checked
             if self.highlight_names_var.get():
-                print(f"Getting names from index {current_index}")
+                self.error_logging(f"Getting names from index {current_index}", level="DEBUG")
                 names = self.main_df.loc[current_index, 'People']
-                print(f"Names data: {names}")
+                self.error_logging(f"Names data: {names}", level="DEBUG")
                 if pd.notna(names) and names.strip():
                     process_entities(names, "name_highlight")
                 else:
-                    print("No names data available")
+                    self.error_logging("No names data available", level="DEBUG")
             
             # Process places if the highlight places option is checked
             if self.highlight_places_var.get():
-                print(f"Getting places from index {current_index}")
+                self.error_logging(f"Getting places from index {current_index}", level="DEBUG")
                 places = self.main_df.loc[current_index, 'Places']
-                print(f"Places data: {places}")
+                self.error_logging(f"Places data: {places}", level="DEBUG")
                 if pd.notna(places) and places.strip():
                     process_entities(places, "place_highlight")
                 else:
-                    print("No places data available")
+                    self.error_logging("No places data available", level="DEBUG")
         
         except Exception as e:
-            print(f"Error in highlight_names_or_places: {str(e)}")
             self.error_logging(f"Error in highlight_names_or_places: {str(e)}")
 
     def highlight_term(self, term, tag, exact_match=False):
         """Helper function to highlight a specific term in the text"""
         if not term or len(term) < 1:
-            print(f"Skipping empty or too short term")
+            self.error_logging(f"Skipping empty or too short term", level="DEBUG")
             return
             
         text_widget = self.text_display
         start_index = "1.0"
         
-        print(f"Highlighting term: '{term}' with tag '{tag}', exact_match={exact_match}")
+        self.error_logging(f"Highlighting term: '{term}' with tag '{tag}', exact_match={exact_match}", level="DEBUG")
         
         # Escape special regex characters
         escaped_term = re.escape(term)
@@ -1726,13 +1851,12 @@ class App(TkinterDnD.Tk):
                     found_count += 1
                     
                 except Exception as e:
-                    print(f"Error in search iteration for term '{term}': {str(e)}")
+                    self.error_logging(f"Error in search iteration for term '{term}': {str(e)}")
                     break
             
-            print(f"Found and highlighted {found_count} instances of '{term}'")
+            self.error_logging(f"Found and highlighted {found_count} instances of '{term}'", level="DEBUG")
             
         except Exception as e:
-            print(f"Error highlighting term '{term}': {str(e)}")
             self.error_logging(f"Error highlighting term '{term}': {str(e)}")
 
     def highlight_text(self):
@@ -1794,18 +1918,18 @@ class App(TkinterDnD.Tk):
     def highlight_errors(self):
         """Highlight error terms from the Errors column"""
         try:
-            print("\nIn highlight_errors function:")
+            self.error_logging("In highlight_errors function", level="DEBUG")
             
             # Get current page index and text
             index = self.page_counter
-            print(f"Current page index: {index}")
+            self.error_logging(f"Current page index: {index}", level="DEBUG")
             if index not in self.main_df.index:
-                print("Index not in DataFrame")
+                self.error_logging("Index not in DataFrame", level="WARNING")
                 return
                 
             # Get the current text display mode
             selected = self.text_display_var.get()
-            print(f"Current text display mode: {selected}")
+            self.error_logging(f"Current text display mode: {selected}", level="DEBUG")
             
             # Map display names to DataFrame columns - fixed to match actual values
             text_map = {
@@ -1818,15 +1942,15 @@ class App(TkinterDnD.Tk):
             # Get the current text column
             current_col = text_map.get(selected)
             if not current_col:
-                print("No valid text column selected")
+                self.error_logging("No valid text column selected", level="WARNING")
                 return
-            print(f"Current text column: {current_col}")
+            self.error_logging(f"Current text column: {current_col}", level="DEBUG")
                 
             # Get errors for current page
             errors = self.main_df.at[index, 'Errors']
-            print(f"Errors from DataFrame: {errors}")
+            self.error_logging(f"Errors from DataFrame: {errors}", level="DEBUG")
             if pd.isna(errors) or not errors.strip():
-                print("No errors found in DataFrame")
+                self.error_logging("No errors found in DataFrame", level="DEBUG")
                 return
                 
             # Process and highlight errors
@@ -1834,14 +1958,13 @@ class App(TkinterDnD.Tk):
                 if not errors_str:
                     return
                 error_terms = [term.strip() for term in errors_str.split(';') if term.strip()]
-                print(f"Error terms to highlight: {error_terms}")
+                self.error_logging(f"Error terms to highlight: {error_terms}", level="DEBUG")
                 for term in error_terms:
                     self.highlight_term(term, "error_highlight", exact_match=True)
             
             process_errors(errors)
                 
         except Exception as e:
-            print(f"Error highlighting errors: {str(e)}")
             self.error_logging(f"Error highlighting errors: {str(e)}")
 
 # DF Update Functions
@@ -2077,36 +2200,1049 @@ class App(TkinterDnD.Tk):
         self.load_text()
         self.counter_update()
 
-    def remove_pagination(self):
-        # Get the current index
-        index = self.page_counter - 1
-        
-        if index >= 0 and index < len(self.main_df):
-            # Get the text based on the toggle state
-            if self.text_toggle:
-                text = self.main_df.at[index, 'Processed_Text']
-                column = 'Processed_Text'
-            else:
-                text = self.main_df.at[index, 'Original_Text']
-                column = 'Original_Text'
+# External Tools
 
-            # Remove the pagination markers
-            if pd.notna(text):
-                # Remove the pagination markers and any surrounding whitespace
-                cleaned_text = re.sub(r'\s*\*{5,}\s*', '\n\n', text)
+    def find_and_replace(self, event=None):
+        self.find_replace.update_main_df(self.main_df)
+        self.find_replace.find_and_replace(event) 
+    
+    def update_api_handler(self):
+        self.api_handler = APIHandler(
+            self.settings.openai_api_key, 
+            self.settings.anthropic_api_key, 
+            self.settings.google_api_key
+        )
+
+    def edit_single_image(self):
+        if self.main_df.empty:
+            messagebox.showerror("Error", "No images have been loaded. Please load some images first.")
+            return
+
+        # Hide the main window
+        self.withdraw()
+
+        # Create a temporary directory for the single image
+        single_temp_dir = os.path.join(self.images_directory, "single_temp")
+        os.makedirs(single_temp_dir, exist_ok=True)
+
+        try:
+            # Copy the current image to temp directory
+            current_image_path = self.main_df.loc[self.page_counter, 'Image_Path']
+            temp_image_name = os.path.basename(current_image_path)
+            temp_image_path = os.path.join(single_temp_dir, temp_image_name)
+            
+            shutil.copy2(current_image_path, temp_image_path)
+
+            # Create an instance of ImageSplitter with the temp directory
+            image_splitter = ImageSplitter(single_temp_dir)
+            
+            # Wait for the ImageSplitter window to close
+            self.wait_window(image_splitter)
+
+            if image_splitter.status == "saved":
+                self.process_edited_single_image(current_image_path)
+            elif image_splitter.status == "discarded":
+                pass
+
+        except Exception as e:
+            print(f"Error in edit_single_image: {str(e)}")
+            messagebox.showerror("Error", f"An error occurred while editing the image: {str(e)}")
+
+        finally:
+            # Clean up
+            if os.path.exists(single_temp_dir):
+                shutil.rmtree(single_temp_dir, ignore_errors=True)
+            
+            # Show the main window again
+            self.deiconify()
+
+    def edit_all_images(self):
+        if self.main_df.empty:
+            messagebox.showerror("Error", "No images have been loaded. Please load some images first.")
+            return
+
+        if not messagebox.askyesno("Warning", 
+                                    "This action will replace all current images and text with the edited versions. "
+                                    "All existing text will be lost. This action cannot be undone. "
+                                    "Do you want to continue?"):
+            return
+
+        self.withdraw()
+        all_temp_dir = os.path.join(self.images_directory, "all_temp")
+        
+        try:
+            # Clean up existing temp directory if it exists
+            if os.path.exists(all_temp_dir):
+                shutil.rmtree(all_temp_dir)
+            
+            # Create fresh temp directory
+            os.makedirs(all_temp_dir, exist_ok=True)
+
+            # Copy all images to temp directory using absolute paths
+            for index, row in self.main_df.iterrows():
+                current_image_path = row['Image_Path']
+                # Use get_full_path to resolve relative paths
+                current_image_path = self.get_full_path(current_image_path)
+                
+                if os.path.exists(current_image_path):
+                    temp_image_name = f"{index+1:04d}.jpg"
+                    temp_image_path = os.path.join(all_temp_dir, temp_image_name)
+                    shutil.copy2(current_image_path, temp_image_path)
+                else:
+                    raise FileNotFoundError(f"Image not found: {current_image_path}")
+
+            image_splitter = ImageSplitter(all_temp_dir)
+            self.wait_window(image_splitter)
+
+            if image_splitter.status == "saved":
+                self.reset_application()
+                pass_images_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
+                                            "util", "subs", "pass_images")
+                
+                if not os.path.exists(pass_images_dir):
+                    raise FileNotFoundError(f"pass_images directory not found at: {pass_images_dir}")
+                
+                self.directory_path = pass_images_dir
+                self.load_files_from_folder_no_text()
+            elif image_splitter.status == "discarded":
+                messagebox.showinfo("Cancelled", "Image editing was cancelled. No changes were made.")
+
+        except Exception as e:
+            print(f"Error in edit_all_images: {str(e)}")
+            messagebox.showerror("Error", f"An error occurred while editing the images: {str(e)}")
+            self.error_logging(f"Error in edit_all_images: {str(e)}")
+        finally:
+            # Clean up temp directory
+            if os.path.exists(all_temp_dir):
+                try:
+                    shutil.rmtree(all_temp_dir)
+                except Exception as e:
+                    print(f"Failed to clean up temp directory: {str(e)}")
+            
+            self.deiconify()
+            # Functions Manipulating the DF
+
+    def process_edited_single_image(self, original_image_path):
+        try:
+            pass_images_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
+                                        "util", "subs", "pass_images")
+
+            if not os.path.exists(pass_images_dir):
+                raise FileNotFoundError(f"pass_images directory not found at: {pass_images_dir}")
+
+            # Get edited images and sort them numerically
+            edited_images = sorted(
+                [f for f in os.listdir(pass_images_dir) if f.endswith('.jpg')],
+                key=lambda x: int(os.path.splitext(x)[0])
+            )
+
+            if not edited_images:
+                raise ValueError("No edited images found")
+
+            current_index = self.page_counter
+            
+            # Create new rows for all split images
+            new_rows = []
+            for i, img_file in enumerate(edited_images):
+                edited_image_path = os.path.join(pass_images_dir, img_file)
+                new_index = current_index + i
+                new_image_name = f"{new_index+1:04d}.jpg"
+                
+                # Ensure target directory exists
+                target_dir = os.path.join(self.project_directory, "images")
+                os.makedirs(target_dir, exist_ok=True)
+                
+                new_image_path = os.path.join(target_dir, new_image_name)
+                
+                # Copy image
+                shutil.copy2(edited_image_path, new_image_path)
+                
+                # Create new row
+                new_row = {
+                    "Index": new_index,
+                    "Page": f"{new_index+1:04d}_p{new_index+1:03d}",
+                    "Original_Text": "",
+                    "First_Draft": "",
+                    "Final_Draft": "",
+                    "Image_Path": os.path.join("images", new_image_name),
+                    "Text_Path": "",
+                    "Text_Toggle": "None"
+                }
+                new_rows.append(new_row)
+            
+            # Update DataFrame
+            self.main_df = pd.concat([
+                self.main_df.iloc[:current_index],
+                pd.DataFrame(new_rows),
+                self.main_df.iloc[current_index+1:]
+            ]).reset_index(drop=True)
+
+            # Clean up pass_images directory
+            try:
+                for file in os.listdir(pass_images_dir):
+                    file_path = os.path.join(pass_images_dir, file)
+                    if os.path.isfile(file_path):
+                        os.unlink(file_path)
+            except Exception as e:
+                print(f"Warning: Failed to clean up some temporary files: {e}")
+
+            # Refresh display
+            self.refresh_display()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to process edited images: {str(e)}")
+            self.error_logging(f"Process edited image error: {str(e)}") 
+
+    async def process_api_request(self, system_prompt, user_prompt, temp, image_data, 
+                                    text_to_process, val_text, engine, index, 
+                                    is_base64=True, formatting_function=False):
+        try:
+            return await self.api_handler.route_api_call(
+                engine=engine,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temp=temp,
+                image_data=image_data,
+                text_to_process=text_to_process,
+                val_text=val_text,
+                index=index,
+                is_base64=is_base64,
+                formatting_function=formatting_function
+            )
+            
+        except Exception as e:
+            print(f"API Error: {e}")
+            return "Error", index
+
+# AI Functions
+
+    def ai_function(self, all_or_one_flag="All Pages", ai_job="HTR", batch_size=50):
+        # Get job parameters including batch_size
+        job_params = self.setup_job_parameters(ai_job)
+        batch_size = job_params.get('batch_size', 50)  # Use job-specific batch size
+    
+        self.toggle_button_state()
+        error_count = 0
+        processed_indices = set() 
+
+        try:
+            # Handle Chunk_Text separately since it will create its own progress windows
+            if ai_job == "Chunk_Text":
+                if all_or_one_flag == "Current Page":
+                    row = self.page_counter
+                    # Check if there's text to process using the new find_chunk_text method
+                    text_to_process, has_translation = self.find_chunk_text(row)
+                    if text_to_process.strip():
+                        batch_df = self.main_df.loc[[row]]
+                    else:
+                        messagebox.showinfo("Skip", "This page has no text to chunk.")
+                        return
+                else:
+                    # Process only pages that have text using find_chunk_text
+                    batch_df = self.main_df[
+                        self.main_df.apply(lambda row: bool(self.find_chunk_text(row.name)[0].strip()), axis=1)
+                    ]
+                        
+                # First process normal text
+                self.process_chunk_text(batch_df, all_or_one_flag, "Chunk_Text")
+                
+                # Then process translations if they exist
+                if all_or_one_flag == "Current Page":
+                    # Check if current page has translation
+                    row = self.page_counter
+                    _, has_translation = self.find_chunk_text(row)
+                    if has_translation:
+                        # Process translation for current page
+                        self.process_translation_chunks(self.main_df.loc[[row]], all_or_one_flag)
+                else:
+                    # Find all pages with translations and process them
+                    translation_df = self.main_df[
+                        self.main_df.apply(lambda row: bool(self.find_chunk_text(row.name)[1]), axis=1)
+                    ]
+                    if not translation_df.empty:
+                        self.process_translation_chunks(translation_df, all_or_one_flag)
+                
+                # Restore button state and exit
+                self.toggle_button_state()
+                return
+            
+            # For all other job types, continue with the standard progress window
+            progress_title = f"Applying {ai_job} to {'Current Page' if all_or_one_flag == 'Current Page' else 'All Pages'}..."
+            progress_window, progress_bar, progress_label = self.progress_bar.create_progress_window(progress_title)
+            self.progress_bar.update_progress(0, 1)
+
+            responses_dict = {}
+            futures_to_index = {}
+            processed_rows = 0
+            total_rows = 0
+
+            # Get the Skip Completed Pages toggle value
+            skip_completed = self.skip_completed_pages.get()
+
+            # Modified batch_df setup for different job types
+            if ai_job == "HTR":
+                if all_or_one_flag == "Current Page":
+                    # Only process current page if it has no Original_Text or if we're not skipping completed
+                    row = self.page_counter
+                    if (skip_completed and (pd.isna(self.main_df.loc[row, 'Original_Text']) or self.main_df.loc[row, 'Original_Text'].strip() == '')) or not skip_completed:
+                        batch_df = self.main_df.loc[[row]]
+                    else:
+                        messagebox.showinfo("Skip", "This page already has recognized text.")
+                        return
+                else:
+                    if skip_completed:
+                        # Filter for pages without Original_Text
+                        batch_df = self.main_df[
+                            (self.main_df['Image_Path'].notna()) & 
+                            (self.main_df['Image_Path'] != '') & 
+                            ((self.main_df['Original_Text'].isna()) | (self.main_df['Original_Text'] == ''))
+                        ]
+                    else:
+                        # Process all pages with images regardless of content
+                        batch_df = self.main_df[
+                            (self.main_df['Image_Path'].notna()) & 
+                            (self.main_df['Image_Path'] != '')
+                        ]
+
+            elif ai_job == "Correct_Text":
+                if all_or_one_flag == "Current Page":
+                    # Logic for Current Page with Skip Completed option
+                    row = self.page_counter
+                    if skip_completed:
+                        # Only process if it has Original_Text but no First_Draft
+                        if pd.notna(self.main_df.loc[row, 'Original_Text']) and \
+                        (pd.isna(self.main_df.loc[row, 'First_Draft']) or self.main_df.loc[row, 'First_Draft'].strip() == ''):
+                            batch_df = self.main_df.loc[[row]]
+                        else:
+                            messagebox.showinfo("Skip", "This page either lacks Original_Text or already has corrections.")
+                            return
+                    else:
+                        # Process regardless of First_Draft status as long as Original_Text exists
+                        if pd.notna(self.main_df.loc[row, 'Original_Text']):
+                            batch_df = self.main_df.loc[[row]]
+                        else:
+                            messagebox.showinfo("Skip", "This page lacks Original_Text.")
+                            return
+                else:
+                    # Logic for All Pages with Skip Completed option
+                    if skip_completed:
+                        # Filter for pages with Original_Text but without First_Draft
+                        batch_df = self.main_df[
+                            (self.main_df['Original_Text'].notna()) & 
+                            (self.main_df['Original_Text'] != '') & 
+                            ((self.main_df['First_Draft'].isna()) | (self.main_df['First_Draft'] == ''))
+                        ]
+                    else:
+                        # Process all pages with Original_Text regardless of First_Draft status
+                        batch_df = self.main_df[
+                            (self.main_df['Original_Text'].notna()) & 
+                            (self.main_df['Original_Text'] != '')
+                        ]
+            elif ai_job == "Create_Final_Draft":
+                if all_or_one_flag == "Current Page":
+                    # Logic for Current Page with Skip Completed option
+                    row = self.page_counter
+                    if skip_completed:
+                        # Only process if it has First_Draft but no Final_Draft
+                        if pd.notna(self.main_df.loc[row, 'First_Draft']) and \
+                        (pd.isna(self.main_df.loc[row, 'Final_Draft']) or self.main_df.loc[row, 'Final_Draft'].strip() == ''):
+                            batch_df = self.main_df.loc[[row]]
+                        else:
+                            messagebox.showinfo("Skip", "This page either lacks First_Draft or already has Final_Draft.")
+                            return
+                    else:
+                        # Process regardless of Final_Draft status as long as First_Draft exists
+                        if pd.notna(self.main_df.loc[row, 'First_Draft']):
+                            batch_df = self.main_df.loc[[row]]
+                        else:
+                            messagebox.showinfo("Skip", "This page lacks First_Draft.")
+                            return
+                else:
+                    # Logic for All Pages with Skip Completed option
+                    if skip_completed:
+                        # Filter for pages with First_Draft but without Final_Draft
+                        batch_df = self.main_df[
+                            (self.main_df['First_Draft'].notna()) & 
+                            (self.main_df['First_Draft'] != '') & 
+                            ((self.main_df['Final_Draft'].isna()) | (self.main_df['Final_Draft'] == ''))
+                        ]
+                    else:
+                        # Process all pages with First_Draft regardless of Final_Draft status
+                        batch_df = self.main_df[
+                            (self.main_df['First_Draft'].notna()) & 
+                            (self.main_df['First_Draft'] != '')
+                        ]
+            # In the ai_function method, modify the batch_df setup section:
+            elif ai_job == "Get_Names_and_Places":
+                if all_or_one_flag == "Current Page":
+                    row = self.page_counter
+                    batch_df = self.main_df.loc[[row]]
+                else:
+                    # First ensure the columns exist
+                    if 'People' not in self.main_df.columns:
+                        self.main_df['People'] = ''
+                    if 'Places' not in self.main_df.columns:
+                        self.main_df['Places'] = ''
+                        
+                    # Then do the filtering
+                    batch_df = self.main_df[
+                        (self.main_df['Image_Path'].notna()) &
+                        (self.main_df['Image_Path'] != '')
+                    ]
+            elif ai_job == "Auto_Rotate":
+                if all_or_one_flag == "Current Page":
+                    row = self.page_counter
+                    batch_df = self.main_df.loc[[row]]
+                else:
+                    # Process all pages that have images
+                    batch_df = self.main_df[
+                        (self.main_df['Image_Path'].notna()) & 
+                        (self.main_df['Image_Path'] != '')
+                    ]
+            elif ai_job == "Chunk_Translation":
+                # This is a special internal job type not directly called by users
+                pass
+            elif ai_job == "Identify_Errors":
+                if all_or_one_flag == "Current Page":
+                    row = self.page_counter
+                    # Only process current page
+                    batch_df = self.main_df.loc[[row]]
+                else:
+                    # Process all pages that have text
+                    batch_df = self.main_df[self.main_df['Image_Path'].notna() & (self.main_df['Image_Path'] != '')]
+            elif ai_job == "Custom":
+                if all_or_one_flag == "Current Page":
+                    row = self.page_counter
+                    batch_df = self.main_df.loc[[row]]
+                else:
+                    batch_df = self.main_df[self.main_df['Image_Path'].notna() & (self.main_df['Image_Path'] != '')]
+            else:
+                batch_df = self.main_df[self.main_df['Image_Path'].notna() & (self.main_df['Image_Path'] != '')]
+
+            total_rows = len(batch_df)
+            
+            if total_rows == 0:
+                if ai_job == "HTR":
+                    messagebox.showinfo("No Work Needed", "All pages already have recognized text.")
+                elif ai_job == "Correct_Text":
+                    messagebox.showinfo("No Work Needed", "All pages either lack Original_Text or already have corrections.")
+                elif ai_job == "Translation":
+                    messagebox.showinfo("No Work Needed", "All pages either lack text to translate or already have translations.")
+                else:
+                    messagebox.showwarning("No Images", "No images are available for processing.")
+                return
+
+            # Set up job parameters
+            job_params = self.setup_job_parameters(ai_job)
+
+            # Process in batches
+            with ThreadPoolExecutor(max_workers=batch_size) as executor:
+                for i in range(0, total_rows, batch_size):
+                    batch_df_subset = batch_df.iloc[i:i+batch_size]
+
+                    for index, row_data in batch_df_subset.iterrows():
+                        # Get images based on the job type
+                        images_data = self.get_images_for_job(ai_job, index, row_data, job_params)
+
+                        # Set text_to_process based on the job type
+                        if ai_job == "HTR":
+                            text_to_process = ''
+                        elif ai_job == "Correct_Text": 
+                            text_to_process = row_data['Original_Text']
+                        elif ai_job == "Create_Final_Draft":
+                            text_to_process = row_data['First_Draft']
+                        elif ai_job == "Translation":
+                            text_to_process = self.find_right_text(index)
+                        else:
+                            if row_data['Text_Toggle'] == "Original_Text":
+                                text_to_process = row_data['Original_Text']
+                            elif row_data['Text_Toggle'] == "First_Draft":
+                                text_to_process = row_data['First_Draft']
+                            elif row_data['Text_Toggle'] == "Final_Draft":
+                                text_to_process = row_data['Final_Draft']
+                            else:
+                                text_to_process = ''
+                           
+                        # Submit the API request
+                        future = executor.submit(
+                            asyncio.run,
+                            self.process_api_request(
+                                system_prompt=job_params['system_prompt'],
+                                user_prompt=job_params['user_prompt'],
+                                temp=job_params['temp'],
+                                image_data=images_data,
+                                text_to_process=text_to_process,
+                                val_text=job_params['val_text'],
+                                engine=job_params['engine'],
+                                index=index,
+                                is_base64=not "gemini" in job_params['engine'].lower()
+                            )
+                        )
+
+                        futures_to_index[future] = index
+
+                        # Process results
+                    for future in as_completed(futures_to_index):
+                        try:
+                            response, index = future.result()
+                            responses_dict[index] = response
+                            
+                            # Only increment progress if this index hasn't been processed before
+                            if index not in processed_indices:
+                                processed_indices.add(index)
+                                processed_rows += 1
+                                self.progress_bar.update_progress(processed_rows, total_rows)
+                            
+                            # Process the response if there is no error
+                            if response == "Error":
+                                error_count += 1
+                            else:
+                                if ai_job == "Auto_Rotate":
+                                    self.update_image_rotation(index, response)
+                                else:
+                                    self.update_df_with_ai_job_response(ai_job, index, response)
+                        except Exception as e:
+                            error_count += 1
+                            self.error_logging(f"Error processing future for index {futures_to_index[future]}: {str(e)}")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred in ai_function: {str(e)}")
+            self.error_logging(f"Error in ai_function: {str(e)}")
+
+        finally:
+            # Only close the progress window if we created one (Chunk_Text is handled separately)
+            if ai_job != "Chunk_Text" and 'progress_window' in locals():
+                self.progress_bar.close_progress_window()
+            self.load_text()
+            self.counter_update()
+            self.toggle_button_state()
+
+            if error_count > 0:
+                message = f"An error occurred while processing the current page." if all_or_one_flag == "Current Page" else f"Errors occurred while processing {error_count} page(s)."
+                messagebox.showwarning("Processing Error", message)
+    
+    def setup_job_parameters(self, ai_job):
+        """Set up parameters for different AI jobs"""
+        self.error_logging(f"Setting up job parameters for {ai_job}")
+        self.error_logging(f"Available presets: {[p['name'] for p in self.settings.function_presets]}")
+        
+        if ai_job == "HTR":
+            preset = next((p for p in self.settings.function_presets if p['name'] == "HTR"), None)
+            if preset:
+                return {
+                    "temp": float(preset.get('temperature', 0.7)),
+                    "val_text": preset.get('val_text', ''),
+                    "engine": preset.get('model', self.settings.model_list[0]),
+                    "user_prompt": preset.get('specific_instructions', ''),
+                    "system_prompt": preset.get('general_instructions', ''),
+                    "batch_size": self.settings.batch_size,
+                    "use_images": preset.get('use_images', False)
+                }
+            else:
+                # Fallback defaults if no preset is found
+                return {
+                    "temp": 0.7,
+                    "val_text": "",
+                    "engine": self.settings.model_list[0],
+                    "user_prompt": "",
+                    "system_prompt": "",
+                    "batch_size": self.settings.batch_size,
+                    "use_images": False
+                }
+        elif ai_job == "Chunk_Text":
+            # Get the selected chunking strategy
+            selected_strategy = self.chunking_strategy_var.get()
+            preset = next((p for p in self.settings.chunk_text_presets if p['name'] == selected_strategy), None)
+            
+            if preset:
+                return {
+                    "temp": float(preset.get('temperature', 0.7)),
+                    "val_text": preset.get('val_text', ''),
+                    "engine": preset.get('model', self.settings.model_list[0]),
+                    "user_prompt": preset.get('specific_instructions', ''),
+                    "system_prompt": preset.get('general_instructions', ''),
+                    "batch_size": self.settings.batch_size,
+                    "use_images": preset.get('use_images', False)
+                }
+            else:
+                self.error_logging(f"Chunk text preset not found for strategy: {selected_strategy}")
+                raise ValueError(f"Chunk text preset not found for strategy: {selected_strategy}")
+        else:
+            # Existing logic for function-based AI jobs
+            preset = next((p for p in self.settings.function_presets if p['name'] == ai_job), None)
+            if preset:
+                return {
+                    "temp": float(preset.get('temperature', 0.7)),
+                    "val_text": preset.get('val_text', ''),
+                    "engine": preset.get('model', self.settings.model_list[0]),
+                    "user_prompt": preset.get('specific_instructions', ''),
+                    "system_prompt": preset.get('general_instructions', ''),
+                    "batch_size": self.settings.batch_size,
+                    "use_images": preset.get('use_images', True)
+                }
+            else:
+                self.error_logging(f"Preset not found for job: {ai_job}")
+                raise ValueError(f"Preset not found for job: {ai_job}")
+        
+    def get_images_for_job(self, ai_job, index, row_data, job_params):
+        """
+        Get and prepare images for AI job processing.
+        
+        Args:
+            ai_job (str): Type of AI job being performed
+            index (int): Current index in the DataFrame
+            row_data (pd.Series): Current row data
+            job_params (dict): Parameters for the job
+            
+        Returns:
+            list: Prepared image data or empty list if error occurs
+        """
+        try:
+            # First check if we need images at all
+            if not job_params.get("use_images", True) or job_params.get("current_image", "Yes") != "Yes":
+                return []
+
+            # Get image path with error checking
+            try:
+                current_image = row_data.get('Image_Path', "")
+                if not current_image:
+                    self.error_logging(f"Empty image path at index {index}")
+                    return []
+            except Exception as e:
+                self.error_logging(f"Error getting image path at index {index}: {str(e)}")
+                return []
+
+            # Convert to absolute path
+            try:
+                current_image = self.get_full_path(current_image)
+                if not current_image:
+                    self.error_logging(f"Failed to get full path for image at index {index}")
+                    return []
+            except Exception as e:
+                self.error_logging(f"Error converting to full path at index {index}: {str(e)}")
+                return []
+
+            # Validate image path
+            if not isinstance(current_image, str) or not current_image.strip():
+                self.error_logging(f"Invalid image path at index {index}: {current_image}")
+                return []
+
+            # Check if file exists
+            if not os.path.exists(current_image):
+                self.error_logging(f"Image file not found at index {index}: {current_image}")
+                return []
+
+            # Prepare image data
+            try:
+                raw_images_data = [(current_image, "Document Image:")]
+                return self.api_handler.prepare_image_data(
+                    raw_images_data,
+                    job_params.get('engine', 'default_engine'),  # Added fallback
+                    not "gemini" in job_params.get('engine', '').lower()
+                )
+            except Exception as e:
+                self.error_logging(f"Error preparing image data at index {index}: {str(e)}")
+                return []
+
+        except Exception as e:
+            self.error_logging(f"Critical error in get_images_for_job at index {index}: {str(e)}")
+            return []  # Return empty list as safe fallback
+
+    def collate_names_and_places(self):
+        """
+        Gather unique names & places, call the LLM for normalization, and
+        store the raw 'Response:' text in self.collated_names_raw and
+        self.collated_places_raw. Does NOT do final replacements.
+        """
+        try:
+            # Initialize default values
+            self.collated_names_raw = ""
+            self.collated_places_raw = ""
+            
+            # Create progress window first so user gets immediate feedback
+            progress_window, progress_bar, progress_label = self.progress_bar.create_progress_window("Collating Names and Places")
+            self.progress_bar.update_progress(5, 100)  # Show 5% progress immediately
+
+            def gather_unique_items(column_name):
+                """Helper function to gather unique items from a DataFrame column"""
+                try:
+                    all_items = []
+                    if column_name in self.main_df.columns:
+                        for idx, val in self.main_df[column_name].dropna().items():
+                            if val.strip():
+                                entries = [x.strip() for x in val.split(';') if x.strip()]
+                                self.error_logging(f"Gathered {len(entries)} items from {column_name} row {idx}: {entries}", level="DEBUG")
+                                all_items.extend(entries)
+                    unique_items = sorted(set(all_items), key=lambda x: x.lower())
+                    self.error_logging(f"Total unique {column_name}: {len(unique_items)}", level="DEBUG")
+                    return unique_items
+                except Exception as e:
+                    self.error_logging(f"Error gathering items from {column_name}: {str(e)}")
+                    return []
+
+            # Gather unique names and places using the helper function
+            self.error_logging("Starting to gather unique names", level="DEBUG")
+            unique_names = gather_unique_items('People')
+            self.progress_bar.update_progress(15, 100)  # Update to 15% after gathering names
+            
+            self.error_logging("Starting to gather unique places", level="DEBUG")
+            unique_places = gather_unique_items('Places')
+            self.progress_bar.update_progress(25, 100)  # Update to 25% after gathering places
+            
+            # Log the counts
+            self.error_logging(f"Found {len(unique_names)} unique names and {len(unique_places)} unique places", level="INFO")
+            if unique_names:
+                self.error_logging(f"Sample names: {unique_names[:10]}", level="DEBUG")
+            if unique_places:
+                self.error_logging(f"Sample places: {unique_places[:10]}", level="DEBUG")
+
+            # If there's nothing to collate, return early
+            if not unique_names and not unique_places:
+                self.error_logging("No names or places to collate", level="INFO")
+                self.progress_bar.close_progress_window()
+                return
+
+            # Create tasks list
+            tasks = []
+            if unique_names:
+                tasks.append(("names", unique_names))
+            if unique_places:
+                tasks.append(("places", unique_places))
+
+            # System prompt
+            system_message = (
+                "You are given a list of historical names or places. You will assemble lists that will be used to automatically find and replace spellings to normalize the text. Each list will "
+                "contain variants of the same entity spelled incorrectly or with OCR errors.\n" 
+                "Ignore minor variants such as the inclusion of 'Mr' or other suffixes in names and concentrate on the core name as it would be used in a keyword search.\n"
+                "For name variants where the first name/initial are different, group these together separately.\n"
+                "You MUST include ALL names or places from the input list - don't skip any!\n"
+                "IMPORTANT: Every single name or place from the input list MUST appear somewhere in your output.\n"
+                "List all place names with multiple variants, group them together (using your judgment to combine names/places that are obvious errors or that are phonetically similar together) and pick the best spelling. Output them as:\n\n"
+                "Response:\n"
+                "most_complete_spelling = variant1; variant2; ...\n"
+                "most_complete_spelling = variant1; variant2; ...\n"
+            )
+            
+            self.progress_bar.update_progress(35, 100)  # Update after preparing data
+
+            try:
+                # Process using same pattern as ai_function
+                results = {}
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    futures_to_label = {}
+                    
+                    # Submit both tasks
+                    for i, (label, items) in enumerate(tasks):
+                        self.error_logging(f"Preparing {label} task with {len(items)} items", level="DEBUG")
+                        text_for_llm = "\n".join(items)
+                        future = executor.submit(
+                            asyncio.run,
+                            self.process_api_request(
+                                system_prompt=system_message,
+                                user_prompt=f"Below is a list of {label}. Collate them. You MUST include ALL items in your output - every single item in the list must appear somewhere in your response. Do not skip any items even if they seem like duplicates or errors.\n\n{text_for_llm}",
+                                temp=0.5,
+                                image_data=[],
+                                text_to_process="",
+                                val_text="Response:",
+                                engine="gemini-2.0-flash-thinking-exp-01-21",
+                                index=0,
+                                is_base64=False
+                            )
+                        )
+                        futures_to_label[future] = label
+                        self.progress_bar.update_progress(40 + i*10, 100)  # 40% after submitting first task, 50% after second
+                    
+                    # Calculate progress increments for API calls
+                    progress_per_task = 40 / len(tasks) if tasks else 0
+                    progress_base = 50  # Start from 50%
+                    
+                    # Process results
+                    for i, future in enumerate(as_completed(futures_to_label)):
+                        label = futures_to_label[future]
+                        try:
+                            self.error_logging(f"Processing {label} API response", level="DEBUG")
+                            response, _ = future.result(timeout=60)  # Add timeout of 60 seconds
+                            self.error_logging(f"Received {label} response length: {len(response)}", level="DEBUG")
+                            results[label] = response
+                        except Exception as e:
+                            self.error_logging(f"Error processing {label}: {str(e)}")
+                            results[label] = ""
+                        
+                        # Update progress - 50% to 90% during API calls
+                        current_progress = progress_base + (i + 1) * progress_per_task
+                        self.progress_bar.update_progress(min(90, current_progress), 100)
+
+                # Store results
+                self.collated_names_raw = results.get("names", "")
+                self.collated_places_raw = results.get("places", "")
+                
+                # Log the results for debugging
+                if self.collated_names_raw:
+                    self.error_logging(f"Collated names sample: {self.collated_names_raw[:200]}", level="DEBUG")
+                if self.collated_places_raw:
+                    self.error_logging(f"Collated places sample: {self.collated_places_raw[:200]}", level="DEBUG")
+                
+                # Verify if all names/places are present by parsing the results
+                names_dict = self.parse_collation_response(self.collated_names_raw)
+                places_dict = self.parse_collation_response(self.collated_places_raw)
+                
+                # Count total variants in dictionaries
+                name_variants_count = sum(len(variants) for variants in names_dict.values())
+                place_variants_count = sum(len(variants) for variants in places_dict.values())
+                
+                self.error_logging(f"Parsed {len(names_dict)} name groups with {name_variants_count} total variants", level="INFO")
+                self.error_logging(f"Parsed {len(places_dict)} place groups with {place_variants_count} total variants", level="INFO")
+                
+                # Check for missing items
+                if unique_names and name_variants_count < len(unique_names) * 0.8:  # If less than 80% included
+                    self.error_logging(f"Warning: Only {name_variants_count} of {len(unique_names)} names were included in the result", level="WARNING")
+                
+                if unique_places and place_variants_count < len(unique_places) * 0.8:  # If less than 80% included
+                    self.error_logging(f"Warning: Only {place_variants_count} of {len(unique_places)} places were included in the result", level="WARNING")
+                
+                self.progress_bar.update_progress(95, 100)  # Almost done
+
+            except Exception as e:
+                self.error_logging(f"Error in main processing: {str(e)}")
+                raise  # Re-raise to be caught by outer try-except
+
+            finally:
+                # Clean up progress bar
+                try:
+                    self.progress_bar.update_progress(100, 100)  # Complete the progress
+                    self.progress_bar.close_progress_window()
+                except Exception as e:
+                    self.error_logging(f"Error closing progress window: {str(e)}")
+
+        except Exception as e:
+            self.error_logging(f"Critical error in collate_names_and_places: {str(e)}")
+            messagebox.showerror("Error", 
+                "An error occurred while collating names and places. Check the error log for details.")
+            # Ensure defaults are set
+            self.collated_names_raw = ""
+            self.collated_places_raw = ""
+            # Make sure progress window is closed
+            if 'progress_bar' in locals() and hasattr(self, 'progress_bar'):
+                try:
+                    self.progress_bar.close_progress_window()
+                except:
+                    pass
+        
+        finally:
+            # Final cleanup and UI update
+            try:
+                self.update()  # Force GUI update
+            except Exception as e:
+                self.error_logging(f"Error in final UI update: {str(e)}")
+
+    def update_df_with_ai_job_response(self, ai_job, index, response):
+        """Update the DataFrame with the AI job response"""
+        try:
+            if response == "Error":
+                return
+            
+            # Get the current text display mode
+            selected = self.text_display_var.get()
+            
+            # Update based on job type
+            if ai_job == "HTR":
+                self.main_df.loc[index, 'Original_Text'] = response
+                self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
+            elif ai_job == "Correct_Text":
+                self.main_df.loc[index, 'First_Draft'] = response
+                self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
+            elif ai_job == "Get_Names_and_Places":
+                print(f"\nProcessing Names and Places response: {response}")
+                # Make sure the People and Places columns exist
+                if 'People' not in self.main_df.columns:
+                    self.main_df['People'] = ""
+                if 'Places' not in self.main_df.columns:
+                    self.main_df['Places'] = ""
+                
+                # Initialize empty values
+                names = ""
+                places = ""
+                
+                # New parsing approach for multi-line format
+                lines = response.split('\n')
+                
+                # Find positions of headers
+                names_idx = -1
+                places_idx = -1
+                
+                for i, line in enumerate(lines):
+                    if line.lower().strip() == "names:":
+                        names_idx = i
+                    elif line.lower().strip() == "places:":
+                        places_idx = i
+                
+                # Extract names (everything between "Names:" and "Places:" or end)
+                if names_idx >= 0:
+                    names_end = places_idx if places_idx > names_idx else len(lines)
+                    names_lines = [line.strip() for line in lines[names_idx+1:names_end] if line.strip()]
+                    names = "; ".join(names_lines)
+                
+                # Extract places (everything after "Places:")
+                if places_idx >= 0:
+                    places_lines = [line.strip() for line in lines[places_idx+1:] if line.strip()]
+                    places = "; ".join(places_lines)
+                
+                print(f"Extracted Names: '{names}'")
+                print(f"Extracted Places: '{places}'")
                 
                 # Update the DataFrame
-                self.main_df.at[index, column] = cleaned_text
+                self.main_df.loc[index, 'People'] = names
+                self.main_df.loc[index, 'Places'] = places
                 
-                # Update the display
-                self.text_display.delete("1.0", tk.END)
-                self.text_display.insert("1.0", cleaned_text)
+                print(f"Updated DataFrame - People: '{self.main_df.loc[index, 'People']}'")
+                print(f"Updated DataFrame - Places: '{self.main_df.loc[index, 'Places']}'")
                 
-                # Reset pagination flag
-                self.pagination_added = False
+            elif ai_job == "Chunk_Text":
+                # Store the response in Final_Draft
+                self.main_df.loc[index, 'Final_Draft'] = response
+                self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
                 
-                # Update the menu item state
-                self.document_menu.entryconfig("Remove Pagination", state="disabled")
+                # If translation exists, also store a copy in Translation column
+                if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
+                    # We'll handle this in a separate AI job for translation chunking
+                    pass
+            elif ai_job == "Chunk_Translation":
+                # Special job type for chunking translations
+                if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
+                    self.main_df.loc[index, 'Translation'] = response
+            elif ai_job == "Auto_Rotate":
+                self.update_image_rotation(index, response)
+            elif ai_job == "Identify_Errors":
+                print("\nProcessing Identify_Errors response:")
+                print(f"Raw response: {response}")
+                
+                # Take just the first line
+                errors = response.split('\n')[0].strip()
+                print(f"Extracted errors: {errors}")
+                self.main_df.loc[index, 'Errors'] = errors
+                
+                # If there are errors, highlight them in the text
+                if errors:
+                    # Split errors by semicolon and strip whitespace
+                    error_terms = [term.strip() for term in errors.split(';') if term.strip()]
+                    print(f"Error terms to highlight: {error_terms}")
+                    
+                    # Clear existing highlights
+                    self.text_display.tag_remove("error_highlight", "1.0", tk.END)
+                    
+                    # Add new error highlights
+                    for term in error_terms:
+                        self.highlight_term(term, "error_highlight", exact_match=True)
+                    
+                    # Configure error highlight style
+                    self.text_display.tag_configure("error_highlight", background="cyan")
+            elif ai_job == "Translation":
+                self.main_df.loc[index, 'Translation'] = response
+                self.main_df.loc[index, 'Text_Toggle'] = "Translation"
+            
+            # Load the updated text
+            self.load_text()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to update DataFrame: {str(e)}")
+            self.error_logging(f"Failed to update DataFrame: {str(e)}")
+
+    def update_image_rotation(self, index, response):
+        # Get the image path from the DataFrame.
+        image_path = self.main_df.loc[index, 'Image_Path']
+        # Use get_full_path to resolve relative paths
+        image_path = self.get_full_path(image_path)
+        
+        # Dictionary mapping responses to orientation in degrees.
+        orientation_map = {
+            "standard": 0,
+            "rotated 90 clockwise": 90,
+            "rotated 180 degrees": 180,
+            "rotated 90 counter-clockwise": 270,
+            "no text": 0
+        }
+        
+        response = response.strip().lower()
+        print(f"\nInput Response: '{response}'")
+        
+        if response not in orientation_map:
+            print(f"ERROR: Could not parse rotation angle from response: {response}")
+            return
+        
+        current_orientation = orientation_map[response]
+        print(f"Detected Orientation: {current_orientation} degrees from standard")
+        
+        if current_orientation == 0:
+            print(f"No rotation needed for page index {index}.")
+            return
+        
+        correction_angle = current_orientation
+        print(f"Applying correction angle: {correction_angle} degrees")
+        
+        try:
+            with Image.open(image_path) as img:
+                rotated_img = img.rotate(correction_angle, expand=True)
+                rotated_img.save(image_path, quality=95)
+            
+            if index == self.page_counter:
+                self.image_handler.load_image(image_path)
+                    
+            print(f"Corrected page index {index} from {current_orientation} degrees to standard orientation")
+        except Exception as e:
+            print(f"Error rotating image at index {index}: {e}")
+            self.error_logging(f"Error rotating image at index {index}: {e}")
+
+    def revert_current_page(self):
+        index = self.page_counter
+        current_selection = self.text_display_var.get()
+        
+        if current_selection == "Translation":
+            if messagebox.askyesno("Revert Text", 
+                                "Do you want to revert the Translation and return to the final draft version?"):
+                self.main_df.loc[index, 'Translation'] = ""
+                if pd.notna(self.main_df.loc[index, 'Final_Draft']) and self.main_df.loc[index, 'Final_Draft'].strip():
+                    self.text_display_var.set("Final_Draft")
+                    self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
+                elif pd.notna(self.main_df.loc[index, 'First_Draft']) and self.main_df.loc[index, 'First_Draft'].strip():
+                    self.text_display_var.set("First_Draft")
+                    self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
+                else:
+                    self.text_display_var.set("Original_Text")
+                    self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
+        elif current_selection == "Final_Draft":
+            if messagebox.askyesno("Revert Text", 
+                                "Do you want to revert to the first draft version?"):
+                self.main_df.loc[index, 'Final_Draft'] = ""
+                self.text_display_var.set("First_Draft")
+                self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
+                
+        elif current_selection == "First_Draft":
+            if messagebox.askyesno("Revert Text", 
+                                "Do you want to revert to the Original_Text version?"):
+                self.main_df.loc[index, 'First_Draft'] = ""
+                self.main_df.loc[index, 'Final_Draft'] = ""
+                self.text_display_var.set("Original_Text")
+                self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
+                
+        elif current_selection == "Original_Text":
+            messagebox.showinfo("Original_Text", 
+                            "You are already viewing the Original_Text version.")
+            return
+        
+        self.load_text()
+    
+    def revert_all_pages(self):
+        if messagebox.askyesno("Confirm Revert", 
+                            "Are you sure you want to revert ALL pages to their Original_Text? "
+                            "This will remove all corrections, translations, and cannot be undone."):
+            self.main_df['Final_Draft'] = ""
+            self.main_df['First_Draft'] = ""
+            self.main_df['Translation'] = ""
+            self.main_df['Text_Toggle'] = "Original_Text"
+            self.text_display_var.set("Original_Text")
+            
+        self.load_text()
+        self.counter_update()
 
 # External Tools
 
@@ -2334,6 +3470,47 @@ class App(TkinterDnD.Tk):
         processed_indices = set() 
 
         try:
+            # Handle Chunk_Text separately since it will create its own progress windows
+            if ai_job == "Chunk_Text":
+                if all_or_one_flag == "Current Page":
+                    row = self.page_counter
+                    # Check if there's text to process using the new find_chunk_text method
+                    text_to_process, has_translation = self.find_chunk_text(row)
+                    if text_to_process.strip():
+                        batch_df = self.main_df.loc[[row]]
+                    else:
+                        messagebox.showinfo("Skip", "This page has no text to chunk.")
+                        return
+                else:
+                    # Process only pages that have text using find_chunk_text
+                    batch_df = self.main_df[
+                        self.main_df.apply(lambda row: bool(self.find_chunk_text(row.name)[0].strip()), axis=1)
+                    ]
+                        
+                # First process normal text
+                self.process_chunk_text(batch_df, all_or_one_flag, "Chunk_Text")
+                
+                # Then process translations if they exist
+                if all_or_one_flag == "Current Page":
+                    # Check if current page has translation
+                    row = self.page_counter
+                    _, has_translation = self.find_chunk_text(row)
+                    if has_translation:
+                        # Process translation for current page
+                        self.process_translation_chunks(self.main_df.loc[[row]], all_or_one_flag)
+                else:
+                    # Find all pages with translations and process them
+                    translation_df = self.main_df[
+                        self.main_df.apply(lambda row: bool(self.find_chunk_text(row.name)[1]), axis=1)
+                    ]
+                    if not translation_df.empty:
+                        self.process_translation_chunks(translation_df, all_or_one_flag)
+                
+                # Restore button state and exit
+                self.toggle_button_state()
+                return
+            
+            # For all other job types, continue with the standard progress window
             progress_title = f"Applying {ai_job} to {'Current Page' if all_or_one_flag == 'Current Page' else 'All Pages'}..."
             progress_window, progress_bar, progress_label = self.progress_bar.create_progress_window(progress_title)
             self.progress_bar.update_progress(0, 1)
@@ -2466,44 +3643,6 @@ class App(TkinterDnD.Tk):
                         (self.main_df['Image_Path'].notna()) & 
                         (self.main_df['Image_Path'] != '')
                     ]
-            elif ai_job == "Chunk_Text":
-                if all_or_one_flag == "Current Page":
-                    row = self.page_counter
-                    # Check if there's text to process using the new find_chunk_text method
-                    text_to_process, has_translation = self.find_chunk_text(row)
-                    if text_to_process.strip():
-                        batch_df = self.main_df.loc[[row]]
-                    else:
-                        messagebox.showinfo("Skip", "This page has no text to chunk.")
-                        return
-                else:
-                    # Process only pages that have text using find_chunk_text
-                    batch_df = self.main_df[
-                        self.main_df.apply(lambda row: bool(self.find_chunk_text(row.name)[0].strip()), axis=1)
-                    ]
-                        
-                # First process normal text
-                self.process_chunk_text(batch_df, all_or_one_flag, "Chunk_Text")
-                
-                # Then process translations if they exist
-                if all_or_one_flag == "Current Page":
-                    # Check if current page has translation
-                    row = self.page_counter
-                    _, has_translation = self.find_chunk_text(row)
-                    if has_translation:
-                        # Process translation for current page
-                        self.process_translation_chunks(self.main_df.loc[[row]], all_or_one_flag)
-                else:
-                    # Find all pages with translations and process them
-                    translation_df = self.main_df[
-                        self.main_df.apply(lambda row: bool(self.find_chunk_text(row.name)[1]), axis=1)
-                    ]
-                    if not translation_df.empty:
-                        self.process_translation_chunks(translation_df, all_or_one_flag)
-                        
-                # Exit early since we've handled everything in the specialized methods
-                return
-                
             elif ai_job == "Chunk_Translation":
                 # This is a special internal job type not directly called by users
                 pass
@@ -2521,9 +3660,6 @@ class App(TkinterDnD.Tk):
                     batch_df = self.main_df.loc[[row]]
                 else:
                     batch_df = self.main_df[self.main_df['Image_Path'].notna() & (self.main_df['Image_Path'] != '')]
-                           
-
-            
             else:
                 batch_df = self.main_df[self.main_df['Image_Path'].notna() & (self.main_df['Image_Path'] != '')]
 
@@ -2618,7 +3754,9 @@ class App(TkinterDnD.Tk):
             self.error_logging(f"Error in ai_function: {str(e)}")
 
         finally:
-            self.progress_bar.close_progress_window()
+            # Only close the progress window if we created one (Chunk_Text is handled separately)
+            if ai_job != "Chunk_Text" and 'progress_window' in locals():
+                self.progress_bar.close_progress_window()
             self.load_text()
             self.counter_update()
             self.toggle_button_state()
@@ -2753,81 +3891,6 @@ class App(TkinterDnD.Tk):
         except Exception as e:
             self.error_logging(f"Critical error in get_images_for_job at index {index}: {str(e)}")
             return []  # Return empty list as safe fallback
-    
-    def get_doc_type_with_ai(self):
-        pass
-        # print ("In get_doc_type_with_ai")
-        
-        # # Build the list of document types from the chunk_text_presets
-        # doc_types = [preset['name'] for preset in self.settings.chunk_text_presets] if self.settings.chunk_text_presets else []
-        # list_of_doc_types = str(doc_types)
-        
-        # system_prompt = (
-        #     f'You are a function in a program that classifies historical documents according to a set scheme. '
-        #     f'You examine images of documents, write "Output:" and then output the most correct general classification '
-        #     f'from the following list: {list_of_doc_types}, nothing else. If none of those apply or if more than one of '
-        #     f'those applies, write "Output: Other" or "Output: N/A".'
-        # )
-        # user_prompt = ""  # Specific instructions are empty
-        
-        # # API call settings
-        # temp = 0.2
-        # val_text = "Output:"
-        # engine = "gemini-2.0-flash"
-        
-        # # Prepare image data using the current image if available
-        # if hasattr(self, 'current_image_path') and self.current_image_path:
-        #     image_tuple = (self.current_image_path, "Document Image:")
-        #     image_data = self.api_handler.prepare_image_data(
-        #         [image_tuple], 
-        #         engine, 
-        #         is_base64=not ("gemini" in engine.lower())
-        #     )
-        # else:
-        #     image_data = []
-        
-        # text_to_process = ""
-        # index = 0  # Placeholder index
-        
-        # try:
-        #     result = asyncio.run(
-        #         self.process_api_request(
-        #             system_prompt=system_prompt,
-        #             user_prompt=user_prompt,
-        #             temp=temp,
-        #             image_data=image_data,
-        #             text_to_process=text_to_process,
-        #             val_text=val_text,
-        #             engine=engine,
-        #             index=index,
-        #             is_base64=not ("gemini" in engine.lower()),
-        #             formatting_function=False
-        #         )
-        #     )
-        #     # Unpack the tuple returned by process_api_request
-        #     response, _ = result
-
-        #     print ("Response: ", response)
-
-        #     # Keep only the first line of the response
-        #     first_line = response.split("\n")[0].strip()
-        #     # Remove the "Output:" prefix if present
-        #     if first_line.startswith("Output:"):
-        #         classification = first_line[len("Output:"):].strip()
-        #     else:
-        #         classification = first_line
-            
-        #     print ("Classification: ", classification)
-            
-        #     # Check if the classification is valid
-        #     doc_types = [preset['name'] for preset in self.settings.chunk_text_presets]
-        #     if classification in doc_types:
-        #         self.chunking_strategy_var.set(classification)
-        #     else:
-        #         self.chunking_strategy_var.set("")
-                
-        # except Exception as e:
-        #     self.chunking_strategy_var.set("")
 
     def collate_names_and_places(self):
         """
@@ -2840,26 +3903,47 @@ class App(TkinterDnD.Tk):
             self.collated_names_raw = ""
             self.collated_places_raw = ""
             
+            # Create progress window first so user gets immediate feedback
+            progress_window, progress_bar, progress_label = self.progress_bar.create_progress_window("Collating Names and Places")
+            self.progress_bar.update_progress(5, 100)  # Show 5% progress immediately
+
             def gather_unique_items(column_name):
                 """Helper function to gather unique items from a DataFrame column"""
                 try:
                     all_items = []
                     if column_name in self.main_df.columns:
-                        for val in self.main_df[column_name].dropna():
+                        for idx, val in self.main_df[column_name].dropna().items():
                             if val.strip():
                                 entries = [x.strip() for x in val.split(';') if x.strip()]
+                                self.error_logging(f"Gathered {len(entries)} items from {column_name} row {idx}: {entries}", level="DEBUG")
                                 all_items.extend(entries)
-                    return sorted(set(all_items), key=lambda x: x.lower())
+                    unique_items = sorted(set(all_items), key=lambda x: x.lower())
+                    self.error_logging(f"Total unique {column_name}: {len(unique_items)}", level="DEBUG")
+                    return unique_items
                 except Exception as e:
                     self.error_logging(f"Error gathering items from {column_name}: {str(e)}")
                     return []
 
             # Gather unique names and places using the helper function
+            self.error_logging("Starting to gather unique names", level="DEBUG")
             unique_names = gather_unique_items('People')
+            self.progress_bar.update_progress(15, 100)  # Update to 15% after gathering names
+            
+            self.error_logging("Starting to gather unique places", level="DEBUG")
             unique_places = gather_unique_items('Places')
+            self.progress_bar.update_progress(25, 100)  # Update to 25% after gathering places
+            
+            # Log the counts
+            self.error_logging(f"Found {len(unique_names)} unique names and {len(unique_places)} unique places", level="INFO")
+            if unique_names:
+                self.error_logging(f"Sample names: {unique_names[:10]}", level="DEBUG")
+            if unique_places:
+                self.error_logging(f"Sample places: {unique_places[:10]}", level="DEBUG")
 
             # If there's nothing to collate, return early
             if not unique_names and not unique_places:
+                self.error_logging("No names or places to collate", level="INFO")
+                self.progress_bar.close_progress_window()
                 return
 
             # Create tasks list
@@ -2872,19 +3956,18 @@ class App(TkinterDnD.Tk):
             # System prompt
             system_message = (
                 "You are given a list of historical names or places. You will assemble lists that will be used to automatically find and replace spellings to normalize the text. Each list will "
-                "contain variants of the same entity spelled incorrectly or with OCR errors." 
-                "Ignore minor variants such as the inclusion of 'Mr' or other suffixes in names and concentrate on the core name as it would be used in a keyword search."
-                "For name variants where the first name/iniital are different, groupt these together separately."
-                "List only place names with multiple variants, group them together (using your judgement to combine names/places that are obvious errors or that are phonetically similar together) and pick the best spelling. Output them as:\n\n"
+                "contain variants of the same entity spelled incorrectly or with OCR errors.\n" 
+                "Ignore minor variants such as the inclusion of 'Mr' or other suffixes in names and concentrate on the core name as it would be used in a keyword search.\n"
+                "For name variants where the first name/initial are different, group these together separately.\n"
+                "You MUST include ALL names or places from the input list - don't skip any!\n"
+                "IMPORTANT: Every single name or place from the input list MUST appear somewhere in your output.\n"
+                "List all place names with multiple variants, group them together (using your judgment to combine names/places that are obvious errors or that are phonetically similar together) and pick the best spelling. Output them as:\n\n"
                 "Response:\n"
                 "most_complete_spelling = variant1; variant2; ...\n"
                 "most_complete_spelling = variant1; variant2; ...\n"
             )
-
-            # Show progress
-            progress_window, progress_bar, progress_label = self.progress_bar.create_progress_window("Collating Names and Places")
-            total_tasks = len(tasks)
-            processed_tasks = 0
+            
+            self.progress_bar.update_progress(35, 100)  # Update after preparing data
 
             try:
                 # Process using same pattern as ai_function
@@ -2892,13 +3975,15 @@ class App(TkinterDnD.Tk):
                 with ThreadPoolExecutor(max_workers=1) as executor:
                     futures_to_label = {}
                     
-                    for label, items in tasks:
+                    # Submit both tasks
+                    for i, (label, items) in enumerate(tasks):
+                        self.error_logging(f"Preparing {label} task with {len(items)} items", level="DEBUG")
                         text_for_llm = "\n".join(items)
                         future = executor.submit(
                             asyncio.run,
                             self.process_api_request(
                                 system_prompt=system_message,
-                                user_prompt=f"Below is a list of {label}. Collate them.\n\n{text_for_llm}",
+                                user_prompt=f"Below is a list of {label}. Collate them. You MUST include ALL items in your output - every single item in the list must appear somewhere in your response. Do not skip any items even if they seem like duplicates or errors.\n\n{text_for_llm}",
                                 temp=0.5,
                                 image_data=[],
                                 text_to_process="",
@@ -2909,24 +3994,57 @@ class App(TkinterDnD.Tk):
                             )
                         )
                         futures_to_label[future] = label
-
+                        self.progress_bar.update_progress(40 + i*10, 100)  # 40% after submitting first task, 50% after second
+                    
+                    # Calculate progress increments for API calls
+                    progress_per_task = 40 / len(tasks) if tasks else 0
+                    progress_base = 50  # Start from 50%
+                    
                     # Process results
-                    for future in as_completed(futures_to_label):
+                    for i, future in enumerate(as_completed(futures_to_label)):
                         label = futures_to_label[future]
                         try:
-                            response, _ = future.result(timeout=30)  # Add timeout
+                            self.error_logging(f"Processing {label} API response", level="DEBUG")
+                            response, _ = future.result(timeout=60)  # Add timeout of 60 seconds
+                            self.error_logging(f"Received {label} response length: {len(response)}", level="DEBUG")
                             results[label] = response
                         except Exception as e:
                             self.error_logging(f"Error processing {label}: {str(e)}")
                             results[label] = ""
                         
-                        # Update progress
-                        processed_tasks += 1
-                        self.progress_bar.update_progress(processed_tasks, total_tasks)
+                        # Update progress - 50% to 90% during API calls
+                        current_progress = progress_base + (i + 1) * progress_per_task
+                        self.progress_bar.update_progress(min(90, current_progress), 100)
 
                 # Store results
                 self.collated_names_raw = results.get("names", "")
                 self.collated_places_raw = results.get("places", "")
+                
+                # Log the results for debugging
+                if self.collated_names_raw:
+                    self.error_logging(f"Collated names sample: {self.collated_names_raw[:200]}", level="DEBUG")
+                if self.collated_places_raw:
+                    self.error_logging(f"Collated places sample: {self.collated_places_raw[:200]}", level="DEBUG")
+                
+                # Verify if all names/places are present by parsing the results
+                names_dict = self.parse_collation_response(self.collated_names_raw)
+                places_dict = self.parse_collation_response(self.collated_places_raw)
+                
+                # Count total variants in dictionaries
+                name_variants_count = sum(len(variants) for variants in names_dict.values())
+                place_variants_count = sum(len(variants) for variants in places_dict.values())
+                
+                self.error_logging(f"Parsed {len(names_dict)} name groups with {name_variants_count} total variants", level="INFO")
+                self.error_logging(f"Parsed {len(places_dict)} place groups with {place_variants_count} total variants", level="INFO")
+                
+                # Check for missing items
+                if unique_names and name_variants_count < len(unique_names) * 0.8:  # If less than 80% included
+                    self.error_logging(f"Warning: Only {name_variants_count} of {len(unique_names)} names were included in the result", level="WARNING")
+                
+                if unique_places and place_variants_count < len(unique_places) * 0.8:  # If less than 80% included
+                    self.error_logging(f"Warning: Only {place_variants_count} of {len(unique_places)} places were included in the result", level="WARNING")
+                
+                self.progress_bar.update_progress(95, 100)  # Almost done
 
             except Exception as e:
                 self.error_logging(f"Error in main processing: {str(e)}")
@@ -2935,6 +4053,7 @@ class App(TkinterDnD.Tk):
             finally:
                 # Clean up progress bar
                 try:
+                    self.progress_bar.update_progress(100, 100)  # Complete the progress
                     self.progress_bar.close_progress_window()
                 except Exception as e:
                     self.error_logging(f"Error closing progress window: {str(e)}")
@@ -2946,228 +4065,19 @@ class App(TkinterDnD.Tk):
             # Ensure defaults are set
             self.collated_names_raw = ""
             self.collated_places_raw = ""
+            # Make sure progress window is closed
+            if 'progress_bar' in locals() and hasattr(self, 'progress_bar'):
+                try:
+                    self.progress_bar.close_progress_window()
+                except:
+                    pass
         
         finally:
             # Final cleanup and UI update
             try:
                 self.update()  # Force GUI update
             except Exception as e:
-                self.error_logging(f"Error in final UI update: {str(e)}")# Main Loop
-                
-    def create_chunk_text_window(self, all_or_one_flag):
-        """
-        Creates a window for selecting document type before running Chunk_Text
-        """
-        # Create the window
-        chunk_window = tk.Toplevel(self)
-        chunk_window.title("Select Document Type")
-        chunk_window.geometry("400x200")
-        chunk_window.grab_set()  # Make window modal
-        
-        # Message explaining purpose
-        message_label = tk.Label(chunk_window, 
-            text="Select the document type for text chunking:",
-            font=("Calibri", 12))
-        message_label.pack(pady=15)
-        
-        # Create the chunking strategy dropdown in this window
-        dropdown_frame = tk.Frame(chunk_window)
-        dropdown_frame.pack(pady=10)
-        
-        chunking_label = tk.Label(dropdown_frame, text="Document Type:")
-        chunking_label.pack(side="left", padx=5)
-        
-        # Create a new StringVar for this window's dropdown
-        window_chunking_var = tk.StringVar()
-        
-        # If there's already a selected strategy, use it as default
-        if hasattr(self, 'chunking_strategy_var') and self.chunking_strategy_var.get():
-            window_chunking_var.set(self.chunking_strategy_var.get())
-        
-        # Get preset names for the dropdown
-        preset_names = [p['name'] for p in self.settings.chunk_text_presets] if self.settings.chunk_text_presets else []
-        
-        # Create the dropdown
-        chunking_dropdown = ttk.Combobox(dropdown_frame, 
-                                      textvariable=window_chunking_var,
-                                      values=preset_names, 
-                                      state="readonly", 
-                                      width=30)
-        chunking_dropdown.pack(side="left", padx=5)
-        
-        # Set a default value if available
-        if preset_names and not window_chunking_var.get():
-            window_chunking_var.set(preset_names[0])
-        
-        # Buttons frame
-        button_frame = tk.Frame(chunk_window)
-        button_frame.pack(pady=20)
-        
-        # Function to handle OK button
-        def on_ok():
-            # Set the main window's chunking strategy variable
-            self.chunking_strategy_var.set(window_chunking_var.get())
-            # Close the window
-            chunk_window.destroy()
-            # Run the AI function with the selected parameters
-            self.ai_function(all_or_one_flag=all_or_one_flag, ai_job="Chunk_Text")
-        
-        # Function to handle Cancel button
-        def on_cancel():
-            chunk_window.destroy()
-        
-        # Create buttons
-        ok_button = tk.Button(button_frame, text="OK", command=on_ok, width=10)
-        ok_button.pack(side="left", padx=10)
-        
-        cancel_button = tk.Button(button_frame, text="Cancel", command=on_cancel, width=10)
-        cancel_button.pack(side="left", padx=10)
-        
-        # Center the window on the screen
-        chunk_window.update_idletasks()
-        width = chunk_window.winfo_width()
-        height = chunk_window.winfo_height()
-        x = (chunk_window.winfo_screenwidth() // 2) - (width // 2)
-        y = (chunk_window.winfo_screenheight() // 2) - (height // 2)
-        chunk_window.geometry(f'{width}x{height}+{x}+{y}')
-        
-        # Wait for the window to be closed
-        self.wait_window(chunk_window)
-
-    def find_chunk_text(self, index_no):
-        """
-        Special version of find_right_text specifically for Chunk_Text operations.
-        Prioritizes First_Draft -> Original_Text, never uses Translation.
-        Returns a tuple of (text_to_use, has_translation) where has_translation is a boolean.
-        """
-        first_draft = self.main_df.loc[index_no, 'First_Draft'] if 'First_Draft' in self.main_df.columns else ""
-        original_text = self.main_df.loc[index_no, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
-        translation = self.main_df.loc[index_no, 'Translation'] if 'Translation' in self.main_df.columns else ""
-        
-        # Check if translation exists and is non-empty
-        has_translation = pd.notna(translation) and translation.strip() != ""
-        
-        # First try First_Draft
-        if pd.notna(first_draft) and first_draft.strip():
-            return first_draft, has_translation
-        # Then try Original_Text
-        elif pd.notna(original_text) and original_text.strip():
-            return original_text, has_translation
-        # If neither is available, return empty string
-        else:
-            return "", has_translation
-
-    def update_df_with_ai_job_response(self, ai_job, index, response):
-        """Update the DataFrame with the AI job response"""
-        try:
-            if response == "Error":
-                return
-            
-            # Get the current text display mode
-            selected = self.text_display_var.get()
-            
-            # Update based on job type
-            if ai_job == "HTR":
-                self.main_df.loc[index, 'Original_Text'] = response
-                self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
-            elif ai_job == "Correct_Text":
-                self.main_df.loc[index, 'First_Draft'] = response
-                self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
-            elif ai_job == "Get_Names_and_Places":
-                print(f"\nProcessing Names and Places response: {response}")
-                # Make sure the People and Places columns exist
-                if 'People' not in self.main_df.columns:
-                    self.main_df['People'] = ""
-                if 'Places' not in self.main_df.columns:
-                    self.main_df['Places'] = ""
-                
-                # Initialize empty values
-                names = ""
-                places = ""
-                
-                # New parsing approach for multi-line format
-                lines = response.split('\n')
-                
-                # Find positions of headers
-                names_idx = -1
-                places_idx = -1
-                
-                for i, line in enumerate(lines):
-                    if line.lower().strip() == "names:":
-                        names_idx = i
-                    elif line.lower().strip() == "places:":
-                        places_idx = i
-                
-                # Extract names (everything between "Names:" and "Places:" or end)
-                if names_idx >= 0:
-                    names_end = places_idx if places_idx > names_idx else len(lines)
-                    names_lines = [line.strip() for line in lines[names_idx+1:names_end] if line.strip()]
-                    names = "; ".join(names_lines)
-                
-                # Extract places (everything after "Places:")
-                if places_idx >= 0:
-                    places_lines = [line.strip() for line in lines[places_idx+1:] if line.strip()]
-                    places = "; ".join(places_lines)
-                
-                print(f"Extracted Names: '{names}'")
-                print(f"Extracted Places: '{places}'")
-                
-                # Update the DataFrame
-                self.main_df.loc[index, 'People'] = names
-                self.main_df.loc[index, 'Places'] = places
-                
-                print(f"Updated DataFrame - People: '{self.main_df.loc[index, 'People']}'")
-                print(f"Updated DataFrame - Places: '{self.main_df.loc[index, 'Places']}'")
-                
-            elif ai_job == "Chunk_Text":
-                # Store the response in Final_Draft
-                self.main_df.loc[index, 'Final_Draft'] = response
-                self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
-                
-                # If translation exists, also store a copy in Translation column
-                if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
-                    # We'll handle this in a separate AI job for translation chunking
-                    pass
-            elif ai_job == "Chunk_Translation":
-                # Special job type for chunking translations
-                if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
-                    self.main_df.loc[index, 'Translation'] = response
-            elif ai_job == "Auto_Rotate":
-                self.update_image_rotation(index, response)
-            elif ai_job == "Identify_Errors":
-                print("\nProcessing Identify_Errors response:")
-                print(f"Raw response: {response}")
-                
-                # Take just the first line
-                errors = response.split('\n')[0].strip()
-                print(f"Extracted errors: {errors}")
-                self.main_df.loc[index, 'Errors'] = errors
-                
-                # If there are errors, highlight them in the text
-                if errors:
-                    # Split errors by semicolon and strip whitespace
-                    error_terms = [term.strip() for term in errors.split(';') if term.strip()]
-                    print(f"Error terms to highlight: {error_terms}")
-                    
-                    # Clear existing highlights
-                    self.text_display.tag_remove("error_highlight", "1.0", tk.END)
-                    
-                    # Add new error highlights
-                    for term in error_terms:
-                        self.highlight_term(term, "error_highlight", exact_match=True)
-                    
-                    # Configure error highlight style
-                    self.text_display.tag_configure("error_highlight", background="cyan")
-            elif ai_job == "Translation":
-                self.main_df.loc[index, 'Translation'] = response
-                self.main_df.loc[index, 'Text_Toggle'] = "Translation"
-            
-            # Load the updated text
-            self.load_text()
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to update DataFrame: {str(e)}")
-            self.error_logging(f"Failed to update DataFrame: {str(e)}")
+                self.error_logging(f"Error in final UI update: {str(e)}")
 
     def process_chunk_text(self, batch_df, all_or_one_flag, ai_job_type):
         """
@@ -3270,6 +4180,17 @@ class App(TkinterDnD.Tk):
             if translation_df.empty:
                 return
                 
+            # Count actual non-empty translations
+            translations_to_process = 0
+            for index, row_data in translation_df.iterrows():
+                text = row_data['Translation'] if pd.notna(row_data['Translation']) else ""
+                if text.strip():
+                    translations_to_process += 1
+                    
+            # If no actual translations to process, return early
+            if translations_to_process == 0:
+                return
+                
             # Get job parameters - use the same as Chunk_Text
             job_params = self.setup_job_parameters("Chunk_Text")
             batch_size = job_params.get('batch_size', 50)
@@ -3279,7 +4200,7 @@ class App(TkinterDnD.Tk):
             progress_window, progress_bar, progress_label = self.progress_bar.create_progress_window(progress_title)
             self.progress_bar.update_progress(0, 1)
             
-            total_rows = len(translation_df)
+            total_rows = translations_to_process
             processed_rows = 0
             error_count = 0
             processed_indices = set()
@@ -3348,9 +4269,56 @@ class App(TkinterDnD.Tk):
             self.error_logging(f"Error in process_translation_chunks: {str(e)}")
             
         finally:
-            # Close progress window
-            self.progress_bar.close_progress_window()
+            # Only close progress window if we created one
+            if 'progress_window' in locals():
+                self.progress_bar.close_progress_window()
             self.load_text()
+            self.counter_update()
+
+    def run_collation_and_open_window(self):
+        """
+        First collects names and places from the LLM, then shows the GUI for user editing.
+        """
+        # 1) Collect suggestions from the LLM automatically
+        self.collate_names_and_places()
+
+        # 2) Now show the user a GUI with the raw lines
+        self.create_collate_names_places_window()
+
+    def refresh_display(self):
+        """Refresh the current image and text display with proper path handling"""
+        if not self.main_df.empty:
+            # Ensure page_counter is within valid bounds
+            self.page_counter = min(self.page_counter, len(self.main_df) - 1)
+            self.page_counter = max(0, self.page_counter)
+
+            try:
+                # Get image path
+                image_path = self.main_df.iloc[self.page_counter]['Image_Path']
+                
+                # Convert to absolute path if necessary
+                if not os.path.isabs(image_path):
+                    image_path = os.path.join(self.project_directory, image_path)
+                
+                # Verify file exists
+                if os.path.exists(image_path):
+                    self.current_image_path = image_path
+                    self.image_handler.load_image(self.current_image_path)
+                    self.load_text()
+                else:
+                    messagebox.showerror("Error", f"Image file not found: {image_path}")
+                    
+                self.counter_update()
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to refresh display: {str(e)}")
+                self.error_logging(f"Refresh display error: {str(e)}")
+        else:
+            self.error_logging("No images to display", level="INFO")
+            # Clear the image display
+            self.image_display.delete("all")
+            # Clear the text display
+            self.text_display.delete("1.0", tk.END)
             self.counter_update()
 
 if __name__ == "__main__":
@@ -3362,8 +4330,8 @@ if __name__ == "__main__":
         print(f"Critical error in main loop: {str(e)}")
         # Try to write to error log if possible
         try:
-            with open("critical_error.log", "a") as f:
-                f.write(f"{datetime.now()}: {str(e)}\n")
+            with open("util/error_logs.txt", "a") as f:
+                f.write(f"{datetime.now()}: CRITICAL: {str(e)}\n{traceback.format_exc()}\n")
         except:
             pass
         # Try to show error message
