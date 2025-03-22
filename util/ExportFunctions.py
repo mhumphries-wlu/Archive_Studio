@@ -6,6 +6,7 @@ import fitz
 from PIL import Image
 import pandas as pd
 import asyncio
+import traceback
 
 class ExportManager:
     def __init__(self, app):
@@ -346,18 +347,35 @@ class ExportManager:
             return
             
         try:
+            # Add a debug log at the start of export process
+            self.app.error_logging("Starting CSV export process")
+            print(f"Starting CSV export process with {len(self.app.main_df)} rows in main_df")
+            
             # Check if Custom Separation is requested and available
             documents_separated = False
             if use_custom_separation:
                 try:
-                    # Check if any text contains the separator
-                    combined_text = ""
+                    # More thorough check for separators - look at each row individually
+                    separator_count = 0
+                    pages_with_separators = []
+                    
                     for index, row in self.app.main_df.iterrows():
                         text = self.app.find_right_text(index)
-                        combined_text += text + " "
+                        if "*****" in text:
+                            separator_count += text.count("*****")
+                            pages_with_separators.append(index)
                     
-                    documents_separated = "*****" in combined_text
-                except:
+                    documents_separated = separator_count > 0
+                    
+                    if documents_separated:
+                        print(f"Found {separator_count} document separators ('*****') across {len(pages_with_separators)} pages")
+                        print(f"Pages with separators: {pages_with_separators}")
+                    else:
+                        print(f"No document separators found in any pages")
+                        
+                except Exception as e:
+                    print(f"Error checking for document separators: {str(e)}")
+                    self.app.error_logging(f"Error checking for document separators: {str(e)}")
                     documents_separated = False
                 
                 if not documents_separated:
@@ -370,17 +388,40 @@ class ExportManager:
             
             # If using custom separation, use the existing document analyzer method
             if use_custom_separation and documents_separated:
-                # Create analyzer to access compile_documents functionality
-                from util.AnalyzeDocuments import AnalyzeDocuments
-                analyzer = AnalyzeDocuments(self.app)
-                
-                # Compile documents into dataframe using document separators
-                compiled_df = analyzer.compile_documents(force_recompile=True)
-                
-                if compiled_df is None or compiled_df.empty:
-                    messagebox.showwarning("Warning", "No documents were found to export. Please check if your documents are properly separated.")
-                    return
-            else:
+                try:
+                    # Create analyzer to access compile_documents functionality
+                    from util.AnalyzeDocuments import AnalyzeDocuments
+                    analyzer = AnalyzeDocuments(self.app)
+                    
+                    # Force recompile to ensure document separators are processed
+                    print("Compiling documents using document separators...")
+                    compiled_df = analyzer.compile_documents(force_recompile=True)
+                    
+                    if compiled_df is None or compiled_df.empty:
+                        print("WARNING: compile_documents returned empty dataframe")
+                        messagebox.showwarning("Warning", "No documents were found to export. Please check if your documents are properly separated.")
+                        return
+                    else:
+                        print(f"Successfully compiled {len(compiled_df)} documents from separated text")
+                        # Ensure we have the basic columns needed for export
+                        if 'Text' not in compiled_df.columns:
+                            print("Adding missing 'Text' column to compiled dataframe")
+                            compiled_df['Text'] = ""
+                        if 'Document_Page' not in compiled_df.columns:
+                            print("Adding missing 'Document_Page' column to compiled dataframe")
+                            compiled_df['Document_Page'] = compiled_df.index + 1
+                except Exception as e:
+                    print(f"Error compiling documents: {str(e)}")
+                    self.app.error_logging(f"Error compiling documents: {str(e)}")
+                    # Fall back to basic pagination
+                    messagebox.showwarning(
+                        "Warning", 
+                        f"Error compiling documents: {str(e)}\n\nFalling back to Basic Pagination."
+                    )
+                    use_custom_separation = False
+                    documents_separated = False
+            
+            if not use_custom_separation or not documents_separated:
                 # Basic Pagination: Each page is its own row in the CSV
                 compiled_df = self.app.main_df.copy()
                 
@@ -448,19 +489,51 @@ class ExportManager:
                     
                     # Create a wrapper function to handle and extract metadata
                     def metadata_response_handler(ai_job, idx, response):
-                        # First call the original function to do its normal processing
-                        result = original_update_func(ai_job, idx, response)
-                        
-                        # Then extract and structure metadata from the response
-                        self.extract_and_map_metadata(temp_df, idx, response)
-                        
-                        return result
+                        try:
+                            # First call the original function to do its normal processing
+                            result = original_update_func(ai_job, idx, response)
+                            
+                            # Then extract and structure metadata from the response
+                            print(f"Processing metadata for index {idx}")
+                            success = self.extract_and_map_metadata(temp_df, idx, response)
+                            if not success:
+                                print(f"WARNING: Failed to extract metadata for index {idx}")
+                            else:
+                                print(f"Successfully extracted metadata for index {idx}")
+                            
+                            return result
+                        except Exception as e:
+                            print(f"ERROR in metadata_response_handler for index {idx}: {str(e)}")
+                            self.app.error_logging(f"Error in metadata_response_handler for index {idx}: {str(e)}")
+                            return None
                     
                     # Replace the app's update function with our wrapper
                     self.app.update_df_with_ai_job_response = metadata_response_handler
                     
                     # Call the app's AI function with the standard Metadata job
+                    print("Starting metadata generation with AI function...")
+                    # Add tracking for processed rows
+                    processed_indices = set()
+                    
+                    # Create a wrapper for update function to track processed indices
+                    original_update = self.app.update_df_with_ai_job_response
+                    
+                    def tracking_update_wrapper(ai_job, idx, response):
+                        processed_indices.add(idx)
+                        return metadata_response_handler(ai_job, idx, response)
+                    
+                    # Replace the wrapper
+                    self.app.update_df_with_ai_job_response = tracking_update_wrapper
+                    
                     self.app.ai_function(all_or_one_flag="All Pages", ai_job="Metadata")
+                    print("Metadata generation completed")
+                    
+                    # Check if any indices were skipped
+                    all_expected_indices = set(range(len(temp_df)))
+                    skipped_indices = all_expected_indices - processed_indices
+                    if skipped_indices:
+                        print(f"WARNING: The following indices were skipped: {sorted(skipped_indices)}")
+                        self.app.error_logging(f"WARNING: Skipped metadata generation for indices: {sorted(skipped_indices)}")
                     
                     # Retrieve the updated dataframe
                     updated_df = self.app.main_df.copy()
@@ -468,14 +541,35 @@ class ExportManager:
                     # Copy only the metadata columns back to compiled_df
                     metadata_columns = ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place',
                                         'Creation_Place', 'Date', 'Places', 'People', 'Summary']
+                    
+                    update_counts = {col: 0 for col in metadata_columns}
                     for col in metadata_columns:
                         if col in updated_df.columns:
                             compiled_df[col] = updated_df[col]
+                            # Count non-empty values
+                            update_counts[col] = updated_df[col].notna().sum()
                     
+                    # Print summary of updates
+                    print("\nMetadata generation summary:")
+                    for col, count in update_counts.items():
+                        print(f"  {col}: {count} entries")
+                    
+                except Exception as e:
+                    print(f"CRITICAL ERROR in metadata generation: {str(e)}")
+                    self.app.error_logging(f"Critical error in metadata generation: {str(e)}")
+                    traceback_str = traceback.format_exc()
+                    print(traceback_str)
+                    self.app.error_logging(f"Traceback: {traceback_str}")
+                
                 finally:
                     # Restore the original main_df and update function
                     self.app.main_df = original_df
                     self.app.update_df_with_ai_job_response = original_update_func
+                    
+                    # Refresh the UI display
+                    self.app.refresh_display()
+                    self.app.load_text()
+                    self.app.counter_update()
             
             # If single_author was set, reapply it to override AI-generated values
             if single_author:
@@ -688,6 +782,19 @@ class ExportManager:
             # Save the filtered dataframe to CSV
             final_export_df.to_csv(file_path, index=False, encoding='utf-8')
             
+            # Log summary of what was exported - helps diagnose missing rows
+            print(f"Exported CSV with {len(final_export_df)} rows to {file_path}")
+            # Log first few rows with metadata to check if they have expected data
+            print("Sample of exported data (first 3 rows):")
+            sample_df = final_export_df.head(3)
+            for idx, row in sample_df.iterrows():
+                print(f"Row {idx} metadata status:")
+                for col in ['Document_Type', 'Author', 'Date', 'Summary']:
+                    if col in row and not pd.isna(row[col]) and row[col]:
+                        print(f"  {col}: Present")
+                    else:
+                        print(f"  {col}: MISSING")
+            
             messagebox.showinfo("Success", "CSV exported successfully!")
             
         except Exception as e:
@@ -697,6 +804,10 @@ class ExportManager:
             # Ensure the original main_df is restored
             if 'original_df' in locals():
                 self.app.main_df = original_df
+                # Refresh the UI display
+                self.app.refresh_display()
+                self.app.load_text()
+                self.app.counter_update()
 
     def extract_and_map_metadata(self, df, idx, response):
         """
@@ -714,6 +825,7 @@ class ExportManager:
             # Check if response is None or empty
             if not response:
                 self.app.error_logging(f"Empty response for idx {idx}")
+                print(f"Empty response for idx {idx}")
                 return False
                 
             # Log the entire response for debugging
@@ -809,6 +921,9 @@ class ExportManager:
                 self.app.error_logging(f"No fields were updated for idx {idx}. Parsed metadata text:\n{metadata_text}")
                 # Print to console as well for immediate visibility
                 print(f"ERROR: No fields were updated for idx {idx}. Parsed metadata text:\n{metadata_text}")
+                # Print the fields that were found but not mapped
+                print(f"Fields found in response: {list(field_values.keys())}")
+                print(f"Available df columns: {list(df.columns)}")
                 return False
             
         except Exception as e:

@@ -92,9 +92,6 @@ class ProjectIO:
 
             messagebox.showinfo("Success", "Project loaded successfully.")
             
-            # Trigger document classification upon project load
-            self.app.get_doc_type_with_ai()
-
         except Exception as e:
             messagebox.showerror("Error", f"Failed to open project: {e}")
             self.app.error_logging("Failed to open project", str(e))
@@ -203,7 +200,6 @@ class ProjectIO:
             pdf_document.close()
             self.app.refresh_display()
             self.app.progress_bar.close_progress_window()
-            self.app.get_doc_type_with_ai()
             messagebox.showinfo("Success", f"PDF processed successfully. {total_pages} pages added.")
 
         except Exception as e:
