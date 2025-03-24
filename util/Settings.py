@@ -270,9 +270,9 @@ Current Document to Analyze: {text_to_process}''',
         self.analysis_presets = [
             {
                 'name': "Relevance",
-                'model': "gpt-4o",
+                'model': "gemini-2.0-flash",
                 'temperature': "0.3",
-                'general_instructions' : '''You provide expert historical analysis. You examine a historical document and evaluate whether it meets the relevance criteria specified by a user. That criteria might include subjective factors such as whether the given document might be relevant to a particular research question or theme, or objective factors such as whether the document fits specific temporal or geographic requirements. Read the user's instructions, then the document provided, and determine whether the document fits the user's relevance criteria or not. Provide a confidence level for your judgement where 100% means absolute certainty. \n\nYou must end your response by writing: "Relevance:" followed by "Relevant", "Irrelevant", or "Uncertain". Then write "Confidence Level:" followed by your level of confidence in this judgement out of 100%.''',
+                'general_instructions' : '''You provide expert historical analysis. You examine a historical document and evaluate whether it meets the relevance criteria specified by a user. That criteria might include subjective factors such as whether the given document might be relevant to a particular research question or theme, or objective factors such as whether the document fits specific temporal or geographic requirements. Read the user's instructions, then the document provided, and determine whether the document fits the user's relevance criteria or not. Provide a confidence level for your judgement where 100% means absolute certainty. \n\nYou must end your response by writing: "Relevance:" followed by "Relevant", "Partially Relevant", "Irrelevant", or "Uncertain".''',
                 'specific_instructions': '''The user's query and specific criteria are as follows: {query_text}. \n\n Here is the text to analyze:\n\n{text_to_process}''',
                 'use_images': False,
                 'current_image': "No",
@@ -280,7 +280,19 @@ Current Document to Analyze: {text_to_process}''',
                 'num_after_images': "0",
                 'val_text': "Relevance:",
                 'dataframe_field': "Relevance"
-            },          
+            },
+            {
+                'name': "Bounding_Boxes",
+                'model': "gemini-2.0-flash",
+                'temperature': "0.0",
+                'general_instructions': '''You draw bounding boxes on an image of historical documents to identify the location of specific text. ''',
+                'specific_instructions': '''In the accompanying image, identify bounding boxes for each section of the image that would surround the following text blocks. Make sure your boxes will capture all the text by providing generous margins: \n\n {text_to_process}''',
+                'use_images': True,
+                'current_image': "Yes",
+                'num_prev_images': "0",
+                'num_after_images': "0",
+                'val_text': None
+            }          
         ] # List of dictionaries for analysis presets
         
         # Default metadata presets
