@@ -283,7 +283,7 @@ Current Document to Analyze: {text_to_process}''',
             },
             {
                 'name': "Bounding_Boxes",
-                'model': "gemini-2.0-flash",
+                'model': "gemini-2.0-pro-exp-02-05",
                 'temperature': "0.0",
                 'general_instructions': '''You draw bounding boxes on an image of historical documents to identify the location of specific text. ''',
                 'specific_instructions': '''In the accompanying image, identify bounding boxes for each section of the image that would surround the following text blocks. Make sure your boxes will capture all the text by providing generous margins: \n\n {text_to_process}''',
