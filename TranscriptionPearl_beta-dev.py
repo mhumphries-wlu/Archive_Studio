@@ -185,7 +185,8 @@ class App(TkinterDnD.Tk):
         self.api_handler = APIHandler(
             self.settings.openai_api_key, 
             self.settings.anthropic_api_key, 
-            self.settings.google_api_key
+            self.settings.google_api_key,
+            self
         )
         
         # Initialize the Progress Bar
@@ -702,15 +703,6 @@ class App(TkinterDnD.Tk):
             # Names and Places columns
             "People",
             "Places",
-            # Additional metadata columns that might be useful
-            "Document_No",
-            "Document_Type",
-            "Creation_Date",
-            "Author",
-            "Correspondent",
-            "Creation_Place",
-            "Summary",
-            "Notes",
             # Error tracking
             "Errors"
         ])
@@ -718,16 +710,13 @@ class App(TkinterDnD.Tk):
         # Initialize all text columns as empty strings instead of NaN
         text_columns = [
             "Original_Text", "First_Draft", "Final_Draft", "Translation",
-            "People", "Places", "Document_Type", "Author",
-            "Correspondent", "Creation_Place", "Summary", "Notes",
-            "Errors"  # Add Errors to text columns
+            "People", "Places", "Errors"
         ]
         for col in text_columns:
             self.main_df[col] = ""
         
         # Initialize numeric columns
         self.main_df["Index"] = pd.Series(dtype=int)
-        self.main_df["Document_No"] = pd.Series(dtype=int)
         
         # Initialize date column
         self.main_df["Creation_Date"] = pd.Series(dtype='datetime64[ns]')
@@ -1389,20 +1378,24 @@ class App(TkinterDnD.Tk):
 
     def error_logging(self, error_message, additional_info=None, level="ERROR"):
         """
-        Log errors, warnings, and information to the error log file.
+        Log errors to the error log file.
         
         Args:
             error_message (str): The main error message to log
             additional_info (str, optional): Additional information to include
-            level (str, optional): Log level - ERROR, WARNING, INFO, or DEBUG
+            level (str, optional): Log level - only "ERROR" messages are logged
         """
+        # Skip logging for non-error messages
+        if level != "ERROR":
+            return
+            
         try:
             error_logs_path = "util/error_logs.txt"
             os.makedirs(os.path.dirname(error_logs_path), exist_ok=True)
             
             with open(error_logs_path, "a", encoding='utf-8') as file:
-                # Add stack trace for errors only
-                stack = traceback.format_exc() if level == "ERROR" else None
+                # Add stack trace for errors
+                stack = traceback.format_exc()
                 
                 log_message = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} [{level}]: {error_message}"
                 if additional_info:
@@ -2281,6 +2274,8 @@ class App(TkinterDnD.Tk):
                 
                 # No longer needed: self.highlight_changes_var.set(False)
                 # We now allow multiple highlight types simultaneously
+            elif ai_job == "Metadata":
+                self.extract_metadata_from_response(index, response)
             elif ai_job == "Chunk_Text":
                 # Store the response in Final_Draft
                 self.main_df.loc[index, 'Final_Draft'] = response
@@ -2443,7 +2438,8 @@ class App(TkinterDnD.Tk):
         self.api_handler = APIHandler(
             self.settings.openai_api_key, 
             self.settings.anthropic_api_key, 
-            self.settings.google_api_key
+            self.settings.google_api_key,
+            self
         )
 
     def edit_single_image(self):
@@ -2628,7 +2624,7 @@ class App(TkinterDnD.Tk):
 
     async def process_api_request(self, system_prompt, user_prompt, temp, image_data, 
                                     text_to_process, val_text, engine, index, 
-                                    is_base64=True, formatting_function=False):
+                                    is_base64=True, formatting_function=False, ai_job=None, job_params=None):
         try:
             return await self.api_handler.route_api_call(
                 engine=engine,
@@ -2640,7 +2636,9 @@ class App(TkinterDnD.Tk):
                 val_text=val_text,
                 index=index,
                 is_base64=is_base64,
-                formatting_function=formatting_function
+                formatting_function=formatting_function,
+                job_type=ai_job,
+                job_params=job_params
             )
             
         except Exception as e:
@@ -2908,7 +2906,9 @@ class App(TkinterDnD.Tk):
                                 val_text=job_params['val_text'],
                                 engine=job_params['engine'],
                                 index=index,
-                                is_base64=not "gemini" in job_params['engine'].lower()
+                                is_base64=not "gemini" in job_params['engine'].lower(),
+                                ai_job=ai_job,
+                                job_params=job_params
                             )
                         )
 
@@ -3000,6 +3000,52 @@ class App(TkinterDnD.Tk):
             else:
                 self.error_logging(f"Chunk text preset not found for strategy: {selected_strategy}")
                 raise ValueError(f"Chunk text preset not found for strategy: {selected_strategy}")
+        elif ai_job == "Metadata":
+            # Use the selected metadata preset
+            try:
+                # Get the currently selected metadata preset name
+                preset_name = self.settings.metadata_preset if hasattr(self.settings, 'metadata_preset') else "Standard Metadata"
+                
+                # Find the preset in the metadata_presets list
+                preset = next((p for p in self.settings.metadata_presets if p['name'] == preset_name), None)
+                
+                if preset:
+                    return {
+                        "temp": float(preset.get('temperature', 0.3)),
+                        "val_text": preset.get('val_text', 'Metadata:'),
+                        "engine": preset.get('model', self.settings.model_list[0] if self.settings.model_list else "claude-3-5-sonnet-20241022"),
+                        "user_prompt": preset.get('specific_instructions', 'Text to analyze:\n\n{text_to_process}'),
+                        "system_prompt": preset.get('general_instructions', ''),
+                        "batch_size": self.settings.batch_size,
+                        "use_images": False,  # Metadata doesn't use images by default
+                        "headers": preset.get('metadata_headers', '').split(';') if preset.get('metadata_headers', '') else []
+                    }
+                else:
+                    # If selected preset not found, fall back to legacy settings
+                    self.error_logging(f"Selected metadata preset '{preset_name}' not found, using legacy settings")
+                    return {
+                        "temp": float(self.settings.metadata_temp),
+                        "val_text": self.settings.metadata_val_text,
+                        "engine": self.settings.metadata_model,
+                        "user_prompt": self.settings.metadata_user_prompt,
+                        "system_prompt": self.settings.metadata_system_prompt,
+                        "batch_size": self.settings.batch_size,
+                        "use_images": False,  # Metadata doesn't use images by default
+                        "headers": self.settings.metadata_headers.split(';') if hasattr(self.settings, 'metadata_headers') else []
+                    }
+            except Exception as e:
+                self.error_logging(f"Error setting up metadata parameters: {str(e)}")
+                # If there's an error, use sensible defaults
+                return {
+                    "temp": 0.3,
+                    "val_text": "Metadata:",
+                    "engine": self.settings.model_list[0] if self.settings.model_list else "claude-3-5-sonnet-20241022",
+                    "user_prompt": "Text to analyze:\n\n{text_to_process}",
+                    "system_prompt": "You analyze historical documents to extract information.",
+                    "batch_size": self.settings.batch_size,
+                    "use_images": False,
+                    "headers": ["Document Type", "Author", "Correspondent", "Correspondent Place", "Date", "Place of Creation", "People", "Places", "Summary"]
+                }
         else:
             # Existing logic for function-based AI jobs
             preset = next((p for p in self.settings.function_presets if p['name'] == ai_job), None)
@@ -3315,7 +3361,9 @@ class App(TkinterDnD.Tk):
                             val_text=job_params['val_text'],
                             engine=job_params['engine'],
                             index=index,
-                            is_base64=not "gemini" in job_params['engine'].lower()
+                            is_base64=not "gemini" in job_params['engine'].lower(),
+                            ai_job=ai_job_type,
+                            job_params=job_params
                         )
                     )
                     
@@ -3421,7 +3469,9 @@ class App(TkinterDnD.Tk):
                             val_text=job_params['val_text'],
                             engine=job_params['engine'],
                             index=index,
-                            is_base64=not "gemini" in job_params['engine'].lower()
+                            is_base64=not "gemini" in job_params['engine'].lower(),
+                            ai_job="Chunk_Translation",
+                            job_params=job_params
                         )
                     )
                     
@@ -3563,6 +3613,160 @@ class App(TkinterDnD.Tk):
             errors = self.main_df.loc[index, 'Errors']
             has_errors = pd.notna(errors) and errors.strip() != ""
         self.document_menu.entryconfig("Highlight Errors", state="normal" if has_errors else "disabled")
+
+    def extract_metadata_from_response(self, index, response):
+        """
+        Extract metadata from an AI response and update the DataFrame columns.
+        
+        Args:
+            index (int): The index in the DataFrame to update
+            response (str): The API response text
+            
+        Returns:
+            bool: True if metadata was successfully processed
+        """
+        try:
+            # Check if response is None or empty
+            if not response:
+                self.error_logging(f"Empty metadata response for index {index}")
+                return False
+                
+            # Log the entire response for debugging
+            self.error_logging(f"Raw metadata response for index {index}:\n{response}")
+            
+            # Get metadata parameters
+            job_params = self.setup_job_parameters("Metadata")
+            val_text = job_params.get('val_text', "Metadata:")
+            headers = job_params.get('headers', [])
+            
+            # First, ensure all required metadata columns exist in the DataFrame
+            # Map from header names to column names (convert spaces to underscores)
+            header_to_column = {}
+            for header in headers:
+                header = header.strip()
+                if not header:
+                    continue
+                # Convert header to a valid column name
+                column_name = header.replace(" ", "_")
+                header_to_column[header] = column_name
+                # Add column if it doesn't exist
+                if column_name not in self.main_df.columns:
+                    self.main_df[column_name] = ""
+                    self.error_logging(f"Added new metadata column: {column_name}")
+                    
+            # Try to find metadata even if the specific marker is not present
+            metadata_text = ""
+            
+            # First try with the expected marker
+            if val_text in response:
+                metadata_text = response.split(val_text, 1)[1].strip()
+                self.error_logging(f"Found metadata marker '{val_text}' in response")
+            # Try alternate markers if the main one isn't found
+            elif "Metadata:" in response:
+                metadata_text = response.split("Metadata:", 1)[1].strip()
+                self.error_logging("Using alternate 'Metadata:' marker")
+            # If no markers found, try to use the whole response if it looks like metadata
+            elif ":" in response and len(headers) > 0 and any(header in response for header in headers):
+                metadata_text = response.strip()
+                self.error_logging("No marker found, using full response as it contains metadata fields")
+            else:
+                self.error_logging(f"No recognizable metadata format in response for index {index}")
+                print(f"ERROR: No recognizable metadata format in response for index {index}")
+                return False
+                
+            # Parse the metadata
+            lines = metadata_text.split('\n')
+            current_field = None
+            metadata = {}
+            field_values = {}
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                # Check if this line starts a new field
+                if ":" in line:
+                    parts = line.split(":", 1)
+                    field_name = parts[0].strip()
+                    value = parts[1].strip() if len(parts) > 1 else ""
+                    
+                    # Store field and value
+                    field_values[field_name] = value
+                    
+                    # Start collecting multi-line fields
+                    if field_name == "Summary":
+                        current_field = 'Summary'
+                        metadata[current_field] = value
+                    else:
+                        current_field = None
+                elif current_field == 'Summary':
+                    # Append to the existing summary
+                    metadata[current_field] += " " + line
+            
+            # Update DataFrame
+            fields_updated = 0
+            
+            # First update any fields from the metadata response
+            for field_name, value in field_values.items():
+                # Skip if empty
+                if not value.strip():
+                    continue
+                
+                # Find matching column name
+                column_name = None
+                
+                # First try direct match with header
+                if field_name in header_to_column:
+                    column_name = header_to_column[field_name]
+                
+                # Try alternate mappings for backward compatibility
+                if column_name is None:
+                    alt_mappings = {
+                        "Document Type": "Document_Type",
+                        "Author": "Author",
+                        "Correspondent": "Correspondent",
+                        "Correspondent Place": "Correspondent_Place",
+                        "Date": "Date",
+                        "Place of Creation": "Creation_Place",
+                        "People": "People",
+                        "Places": "Places",
+                        "Summary": "Summary"
+                    }
+                    if field_name in alt_mappings:
+                        column_name = alt_mappings[field_name]
+                
+                # Update the column if we found a match
+                if column_name and column_name in self.main_df.columns:
+                    # Only update if the column is empty or this is a new value
+                    if not pd.notna(self.main_df.at[index, column_name]) or not self.main_df.at[index, column_name].strip():
+                        self.main_df.at[index, column_name] = value
+                        fields_updated += 1
+                        self.error_logging(f"Updated {column_name} with value: {value}")
+            
+            # Preserve existing People and Places if they exist and weren't updated
+            for special_field in ["People", "Places"]:
+                if special_field in self.main_df.columns:
+                    # If the field wasn't updated but has existing value, preserve it
+                    existing_value = self.main_df.at[index, special_field]
+                    if pd.notna(existing_value) and existing_value.strip() and special_field not in field_values:
+                        self.error_logging(f"Preserved existing {special_field}: {existing_value}")
+                        fields_updated += 1  # Count as updated for success check
+            
+            # Check if we actually updated any fields
+            if fields_updated > 0:
+                self.error_logging(f"Successfully processed {fields_updated} metadata fields for index {index}")
+                return True
+            else:
+                self.error_logging(f"No fields were updated for index {index}")
+                # Print to console as well for immediate visibility
+                print(f"ERROR: No fields were updated for index {index}. Parsed metadata text:\n{metadata_text}")
+                return False
+            
+        except Exception as e:
+            self.error_logging(f"Error extracting metadata for index {index}: {str(e)}")
+            print(f"ERROR: Exception extracting metadata for index {index}: {str(e)}")
+            return False
 
 if __name__ == "__main__":
     try:

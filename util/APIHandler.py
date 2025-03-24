@@ -15,15 +15,21 @@ import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
 class APIHandler:
-    def __init__(self, openai_api_key, anthropic_api_key, google_api_key):
+    def __init__(self, openai_api_key, anthropic_api_key, google_api_key, app=None):
         self.openai_api_key = openai_api_key
         self.anthropic_api_key = anthropic_api_key
         self.google_api_key = google_api_key
+        self.app = app  # Reference to main app for error logging
+        
+    def log_error(self, error_message, additional_info=None):
+        """Log errors using the app's error_logging if available, otherwise silently continue"""
+        if self.app and hasattr(self.app, 'error_logging'):
+            self.app.error_logging(error_message, additional_info)
 
     async def route_api_call(self, engine, system_prompt, user_prompt, temp, 
                             image_data=None, text_to_process=None, val_text=None, 
                             index=None, is_base64=True, formatting_function=False, 
-                            api_timeout=80):
+                            api_timeout=80, job_type=None, job_params=None):
         """
         Routes the API call to the appropriate service based on the engine name.
         image_data can be either:
@@ -31,21 +37,26 @@ class APIHandler:
         - A single image (base64 string or path)
         - A list of tuples [(image_data, label), ...]
         """
+        # Extract required_headers for metadata validation if applicable
+        required_headers = None
+        if job_type == "Metadata" and job_params and "required_headers" in job_params:
+            required_headers = job_params["required_headers"]
+        
         if "gpt" in engine.lower() or "o1" in engine.lower() or "o3" in engine.lower():
             return await self.handle_gpt_call(system_prompt, user_prompt, temp, 
                                             image_data, text_to_process, val_text, 
                                             engine, index, is_base64, formatting_function, 
-                                            api_timeout)
+                                            api_timeout, job_type, required_headers)
         elif "gemini" in engine.lower():
             return await self.handle_gemini_call(system_prompt, user_prompt, temp, 
                                             image_data, text_to_process, val_text, 
                                             engine, index, is_base64, formatting_function, 
-                                            api_timeout)
+                                            api_timeout, job_type, required_headers)
         elif "claude" in engine.lower():
             return await self.handle_claude_call(system_prompt, user_prompt, temp, 
                                             image_data, text_to_process, val_text, 
                                             engine, index, is_base64, formatting_function, 
-                                            api_timeout)
+                                            api_timeout, job_type, required_headers)
         else:
             raise ValueError(f"Unsupported engine: {engine}")
     
@@ -173,13 +184,20 @@ class APIHandler:
 
     async def handle_gpt_call(self, system_prompt, user_prompt, temp, image_data, 
                             text_to_process, val_text, engine, index, 
-                            is_base64=True, formatting_function=False, api_timeout=25.0):
+                            is_base64=True, formatting_function=False, api_timeout=25.0,
+                            job_type=None, required_headers=None):
         client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
         
         populated_user_prompt = (user_prompt if formatting_function 
                             else user_prompt.format(text_to_process=text_to_process))
         max_tokens = 200 if "pagination" in user_prompt.lower() else 1500
-        max_retries = 3
+        
+        # Increase max_tokens for metadata jobs
+        if job_type == "Metadata":
+            max_tokens = 2000
+            
+        # Use more retries for metadata jobs which are more complex
+        max_retries = 5 if job_type == "Metadata" else 3
         retries = 0
         
         # Check if using o1 or o3 models
@@ -207,18 +225,41 @@ class APIHandler:
                 message = client.chat.completions.create(**api_params)
                 
                 response = message.choices[0].message.content
-                return self._validate_response(response, val_text, index)
+                validation_result = self._validate_response(response, val_text, index, job_type, required_headers)
+                
+                # If validation failed and we have retries left, try again with higher temperature
+                if validation_result[0] == "Error" and retries < max_retries - 1:
+                    # Gradually increase temperature for creativity if we keep getting invalid responses
+                    if job_type == "Metadata" and not is_o_series_model:
+                        new_temp = min(0.9, float(temp) + (retries * 0.1))
+                        api_params["temperature"] = new_temp
+                        
+                        # For metadata, sometimes increasing max_tokens helps
+                        if retries >= 2:
+                            new_max_tokens = min(4000, max_tokens + 500)
+                            api_params["max_tokens"] = new_max_tokens
+                    
+                    retries += 1
+                    # Add backoff between retries
+                    retry_delay = 1 * (1.5 ** retries)  # Exponential backoff
+                    await asyncio.sleep(retry_delay)
+                    continue
+                
+                return validation_result
 
             except (openai.APITimeoutError, openai.APIError) as e:
-                print(f"GPT API Error: {e}")
+                self.log_error(f"GPT API Error with {engine} for index {index}", f"{str(e)}")
                 retries += 1
                 if retries == max_retries:
                     return "Error", index
-                await asyncio.sleep(1)
+                # Add backoff between retries
+                retry_delay = 1 * (1.5 ** retries)  # Exponential backoff
+                await asyncio.sleep(retry_delay)
 
     async def handle_gemini_call(self, system_prompt, user_prompt, temp, image_data, 
                                 text_to_process, val_text, engine, index, 
-                                is_base64=True, formatting_function=False, api_timeout=120.0):
+                                is_base64=True, formatting_function=False, api_timeout=120.0,
+                                job_type=None, required_headers=None):
         genai.configure(api_key=self.google_api_key)
         # Add generation config
         generation_config = {
@@ -253,8 +294,10 @@ class APIHandler:
                     file = genai.upload_file(img_path, mime_type="image/jpeg")
                     content.append(file)
 
-        max_retries = 3
+        # Use more retries for metadata jobs which are more complex
+        max_retries = 5 if job_type == "Metadata" else 3
         retries = 0
+        
         while retries < max_retries:
             try:
                 response = model.generate_content(
@@ -278,22 +321,58 @@ class APIHandler:
                                     }
                                 ],
                                     )
-                return self._validate_response(response.text, val_text, index)
+                
+                validation_result = self._validate_response(response.text, val_text, index, job_type, required_headers)
+                
+                # If validation failed and we have retries left, try again with higher temperature
+                if validation_result[0] == "Error" and retries < max_retries - 1:
+                    # Gradually increase temperature for creativity if we keep getting invalid responses
+                    if job_type == "Metadata":
+                        new_temp = min(0.9, float(temp) + (retries * 0.1))
+                        generation_config["temperature"] = new_temp
+                        model = genai.GenerativeModel(
+                            model_name=engine,
+                            generation_config=generation_config,
+                            system_instruction=system_prompt
+                        )
+                    
+                    retries += 1
+                    # Add backoff between retries
+                    retry_delay = 1 * (1.5 ** retries)  # Exponential backoff
+                    await asyncio.sleep(retry_delay)
+                    continue
+                
+                return validation_result
 
             except Exception as e:
-                print(f"Gemini API Error: {e}")
+                self.log_error(f"Gemini API Error with {engine} for index {index}", f"{str(e)}")
                 retries += 1
                 if retries == max_retries:
                     return "Error", index
-                await asyncio.sleep(1)
+                # Add backoff between retries
+                retry_delay = 1 * (1.5 ** retries)  # Exponential backoff
+                await asyncio.sleep(retry_delay)
 
     async def handle_claude_call(self, system_prompt, user_prompt, temp, image_data, 
                                 text_to_process, val_text, engine, index, 
-                                is_base64=True, formatting_function=False, api_timeout=120.0):
+                                is_base64=True, formatting_function=False, api_timeout=120.0,
+                                job_type=None, required_headers=None):
         async with AsyncAnthropic(api_key=self.anthropic_api_key, 
                                 max_retries=0, timeout=api_timeout) as client:
             populated_user_prompt = (user_prompt if formatting_function 
                                 else user_prompt.format(text_to_process=text_to_process))
+
+            # Set max_tokens based on job type or prompt contents
+            if "Pagination:" in user_prompt.lower():
+                max_tokens = 200
+            elif "extract information" in user_prompt.lower():
+                max_tokens = 1500
+            elif "Split Before:" in user_prompt:
+                max_tokens = 200
+            elif job_type == "Metadata":
+                max_tokens = 2000
+            else:
+                max_tokens = 1200
 
             try:
                 # Ensure image_data is properly formatted base64 string
@@ -335,21 +414,12 @@ class APIHandler:
                 if populated_user_prompt.strip():
                     content.append({"type": "text", "text": populated_user_prompt.strip()})
 
-                if "Pagination:" in user_prompt.lower():
-                    max_tokens = 200
-                elif "extract information" in user_prompt.lower():
-                    max_tokens = 1500
-                elif "Split Before:" in user_prompt:
-                    max_tokens = 200
-                else:
-                    max_tokens = 2500
-                max_retries = 3
+                # Use more retries for metadata jobs which are more complex
+                max_retries = 5 if job_type == "Metadata" else 3
                 retries = 0
                 
                 while retries < max_retries:
                     try:
-                                    # Add logging
-                                      
                         message = await client.messages.create(
                             max_tokens=max_tokens,
                             messages=[{"role": "user", "content": content}],
@@ -360,20 +430,41 @@ class APIHandler:
                         )
                         
                         response = message.content[0].text
-                        return self._validate_response(response, val_text, index)
+                        validation_result = self._validate_response(response, val_text, index, job_type, required_headers)
+                        
+                        # If validation failed and we have retries left, try again with higher temperature
+                        if validation_result[0] == "Error" and retries < max_retries - 1:
+                            # Gradually increase temperature for creativity if we keep getting invalid responses
+                            if job_type == "Metadata":
+                                new_temp = min(0.9, float(temp) + (retries * 0.1))
+                                temp = new_temp
+                                
+                                # For metadata, sometimes increasing max_tokens helps
+                                if retries >= 2:
+                                    max_tokens = min(4000, max_tokens + 500)
+                            
+                            retries += 1
+                            # Add backoff between retries
+                            retry_delay = 1 * (1.5 ** retries)  # Exponential backoff
+                            await asyncio.sleep(retry_delay)
+                            continue
+                        
+                        return validation_result
 
                     except (anthropic.APITimeoutError, anthropic.APIError) as e:
-                        print(f"Claude API Error: {e}")
+                        self.log_error(f"Claude API Error with {engine} for index {index}", f"{str(e)}")
                         retries += 1
                         if retries == max_retries:
                             return "Error", index
-                        await asyncio.sleep(1)
+                        # Add backoff between retries
+                        retry_delay = 1 * (1.5 ** retries)  # Exponential backoff
+                        await asyncio.sleep(retry_delay)
                         
             except Exception as e:
-                print(f"Error preparing Claude content: {str(e)}")
+                self.log_error(f"Error preparing Claude content for index {index}", f"{str(e)}")
                 return "Error", index
                 
-    def _validate_response(self, response, val_text, index):
+    def _validate_response(self, response, val_text, index, job_type=None, required_headers=None):
         """
         Validates and processes the API response.
         
@@ -381,12 +472,15 @@ class APIHandler:
             response: The response text from the API
             val_text: The validation text to look for (can be None or "None")
             index: The index of the current document
+            job_type: The type of job being processed (e.g., "Metadata")
+            required_headers: List of required headers for metadata validation
             
         Returns:
             Tuple of (processed_response, index)
         """
         # First check if we have a valid response
         if not response:
+            self.log_error(f"Empty API response for index {index}", f"job_type: {job_type}")
             return "Error", index
             
         # If no validation text is needed, return the full response
@@ -396,11 +490,65 @@ class APIHandler:
         # Check if validation text exists in response
         try:
             if val_text in response:
-                # Split and return everything after the validation text
-                return response.split(val_text, 1)[1].strip(), index
+                # Split and get everything after the validation text
+                processed_response = response.split(val_text, 1)[1].strip()
+                
+                # Special validation for Metadata responses
+                if job_type == "Metadata" and required_headers:
+                    # Check if all required headers are present in the response
+                    missing_headers = []
+                    has_content = False
+                    header_contents = {}
+                    
+                    for header in required_headers:
+                        header_pattern = f"{header}:"
+                        if header_pattern not in processed_response:
+                            missing_headers.append(header)
+                            continue
+                            
+                        # Check if header has actual content
+                        try:
+                            # Split the text by the header and get the content after it
+                            split_parts = processed_response.split(header_pattern, 1)
+                            if len(split_parts) > 1:
+                                # Find the content until the next header or end of text
+                                header_content = split_parts[1].strip()
+                                
+                                # If there's another header, only take text until that header
+                                next_header_pos = float('inf')
+                                for next_header in required_headers:
+                                    next_pattern = f"\n{next_header}:"
+                                    pos = header_content.find(next_pattern)
+                                    if pos != -1 and pos < next_header_pos:
+                                        next_header_pos = pos
+                                
+                                if next_header_pos != float('inf'):
+                                    header_content = header_content[:next_header_pos].strip()
+                                
+                                # Log the content found for this header
+                                header_contents[header] = header_content
+                                
+                                # Check if there's meaningful content
+                                if header_content and not header_content.isspace():
+                                    has_content = True
+                        except Exception as e:
+                            self.log_error(f"Error checking content for header {header}", f"{str(e)}")
+                    
+                    # Request error (retry) if headers are missing or all headers are empty
+                    if missing_headers:
+                        self.log_error(f"Missing required headers in metadata response", f"Missing: {missing_headers}, index: {index}")
+                        return "Error", index
+                    
+                    if not has_content:
+                        self.log_error(f"All metadata headers are empty", f"index: {index}, job_type: {job_type}")
+                        return "Error", index
+                
+                return processed_response, index
+            else:
+                self.log_error(f"Validation text not found in response", f"val_text: {val_text}, index: {index}")
         except TypeError:
             # Handle case where response or val_text is not a string
-            print(f"Validation error - Response: {type(response)}, Val_text: {type(val_text)}")
+            self.log_error(f"Validation error - Response type mismatch", f"Response: {type(response)}, Val_text: {type(val_text)}")
             return "Error", index
             
         # If validation text not found, return error
@@ -440,8 +588,12 @@ class APIHandler:
         return processed_data
 
     def encode_image(self, image_path):
-        with open(image_path, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode('utf-8')   
+        try:
+            with open(image_path, "rb") as image_file:
+                return base64.b64encode(image_file.read()).decode('utf-8')
+        except Exception as e:
+            self.log_error(f"Error encoding image", f"Path: {image_path}, Error: {str(e)}")
+            return None
 
     def _format_content_for_print(self, content):
         formatted_content = []

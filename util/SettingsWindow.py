@@ -82,6 +82,7 @@ class SettingsWindow:
                 "Models and Import Settings",
                 "",
                 "Processing Functions",
+                "Metadata",
                 "Seperate Documents Presets",
                 "",
                 "Load Settings",
@@ -128,6 +129,8 @@ class SettingsWindow:
             self.show_models_and_import_settings()
         elif option == "Processing Functions" and self.mode == "T_PEARL":
             self.show_preset_functions_settings()
+        elif option == "Metadata" and self.mode == "T_PEARL":
+            self.show_metadata_settings()
         elif option == "Custom Functions":
             self.show_analysis_presets_settings()
         elif option == "Seperate Documents Presets" and self.mode == "T_PEARL":
@@ -217,60 +220,118 @@ class SettingsWindow:
         self.models_text.bind("<KeyRelease>", self.update_model_list)
 
     def show_metadata_settings(self):
-        explanation_label = tk.Label(self.right_frame,
-                                     text="""The Metadata function analyzes documents to extract structured information about document type, people, places, and other key details.""",
-                                     wraplength=675, justify=tk.LEFT)
-        explanation_label.grid(row=0, column=0, columnspan=3, padx=10, pady=5, sticky="w")
+        for widget in self.right_frame.winfo_children():
+            widget.destroy()
 
-        model_label = tk.Label(self.right_frame, text="Select model for Metadata:")
-        model_label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
-        self.metadata_model_var = tk.StringVar(value=self.settings.metadata_model)
-        dropdown = ttk.Combobox(self.right_frame,
-                                textvariable=self.metadata_model_var,
-                                values=self.settings.model_list,
-                                state="readonly",
-                                width=30)
-        dropdown.grid(row=1, column=1, padx=10, pady=5, sticky="w")
-        dropdown.bind("<<ComboboxSelected>>",
-                      lambda event: setattr(self.settings, 'metadata_model',
-                                              self.metadata_model_var.get()))
+        # Main settings frame
+        main_settings_frame = ttk.Frame(self.right_frame)
+        main_settings_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
 
-        general_label = tk.Label(self.right_frame, text="General Instructions:")
-        general_label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
-        self.metadata_general_entry = tk.Text(self.right_frame, height=30, width=90, wrap=tk.WORD)
-        self.metadata_general_entry.insert(tk.END, self.settings.metadata_system_prompt)
-        self.metadata_general_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
+        # Initialize variables
+        self.metadata_model_var = tk.StringVar()
+        self.selected_metadata_preset_var = tk.StringVar()
 
-        general_scrollbar = tk.Scrollbar(self.right_frame, command=self.metadata_general_entry.yview)
-        general_scrollbar.grid(row=2, column=2, sticky="ns")
-        self.metadata_general_entry.config(yscrollcommand=general_scrollbar.set)
+        # Preset selection row
+        tk.Label(main_settings_frame, text="Select Metadata Preset:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        preset_names = [p['name'] for p in self.settings.metadata_presets]
+        self.metadata_preset_dropdown = ttk.Combobox(main_settings_frame, 
+                                                textvariable=self.selected_metadata_preset_var,
+                                                values=preset_names, 
+                                                state="readonly", 
+                                                width=30)
+        self.metadata_preset_dropdown.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
-        detailed_label = tk.Label(self.right_frame, text="Detailed Instructions:")
-        detailed_label.grid(row=3, column=0, padx=10, pady=5, sticky="w")
-        self.metadata_detailed_entry = tk.Text(self.right_frame, height=15, width=90, wrap=tk.WORD)
-        self.metadata_detailed_entry.insert(tk.END, self.settings.metadata_user_prompt)
-        self.metadata_detailed_entry.grid(row=3, column=1, padx=10, pady=5, sticky="w")
+        # Create, Modify and delete buttons
+        create_button = tk.Button(main_settings_frame, text="Create New", 
+                               command=self.create_new_metadata_preset_window)
+        create_button.grid(row=0, column=2, padx=5, pady=5, sticky="w")
 
-        detailed_scrollbar = tk.Scrollbar(self.right_frame, command=self.metadata_detailed_entry.yview)
-        detailed_scrollbar.grid(row=3, column=2, sticky="ns")
-        self.metadata_detailed_entry.config(yscrollcommand=detailed_scrollbar.set)
+        modify_button = tk.Button(main_settings_frame, text="Modify", 
+                                command=self.modify_metadata_preset)
+        modify_button.grid(row=0, column=3, padx=5, pady=5, sticky="w")
 
-        val_label = tk.Label(self.right_frame, text="Validation Text:")
-        val_label.grid(row=4, column=0, padx=10, pady=5, sticky="w")
-        self.metadata_val_label_entry = tk.Text(self.right_frame, height=1, width=60)
-        self.metadata_val_label_entry.insert(tk.END, self.settings.metadata_val_text)
-        self.metadata_val_label_entry.grid(row=4, column=1, padx=10, pady=5, sticky="w")
+        delete_button = tk.Button(main_settings_frame, text="Delete", 
+                                command=self.delete_metadata_preset)
+        delete_button.grid(row=0, column=4, padx=5, pady=5, sticky="w")
 
-        # Bind the text widgets to update settings variables
-        self.metadata_general_entry.bind("<KeyRelease>",
-                                         lambda event: setattr(self.settings, 'metadata_system_prompt',
-                                                                 self.metadata_general_entry.get("1.0", "end-1c")))
-        self.metadata_detailed_entry.bind("<KeyRelease>",
-                                          lambda event: setattr(self.settings, 'metadata_user_prompt',
-                                                                  self.metadata_detailed_entry.get("1.0", "end-1c")))
-        self.metadata_val_label_entry.bind("<KeyRelease>",
-                                           lambda event: setattr(self.settings, 'metadata_val_text',
-                                                                   self.metadata_val_label_entry.get("1.0", "end-1c")))
+        # Model selection
+        tk.Label(main_settings_frame, text="Model:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        model_dropdown = ttk.Combobox(main_settings_frame, 
+                                    textvariable=self.metadata_model_var,
+                                    values=self.settings.model_list, 
+                                    state="readonly", 
+                                    width=30)
+        model_dropdown.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+        model_dropdown.bind("<<ComboboxSelected>>",
+                        lambda e: self.update_current_generic_preset(
+                            self.settings.metadata_presets, 
+                            self.selected_metadata_preset_var, 
+                            'model', 
+                            self.metadata_model_var.get()))
+
+        # Temperature
+        tk.Label(main_settings_frame, text="Temperature:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        self.metadata_temp_entry = tk.Entry(main_settings_frame, width=10)
+        self.metadata_temp_entry.grid(row=2, column=1, padx=5, pady=5, sticky="w")
+        self.bind_entry_update(self.metadata_temp_entry, self.settings.metadata_presets, 
+                           self.selected_metadata_preset_var, 'temperature')
+
+        # Instructions Frame
+        instructions_frame = ttk.LabelFrame(self.right_frame, text="Instructions")
+        instructions_frame.grid(row=2, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
+
+        # General Instructions
+        tk.Label(instructions_frame, text="General Instructions:").grid(row=0, column=0, padx=10, pady=5, sticky="nw")
+        general_frame = ttk.Frame(instructions_frame)
+        general_frame.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+        self.metadata_general_text = tk.Text(general_frame, height=10, width=90, wrap=tk.WORD)
+        self.metadata_general_text.grid(row=0, column=0, sticky="nsew")
+        self.bind_text_update(self.metadata_general_text, self.settings.metadata_presets, 
+                          self.selected_metadata_preset_var, 'general_instructions')
+        general_scrollbar = ttk.Scrollbar(general_frame, orient="vertical", command=self.metadata_general_text.yview)
+        self.metadata_general_text.configure(yscrollcommand=general_scrollbar.set)
+        general_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Specific Instructions
+        tk.Label(instructions_frame, text="Specific Instructions:").grid(row=1, column=0, padx=10, pady=5, sticky="nw")
+        specific_frame = ttk.Frame(instructions_frame)
+        specific_frame.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+        self.metadata_specific_text = tk.Text(specific_frame, height=10, width=90, wrap=tk.WORD)
+        self.metadata_specific_text.grid(row=0, column=0, sticky="nsew")
+        self.bind_text_update(self.metadata_specific_text, self.settings.metadata_presets, 
+                           self.selected_metadata_preset_var, 'specific_instructions')
+        specific_scrollbar = ttk.Scrollbar(specific_frame, orient="vertical", command=self.metadata_specific_text.yview)
+        self.metadata_specific_text.configure(yscrollcommand=specific_scrollbar.set)
+        specific_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Metadata Headers
+        tk.Label(instructions_frame, text="Metadata Headers:").grid(row=2, column=0, padx=10, pady=5, sticky="nw")
+        headers_frame = ttk.Frame(instructions_frame)
+        headers_frame.grid(row=2, column=1, padx=10, pady=5, sticky="w")
+        self.metadata_headers_text = tk.Text(headers_frame, height=5, width=90, wrap=tk.WORD)
+        self.metadata_headers_text.grid(row=0, column=0, sticky="nsew")
+        self.bind_text_update(self.metadata_headers_text, self.settings.metadata_presets, 
+                           self.selected_metadata_preset_var, 'metadata_headers')
+        headers_scrollbar = ttk.Scrollbar(headers_frame, orient="vertical", command=self.metadata_headers_text.yview)
+        self.metadata_headers_text.configure(yscrollcommand=headers_scrollbar.set)
+        headers_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Validation Text
+        tk.Label(instructions_frame, text="Validation Text:").grid(row=3, column=0, padx=10, pady=5, sticky="w")
+        self.metadata_val_entry = tk.Entry(instructions_frame, width=90)
+        self.metadata_val_entry.grid(row=3, column=1, padx=10, pady=5, sticky="w")
+        self.bind_entry_update(self.metadata_val_entry, self.settings.metadata_presets, 
+                            self.selected_metadata_preset_var, 'val_text')
+
+        # Load initial preset if available
+        if preset_names:
+            self.selected_metadata_preset_var.set(preset_names[0])
+            # Update the global metadata preset selection in settings
+            self.settings.metadata_preset = preset_names[0]
+            self.load_selected_metadata_preset()
+
+        # Bind dropdown change to load the selected preset
+        self.metadata_preset_dropdown.bind("<<ComboboxSelected>>", self.load_selected_metadata_preset)
 
     def show_analysis_presets_settings(self):
         for widget in self.right_frame.winfo_children():
@@ -767,6 +828,32 @@ class SettingsWindow:
             # Toggle image controls based on use_images setting
             self.toggle_image_controls()
 
+    def load_selected_metadata_preset(self, event=None):
+        selected_name = self.selected_metadata_preset_var.get()
+        preset = self.get_preset_by_name(self.settings.metadata_presets, selected_name)
+        if preset:
+            # Model
+            if 'model' in preset and preset['model'] in self.settings.model_list:
+                self.metadata_model_var.set(preset['model'])
+            # Temperature
+            self.set_entry_text(self.metadata_temp_entry, preset.get('temperature', "0.3"))
+            # Instructions
+            self.set_text_widget(self.metadata_general_text, preset.get('general_instructions', ""))
+            self.set_text_widget(self.metadata_specific_text, preset.get('specific_instructions', ""))
+            self.set_text_widget(self.metadata_headers_text, preset.get('metadata_headers', ""))
+            self.set_entry_text(self.metadata_val_entry, preset.get('val_text', "Metadata:"))
+            
+            # Update the global metadata preset selection in settings
+            self.settings.metadata_preset = selected_name
+            
+            # Also update the individual settings fields for backward compatibility
+            self.settings.metadata_model = preset.get('model', "claude-3-5-sonnet-20241022")
+            self.settings.metadata_temp = preset.get('temperature', "0.3")
+            self.settings.metadata_system_prompt = preset.get('general_instructions', "")
+            self.settings.metadata_user_prompt = preset.get('specific_instructions', "")
+            self.settings.metadata_val_text = preset.get('val_text', "Metadata:")
+            self.settings.metadata_headers = preset.get('metadata_headers', "")
+
 # Preset Creation Functions
 
     def create_new_function_preset_window(self):
@@ -925,6 +1012,89 @@ class SettingsWindow:
         name_entry.bind('<Return>', lambda e: save_new_chunk_preset())
         name_entry.focus_set()
 
+    def create_new_metadata_preset_window(self):
+        new_win = tk.Toplevel(self.settings_window)
+        new_win.title("Create New Metadata Preset")
+
+        new_win.transient(self.settings_window)
+        new_win.grab_set()
+        new_win.attributes('-topmost', True)
+
+        window_width = 300
+        window_height = 120
+        screen_width = new_win.winfo_screenwidth()
+        screen_height = new_win.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        new_win.geometry(f'{window_width}x{window_height}+{x}+{y}')
+
+        new_win.grid_columnconfigure(1, weight=1)
+
+        tk.Label(new_win, text="Preset Name:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        name_entry = tk.Entry(new_win, width=30)
+        name_entry.grid(row=0, column=1, columnspan=2, padx=10, pady=5, sticky="ew")
+
+        button_frame = tk.Frame(new_win)
+        button_frame.grid(row=1, column=0, columnspan=3, pady=20)
+
+        def save_new_metadata_preset():
+            name = name_entry.get().strip()
+            if not name:
+                messagebox.showwarning("Invalid Name", "Please enter a preset name.", parent=new_win)
+                return
+
+            if any(preset['name'] == name for preset in self.settings.metadata_presets):
+                messagebox.showwarning("Duplicate Name",
+                                       "A preset with this name already exists. Please choose a different name.",
+                                       parent=new_win)
+                return
+
+            # Default headers
+            default_headers = "Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary"
+            
+            new_preset = {
+                'name': name,
+                'model': self.settings.model_list[0] if self.settings.model_list else "claude-3-5-sonnet-20241022",
+                'temperature': "0.3",
+                'general_instructions': '''You analyze historical documments to extract information. Read the document and then make any notes you require. Then, in your response, write "Metadata:" and then on new lines output the following headings, filling in the information beside each one:
+
+Document Type: <Letter/Baptismal Record/Diary Entry/Will/etc.>
+Author: <Last Name, First Name>
+Correspondent: <Last Name, First Name> - Note: Only for letters
+Correspondent Place: <Place where the correspondent is located> - Note: Only for letters
+Date: <DD/MM/YYYY>
+Place of Creation: <Place where the document was written>
+People: <Last Name, First Name; Last Name, First Name;...>
+Places: <Place 1; Place 2;...>
+Summary:
+
+For People, list all the names of people mentioned in the document. 
+For Places, list all the places mentioned in the document. 
+For Summary, write a brief summary of the document.
+
+If you don't have information for a heading or don't know, leave it blank.''',
+                'specific_instructions': '''Text to analyze:\n\n{text_to_process}''',
+                'val_text': "Metadata:",
+                'metadata_headers': default_headers
+            }
+
+            self.settings.metadata_presets.append(new_preset)
+            # Update dropdown for metadata presets
+            preset_names = [p['name'] for p in self.settings.metadata_presets]
+            self.metadata_preset_dropdown['values'] = preset_names
+            if preset_names:
+                self.selected_metadata_preset_var.set(name)
+                # Update the global metadata preset selection in settings
+                self.settings.metadata_preset = name
+                self.load_selected_metadata_preset()
+            self.settings.save_settings()
+            new_win.destroy()
+
+        tk.Button(button_frame, text="Save", command=save_new_metadata_preset, width=10).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Cancel", command=new_win.destroy, width=10).pack(side=tk.LEFT, padx=5)
+        name_entry.bind('<Return>', lambda e: save_new_metadata_preset())
+        name_entry.focus_set()
+
 # Delete Preset Functions
 
     def delete_function_preset(self):
@@ -981,6 +1151,33 @@ class SettingsWindow:
                                         if p['name'] != selected_name]
         self.settings.save_settings()
         self.update_chunk_preset_dropdown()
+
+    def delete_metadata_preset(self):
+        selected_name = self.selected_metadata_preset_var.get()
+        if not selected_name:
+            messagebox.showwarning("No Selection", 
+                                "No metadata preset selected to delete.", 
+                                parent=self.settings_window)
+            return
+        
+        # Don't allow deletion of the last preset
+        if len(self.settings.metadata_presets) <= 1:
+            messagebox.showwarning("Cannot Delete", 
+                                "Cannot delete the last metadata preset. At least one preset must exist.", 
+                                parent=self.settings_window)
+            return
+        
+        confirm = messagebox.askyesno("Confirm Deletion",
+                                    f"Are you sure you want to delete the metadata preset '{selected_name}'?",
+                                    parent=self.settings_window)
+        if not confirm:
+            return
+
+        # Remove the preset from the list and update settings
+        self.settings.metadata_presets = [p for p in self.settings.metadata_presets 
+                                        if p['name'] != selected_name]
+        self.settings.save_settings()
+        self.update_metadata_preset_dropdown()
 
 # Modify Preset Functions
 
@@ -1172,6 +1369,73 @@ class SettingsWindow:
         name_entry.bind('<Return>', lambda e: save_modified_preset())
         name_entry.focus_set()
 
+    def modify_metadata_preset(self):
+        selected_name = self.selected_metadata_preset_var.get()
+        if not selected_name:
+            messagebox.showwarning("No Selection", 
+                                "No metadata preset selected to modify.", 
+                                parent=self.settings_window)
+            return
+
+        preset = self.get_preset_by_name(self.settings.metadata_presets, selected_name)
+        if not preset:
+            messagebox.showwarning("Error", "Selected preset not found.", 
+                                parent=self.settings_window)
+            return
+
+        # Create modification window
+        new_win = tk.Toplevel(self.settings_window)
+        new_win.title("Modify Metadata Preset Name")
+        new_win.transient(self.settings_window)
+        new_win.grab_set()
+        new_win.attributes('-topmost', True)
+
+        window_width = 300
+        window_height = 120
+        screen_width = new_win.winfo_screenwidth()
+        screen_height = new_win.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        new_win.geometry(f'{window_width}x{window_height}+{x}+{y}')
+        new_win.grid_columnconfigure(1, weight=1)
+
+        tk.Label(new_win, text="New Preset Name:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        name_entry = tk.Entry(new_win, width=30)
+        name_entry.grid(row=0, column=1, columnspan=2, padx=10, pady=5, sticky="ew")
+        name_entry.insert(0, selected_name)
+
+        def save_modified_preset():
+            new_name = name_entry.get().strip()
+            if not new_name:
+                messagebox.showwarning("Invalid Name", "Please enter a preset name.", 
+                                    parent=new_win)
+                return
+
+            if new_name != selected_name and any(p['name'] == new_name 
+                                            for p in self.settings.metadata_presets):
+                messagebox.showwarning("Duplicate Name",
+                                    "A preset with this name already exists. Please choose a different name.",
+                                    parent=new_win)
+                return
+
+            preset['name'] = new_name
+            self.settings.save_settings()
+            self.update_metadata_preset_dropdown()
+            self.selected_metadata_preset_var.set(new_name)
+            # Update the global metadata preset selection in settings
+            self.settings.metadata_preset = new_name
+            new_win.destroy()
+
+        button_frame = tk.Frame(new_win)
+        button_frame.grid(row=1, column=0, columnspan=3, pady=20)
+        tk.Button(button_frame, text="Save", command=save_modified_preset, 
+                width=10).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Cancel", command=new_win.destroy, 
+                width=10).pack(side=tk.LEFT, padx=5)
+
+        name_entry.bind('<Return>', lambda e: save_modified_preset())
+        name_entry.focus_set()
+
 # Save and Load Functions
 
     def save_settings(self):
@@ -1263,7 +1527,8 @@ class SettingsWindow:
                 'ghost_user_prompt': self.settings.ghost_user_prompt,
                 'ghost_val_text': self.settings.ghost_val_text,
                 'ghost_model': self.settings.ghost_model,
-                'ghost_temp': self.settings.ghost_temp
+                'ghost_temp': self.settings.ghost_temp,
+                'metadata_presets': self.settings.metadata_presets
             }
             
             with open(file_path, 'w') as f:
@@ -1401,6 +1666,9 @@ class SettingsWindow:
             
             if hasattr(self, 'chunk_preset_dropdown') and self.chunk_preset_dropdown.winfo_exists():
                 self.update_chunk_preset_dropdown()
+                
+            if hasattr(self, 'metadata_preset_dropdown') and self.metadata_preset_dropdown.winfo_exists():
+                self.update_metadata_preset_dropdown()
         except tk.TclError:
             # Handle case where widgets are being destroyed
             pass
@@ -1438,6 +1706,20 @@ class SettingsWindow:
                 if preset_names and self.selected_chunk_preset_var.get() not in preset_names:
                     self.selected_chunk_preset_var.set(preset_names[0])
                     self.load_selected_chunk_preset()
+        except tk.TclError:
+            pass
+
+    def update_metadata_preset_dropdown(self):
+        """Update metadata preset dropdown if it exists."""
+        try:
+            if hasattr(self, 'metadata_preset_dropdown') and self.metadata_preset_dropdown.winfo_exists():
+                preset_names = [p['name'] for p in self.settings.metadata_presets]
+                self.metadata_preset_dropdown['values'] = preset_names
+                if preset_names and self.selected_metadata_preset_var.get() not in preset_names:
+                    self.selected_metadata_preset_var.set(preset_names[0])
+                    # Update the global metadata preset selection in settings
+                    self.settings.metadata_preset = preset_names[0]
+                    self.load_selected_metadata_preset()
         except tk.TclError:
             pass
 

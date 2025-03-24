@@ -1,0 +1,7 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+1. Do not add features or make changes that are unnecessary to completing the task assigned by the user.
+2. Do not delete functions or refactor unless asked to do so.

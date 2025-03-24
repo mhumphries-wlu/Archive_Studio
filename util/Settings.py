@@ -185,8 +185,8 @@ End your response after finishing the second list.'''
 
             {
                 'name': "Metadata",
-                'model': "gemini-2.0-flash",
-                'temperature': "0.2",
+                'model': "claude-3-5-sonnet-20241022",
+                'temperature': "0.3",
                 'general_instructions': '''You analyze historical documments to extract information. Read the document and then make any notes you require. Then, in your response, write "Metadata:" and then on new lines output the following headings, filling in the information beside each one:
 
 Document Type: <Letter/Baptismal Record/Diary Entry/Will/etc.>
@@ -207,7 +207,8 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'current_image': "No",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "Metadata:"
+                'val_text': "Metadata:",
+                'required_headers': ["Document Type", "Author", "Date", "Place of Creation", "People", "Places", "Summary"]
             },
 
             {
@@ -282,6 +283,33 @@ Current Document to Analyze: {text_to_process}''',
             },          
         ] # List of dictionaries for analysis presets
         
+        # Default metadata presets
+        self.metadata_presets = [
+            {
+                'name': "Standard Metadata",
+                'model': "claude-3-5-sonnet-20241022",
+                'temperature': "0.3",
+                'general_instructions': '''You analyze historical documments to extract information. Read the document and then make any notes you require. Then, in your response, write "Metadata:" and then on new lines output the following headings, filling in the information beside each one:
+
+Document Type: <Letter/Baptismal Record/Diary Entry/Will/etc.>
+Author: <Last Name, First Name> - Note: for letters, memos, etc. use the name of the author of document. For other documents where the primary purposes if official or semi-official documentation of an individual(s), like a parish Birth, Marriage or Death Record, prison record, military service file, etc, use the name of the person(s) who the record is about.
+Correspondent: <Last Name, First Name> - Note: Only for letters; use the name of the person(s) who the document is addressed to
+Correspondent Place: <Place where the correspondent is located> - Note: Only for letters; use the place where the correspondent is located
+Date: <DD/MM/YYYY>
+Place of Creation: <Place where the document was written; for diary entries, use the place where the diarist was located at the end of the day of the entry>
+People: <Last Name, First Name; Last Name, First Name;...>
+Places: <Last Name, First Name; Last Name, First Name;...>
+Summary:
+
+For People, list all the names of people mentioned in the document. For Places, list all the places mentioned in the document. For Summary, write a brief summary of the document.
+
+If you don't have information for a heading or don't know, leave it blank.''',
+                'specific_instructions': '''Text to analyze:\n\n{text_to_process}''',
+                'val_text': "Metadata:",
+                'metadata_headers': "Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary"
+            }
+        ]
+        
         self.batch_size = 50
         self.check_orientation = False
         
@@ -305,6 +333,29 @@ Current Document to Analyze: {text_to_process}''',
         self.anthropic_api_key = saved_anthropic_key
         self.google_api_key = saved_google_key
 
+        # Default metadata settings - keep for backward compatibility
+        self.metadata_model = "claude-3-5-sonnet-20241022"
+        self.metadata_temp = "0.3"
+        self.metadata_system_prompt = '''You analyze historical documments to extract information. Read the document and then make any notes you require. Then, in your response, write "Metadata:" and then on new lines output the following headings, filling in the information beside each one:
+
+Document Type: <Letter/Baptismal Record/Diary Entry/Will/etc.>
+Author: <Last Name, First Name> - Note: for letters, memos, etc. use the name of the author of document. For other documents where the primary purposes if official or semi-official documentation of an individual(s), like a parish Birth, Marriage or Death Record, prison record, military service file, etc, use the name of the person(s) who the record is about.
+Correspondent: <Last Name, First Name> - Note: Only for letters; use the name of the person(s) who the document is addressed to
+Correspondent Place: <Place where the correspondent is located> - Note: Only for letters; use the place where the correspondent is located
+Date: <DD/MM/YYYY>
+Place of Creation: <Place where the document was written; for diary entries, use the place where the diarist was located at the end of the day of the entry>
+People: <Last Name, First Name; Last Name, First Name;...>
+Places: <Last Name, First Name; Last Name, First Name;...>
+Summary:
+
+For People, list all the names of people mentioned in the document. For Places, list all the places mentioned in the document. For Summary, write a brief summary of the document.
+
+If you don't have information for a heading or don't know, leave it blank.'''
+        self.metadata_user_prompt = '''Text to analyze:\n\n{text_to_process}'''
+        self.metadata_val_text = "Metadata:"
+        self.metadata_headers = "Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary"
+        self.metadata_preset = "Standard Metadata"  # Store the selected preset name
+
         self.ghost_system_prompt = ""
         self.ghost_user_prompt = ""
         self.ghost_val_text = ""
@@ -321,7 +372,16 @@ Current Document to Analyze: {text_to_process}''',
             'check_orientation': self.check_orientation,                                # Check orientation of text
             'analysis_presets': self.analysis_presets,
             'function_presets': self.function_presets,
-            'chunk_text_presets': self.chunk_text_presets
+            'chunk_text_presets': self.chunk_text_presets,
+            'metadata_presets': self.metadata_presets,                                  # Add metadata presets
+            # Add individual metadata settings for backward compatibility
+            'metadata_model': self.metadata_model,
+            'metadata_temp': self.metadata_temp,
+            'metadata_system_prompt': self.metadata_system_prompt,
+            'metadata_user_prompt': self.metadata_user_prompt,
+            'metadata_val_text': self.metadata_val_text,
+            'metadata_headers': self.metadata_headers,
+            'metadata_preset': self.metadata_preset                                     # Store selected preset
         }
         
         with open(self.settings_file_path, 'w') as f:
