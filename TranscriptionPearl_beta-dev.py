@@ -314,10 +314,7 @@ class App(TkinterDnD.Tk):
                                      command=lambda: self.create_chunk_text_window(self.process_mode.get()))
         
         self.process_menu.add_command(label="Apply Separation", 
-                                     command=self.apply_document_separation)
-        
-        self.process_menu.add_command(label="Apply Separation with Boxes", 
-                                     command=self.apply_document_separation_with_boxes)
+                                     command=self.open_document_separation_options)
         
         self.process_menu.add_separator()
         
@@ -408,6 +405,9 @@ class App(TkinterDnD.Tk):
         # Add key bindings for Chunk_Text
         self.bind("<Control-3>", lambda event: self.create_chunk_text_window("Current Page"))
         self.bind("<Control-Shift-3>", lambda event: self.create_chunk_text_window("All Pages"))
+        
+        # Add key binding for document separation
+        self.bind("<Control-4>", lambda event: self.open_document_separation_options())
 
         # Mouse bindings
         self.image_display.bind("<Control-MouseWheel>", self.image_handler.zoom)
@@ -3776,133 +3776,23 @@ class App(TkinterDnD.Tk):
 
     def apply_document_separation(self):
         """Apply document separation based on ***** markers and replace main_df with the compiled documents."""
-        if self.main_df.empty:
-            messagebox.showinfo("No Documents", "No documents to separate.")
-            return
-        
-        # Check if any text contains the separator
-        documents_separated = False
-        try:
-            # Check if documents are separated with ***** markers
-            separator_count = 0
-            pages_with_separators = []
-            
-            for index, row in self.main_df.iterrows():
-                text = self.find_right_text(index)
-                if "*****" in text:
-                    separator_count += text.count("*****")
-                    pages_with_separators.append(index)
-            
-            documents_separated = separator_count > 0
-            
-            if not documents_separated:
-                messagebox.showwarning(
-                    "Warning", 
-                    "No document separators ('*****') found. Please add separators to your text first."
-                )
-                return
-        except Exception as e:
-            self.error_logging(f"Error checking for document separators: {str(e)}")
-            messagebox.showerror("Error", f"Error checking for document separators: {str(e)}")
-            return
-        
-        # Confirm with user
-        if not messagebox.askyesno("Confirm Separation", 
-                                   "This will reorganize your documents based on ***** separators. Continue?"):
-            return
-        
-        # Use progress bar
-        progress_window, progress_bar, progress_label = self.progress_bar.create_progress_window("Applying Document Separation")
-        self.progress_bar.update_progress(0, 100)
-        
-        try:
-            # Import AnalyzeDocuments
-            from util.AnalyzeDocuments import AnalyzeDocuments
-            analyzer = AnalyzeDocuments(self)
-            
-            # Get a copy of the original dataframe in case we need to restore it
-            original_df = self.main_df.copy()
-            
-            # Update progress
-            self.progress_bar.update_progress(20, 100)
-            progress_label.config(text="Compiling documents with separators...")
-            
-            # Compile documents based on separators
-            compiled_df = analyzer.compile_documents(force_recompile=True)
-            
-            if compiled_df is None or compiled_df.empty:
-                raise Exception("No documents were found after separation. Check that your separators are correct.")
-            
-            # Update progress
-            self.progress_bar.update_progress(60, 100)
-            progress_label.config(text="Creating new main dataframe...")
-            
-            # Create a new main_df with the same columns as the original
-            new_main_df = pd.DataFrame(columns=self.main_df.columns)
-            
-            # For each row in compiled_df, create a new row in main_df
-            for idx, row in compiled_df.iterrows():
-                # Get the original indices that make up this document
-                original_indices = row['Original_Index']
-                
-                # Use the first original index to get the image path
-                first_idx = original_indices[0] if isinstance(original_indices, list) and original_indices else 0
-                if first_idx < len(original_df):
-                    image_path = original_df.loc[first_idx, 'Image_Path']
-                else:
-                    # Fallback to the first available image if index is out of range
-                    image_path = original_df.loc[0, 'Image_Path'] if not original_df.empty else ""
-                
-                # Create a new row for the main_df
-                new_row = {col: "" for col in self.main_df.columns}
-                new_row['Index'] = idx
-                new_row['Page'] = f"{idx+1:04d}_p{idx+1:03d}"
-                new_row['Original_Text'] = row['Text'] if 'Text' in row and pd.notna(row['Text']) else ""
-                new_row['Image_Path'] = image_path
-                new_row['Text_Toggle'] = "Original_Text" if new_row['Original_Text'].strip() else "None"
-                
-                # Copy metadata fields if they exist
-                for metadata_field in ['People', 'Places', 'Document_Type', 'Author', 'Correspondent', 
-                                       'Creation_Place', 'Correspondent_Place', 'Date', 'Summary']:
-                    if metadata_field in row and pd.notna(row[metadata_field]) and metadata_field in new_main_df.columns:
-                        new_row[metadata_field] = row[metadata_field]
-                
-                # Add the row to the new main_df
-                new_main_df.loc[idx] = new_row
-            
-            # Update progress
-            self.progress_bar.update_progress(80, 100)
-            progress_label.config(text="Finalizing changes...")
-            
-            # Replace the main_df with the new one
-            self.main_df = new_main_df
-            
-            # Reset page counter
-            self.page_counter = 0
-            
-            # Update the display
-            self.refresh_display()
-            self.counter_update()
-            
-            # Update progress
-            self.progress_bar.update_progress(100, 100)
-            
-            # Show success message
-            messagebox.showinfo("Success", f"Documents have been separated into {len(self.main_df)} entries.")
-            
-        except Exception as e:
-            self.error_logging(f"Error applying document separation: {str(e)}")
-            messagebox.showerror("Error", f"Error applying document separation: {str(e)}")
-            
-        finally:
-            # Close progress bar
-            self.progress_bar.close_progress_window()
+        from util.apply_separation_options import apply_document_separation
+        apply_document_separation(self)
 
     def apply_document_separation_with_boxes(self):
         """Apply document separation based on ***** markers and replace main_df with the compiled documents,
         while also creating cropped images for each section."""
-        from util.apply_separation_with_boxes import apply_document_separation_with_boxes
+        from util.apply_separation_options import apply_document_separation_with_boxes
         apply_document_separation_with_boxes(self)
+        
+    def open_document_separation_options(self):
+        """Opens a window with document separation options."""
+        from util.apply_separation_options import create_separation_options_window
+        create_separation_options_window(self)
+        
+    def update_separation_menu_state(self, state="normal"):
+        """Update the state of the document separation menu items."""
+        self.process_menu.entryconfig("Apply Separation", state=state)
 
 if __name__ == "__main__":
     try:
