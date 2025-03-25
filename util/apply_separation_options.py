@@ -775,8 +775,8 @@ def highlight_image(image_path, box_data, output_path):
         # Create a drawing object
         draw = ImageDraw.Draw(draw_img)
         
-        # Define blue color for the borders
-        border_color = (0, 0, 255)  # Blue color
+        # Define border color - using a more vibrant blue color for better visibility
+        border_color = (0, 50, 255)  # Brighter blue color
         
         # Get box coordinates
         box_coords = box_data['box_2d']
@@ -784,14 +784,20 @@ def highlight_image(image_path, box_data, output_path):
         # Normalize coordinates (adds buffer and extends horizontally)
         x_min, y_min, x_max, y_max = normalize_coordinates(box_coords, img_width, img_height)
         
-        # Draw the horizontal lines
-        line_width = 3
+        # Draw thicker border lines
+        line_width = 5
         
         # Top line
         draw.line([(x_min, y_min), (x_max, y_min)], fill=border_color, width=line_width)
         
         # Bottom line
         draw.line([(x_min, y_max), (x_max, y_max)], fill=border_color, width=line_width)
+        
+        # Left line (adding vertical lines for better visibility)
+        draw.line([(x_min, y_min), (x_min, y_max)], fill=border_color, width=line_width)
+        
+        # Right line
+        draw.line([(x_max, y_min), (x_max, y_max)], fill=border_color, width=line_width)
         
         print(f"Box highlighted at: ({x_min}, {y_min}), ({x_max}, {y_max})")
         

@@ -56,55 +56,36 @@ def normalize_coordinates(box_coords, img_width, img_height):
     return (x_min_px, y_min_px, x_max_px, y_max_px)
 
 def get_boxes_data():
-    """Get the boxes data from a file or use example data."""
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    
-    # Ask user if they want to use example data or provide a file
-    message_result = messagebox.askyesno(
-        "Bounding Box Data", 
-        "Do you want to use the example data?\nSelect 'Yes' to use example data, 'No' to select a JSON file."
-    )
-    
-    if message_result:
-        # Use example data
-        print("Using example data...")
-        example_data = [
-            {"box_2d": [45, 50, 159, 951], "label": "A Journal of Transactions at\nAsh Fall by Mr. John Cobb"},
-            {"box_2d": [21, 914, 60, 951], "label": "1"},
-            {"box_2d": [215, 14, 350, 968], "label": "1798.\n*****\nAugt. 2 Thursday Wind Westerly clear pleasant weather at 2 P.M.\nI set off from Martins Fall with two Boats, Osnaburgh\nHouse and arrived at that place the 19 Inst."},
-            {"box_2d": [370, 134, 441, 968], "label": "*****\n20th Monday Wind N Wst with rain all day in the evening\nMr. McKay arrived from Martins Fall with 3 Boats"},
-            {"box_2d": [468, 134, 538, 968], "label": "*****\n21st Tuesday men employd repacking some of the bales that had got\nwet on the Journey in a birch rind Canoe from Martins fall"},
-            {"box_2d": [560, 134, 629, 968], "label": "*****\n22 Wednesday the men preparing for the Journey and baking\ntheir bread &c. in the evening got the Goods divided for each boat"},
-            {"box_2d": [640, 125, 781, 971], "label": "*****\n23 Thursday Wind South East cloudy weather at 9 A.M. we\nset off from Osnaburgh with three boats which carried the whole\nof L E and Wepinabaw Cargoes fell a great quantity of rain\nin the evening got only about 12 miles from the House."},
-            {"box_2d": [788, 134, 872, 971], "label": "*****\nSeptr. 6th Thursday Wind West with a strong gale at noon we Arrived\nat Wepinabaw House and found all safe, got the boats unloaded"},
-            {"box_2d": [883, 134, 958, 971], "label": "*****\n7th Friday Wind south Wst at 8 A.M. we set off on our Journey\ntowards Portage De lisle, being short of Provisions, got 2 White Cat"}
-        ]
-        return example_data
-    else:
-        # Ask for a JSON file
-        file_path = filedialog.askopenfilename(
-            title="Select a JSON file with bounding box data",
-            filetypes=[
-                ("JSON files", "*.json"),
-                ("All files", "*.*")
-            ]
-        )
+    """Get the boxes data from user input."""
+    try:
+        print("Enter coordinates as comma-separated values (y_min, x_min, y_max, x_max)")
+        print("Values should be between 0 and 1000")
+        coords_input = input("Enter coordinates: ")
+        label = input("Enter label text: ")
         
-        if not file_path:
-            print("No file selected. Exiting.")
-            return None
+        # Split and convert coordinates
+        coords = [float(x.strip()) for x in coords_input.split(',')]
+        if len(coords) != 4:
+            raise ValueError("Please enter exactly 4 coordinates")
             
-        # Read and parse the JSON file
-        try:
-            with open(file_path, 'r') as file:
-                boxes = json.load(file)
-                print(f"Loaded {len(boxes)} boxes from {file_path}")
-                return boxes
-        except Exception as e:
-            print(f"Error reading JSON file: {e}")
-            messagebox.showerror("Error", f"Could not read JSON file: {str(e)}")
-            return None
+        y_min, x_min, y_max, x_max = coords
+        
+        # Validate input ranges
+        if not all(0 <= x <= 1000 for x in [y_min, x_min, y_max, x_max]):
+            raise ValueError("Coordinates must be between 0 and 1000")
+        
+        # Create box data structure
+        box_data = [{
+            "box_2d": [y_min, x_min, y_max, x_max],
+            "label": label
+        }]
+        print("Successfully created box data from input")
+        return box_data
+        
+    except ValueError as e:
+        print(f"Error with input: {e}")
+        messagebox.showerror("Error", f"Invalid input: {str(e)}")
+        return None
 
 def draw_boxes(image_path, boxes_data):
     """

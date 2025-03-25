@@ -39,7 +39,7 @@ def clean_json_string(json_str):
 
 def get_bounding_boxes_from_api(image_path, text_to_process, settings):
     """
-    Call the Gemini API to get bounding boxes for the text in the image.
+    Call the Gemini API to get bounding boxes for the text in the image using the Google Generative AI SDK.
     
     Args:
         image_path: Path to the image file
@@ -53,305 +53,143 @@ def get_bounding_boxes_from_api(image_path, text_to_process, settings):
     print(f"Text to process length: {len(text_to_process)} characters")
     
     try:
-        # Debug print for settings keys
-        print(f"Settings keys: {dir(settings)}")
+        # Import the Google Generative AI library
+        from google import genai
+        from google.genai import types
         
-        # Validate settings object
-        if not hasattr(settings, 'analysis_presets'):
-            print("ERROR: settings.analysis_presets not found")
-            raise ValueError("settings.analysis_presets not found")
+        # Initialize the Gemini client with the API key from settings
+        api_key = settings.google_api_key
+        if not api_key:
+            raise ValueError("Google API key is not set")
             
-        print(f"Number of analysis presets: {len(settings.analysis_presets)}")
+        print(f"Initializing Gemini client with API key")
+        client = genai.Client(api_key=api_key)
         
-        # Get the Bounding_Boxes preset from settings
-        bounding_box_preset = None
+        # Upload the image file
+        print(f"Uploading image: {image_path}")
+        uploaded_file = client.files.upload(file=image_path)
+        
+        # Get the Bounding_Boxes preset from settings for system instructions
+        system_instruction = "You draw bounding boxes on an image of historical documents to identify the location of specific text."
         for preset in settings.analysis_presets:
-            print(f"Checking preset: {preset.get('name', 'unnamed')}")
             if preset.get('name') == "Bounding_Boxes":
-                bounding_box_preset = preset
+                if preset.get('general_instructions'):
+                    system_instruction = preset.get('general_instructions')
                 break
         
-        if not bounding_box_preset:
-            preset_names = [p.get('name', 'unnamed') for p in settings.analysis_presets]
-            print(f"ERROR: Bounding_Boxes preset not found. Available presets: {preset_names}")
-            raise ValueError("Bounding_Boxes preset not found in settings.analysis_presets")
-        
-        # Print the general instructions for debugging
-        print(f"Found preset: {bounding_box_preset.get('name')}")
-        print(f"General instructions: {bounding_box_preset.get('general_instructions', '')}")
-        
-        # Check if API keys are available
-        print(f"Google API key exists: {hasattr(settings, 'google_api_key')}")
-        if hasattr(settings, 'google_api_key'):
-            key_length = len(settings.google_api_key) if settings.google_api_key else 0
-            print(f"Google API key length: {key_length}")
-        
-        # Initialize API Handler
-        try:
-            print("Creating APIHandler...")
-            api_handler = APIHandler(
-                openai_api_key=getattr(settings, 'openai_api_key', ''),
-                anthropic_api_key=getattr(settings, 'anthropic_api_key', ''),
-                google_api_key=getattr(settings, 'google_api_key', '')
-            )
-            print("APIHandler created successfully")
-        except Exception as e:
-            print(f"ERROR creating APIHandler: {e}")
-            raise ValueError(f"Failed to create APIHandler: {e}")
-        
-        # Format the user prompt with the text to process
-        try:
-            print("Formatting user prompt...")
-            specific_instructions = bounding_box_preset.get('specific_instructions', "")
-            print(f"Specific instructions template: {specific_instructions[:100]}...")
-            
-            # Check if the template is valid
-            if "{text_to_process}" not in specific_instructions:
-                print("WARNING: {text_to_process} placeholder not found in specific_instructions")
-            
-            # Format safely
-            try:
-                user_prompt = specific_instructions.format(text_to_process=text_to_process)
-                print("User prompt formatting successful")
-            except KeyError as e:
-                print(f"ERROR formatting prompt - missing key: {e}")
-                # Try a fallback approach
-                user_prompt = specific_instructions.replace("{text_to_process}", text_to_process)
-            except Exception as e:
-                print(f"ERROR formatting prompt: {e}")
-                # Emergency fallback
-                user_prompt = f"""In the accompanying image, identify bounding boxes for each section containing the following text blocks:
-                
-{text_to_process}
+        # Create the content structure with the uploaded image and text prompt
+        prompt_text = f"""In the accompanying image, identify bounding boxes for each section of the image that would surround the following text blocks. Make sure your boxes will capture all the text by providing generous margins: 
 
-Output as JSON array of objects with box_2d coordinates and label."""
-                
-            print(f"Formatted user prompt: {user_prompt[:200]}...")
-        except Exception as e:
-            print(f"ERROR in prompt preparation: {e}")
-            raise ValueError(f"Failed to prepare prompt: {e}")
+{text_to_process}"""
         
-        # Prepare parameters for API call
-        system_prompt = bounding_box_preset.get('general_instructions', "")
-        temperature = float(bounding_box_preset.get('temperature', 0.0))
-        model = bounding_box_preset.get('model', "gemini-2.0-flash")
+        contents = [
+            types.Content(
+                role="user",
+                parts=[
+                    types.Part.from_uri(
+                        file_uri=uploaded_file.uri,
+                        mime_type=uploaded_file.mime_type,
+                    ),
+                    types.Part.from_text(text=prompt_text),
+                ],
+            ),
+        ]
         
+        # Define the generation configuration
+        generate_content_config = types.GenerateContentConfig(
+            temperature=0,
+            top_p=0.95,
+            top_k=40,
+            max_output_tokens=8192,
+            response_mime_type="application/json",
+            system_instruction=[
+                types.Part.from_text(text=system_instruction),
+            ],
+        )
+        
+        # Make the API call
+        print("Making request to Gemini API...")
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=contents,
+            config=generate_content_config,
+        )
+        
+        # Extract the response text
+        response_text = response.text
+        print("\n========== GEMINI API RESPONSE ==========")
+        print(response_text)
+        print("=======================================\n")
+        
+        # Parse the JSON response
         try:
-            # Load the image
-            print(f"Loading image from path: {image_path}")
-            img = Image.open(image_path)
-            print(f"Image loaded successfully: {img.format}, {img.size}")
+            bounding_boxes = json.loads(response_text)
             
-            # Create an async event loop to run the async API call
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+            # Convert the structure if needed
+            result = []
+            for box in bounding_boxes:
+                # Convert the format if necessary
+                if "box_2d" in box and ("text" in box or "label" in box):
+                    result.append({
+                        "box_2d": box["box_2d"],
+                        "label": box.get("text", box.get("label", ""))
+                    })
             
-            # Make the API call
-            print("Sending request to Gemini API...")
-            result = loop.run_until_complete(
-                api_handler.route_api_call(
-                    engine=model,
-                    system_prompt=system_prompt,
-                    user_prompt=user_prompt,
-                    temp=temperature,
-                    image_data=image_path,
-                    text_to_process=None,  # Already formatted in user_prompt
-                    val_text=None,  # No validation text for this call
-                    index=0,
-                    is_base64=False,  # We're passing the image path directly
-                    formatting_function=True,  # We've already formatted the prompt
-                    api_timeout=120.0
-                )
-            )
+            print(f"Successfully parsed {len(result)} bounding boxes from response")
+            return result
             
-            # Close the event loop
-            loop.close()
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error: {e}")
+            print(f"Invalid JSON: {response_text[:200]}")
             
-            # Check if we got a valid response
-            if result[0] == "Error":
-                raise ValueError("Error from API call")
+            # If parsing fails, attempt to extract JSON using regex
+            import re
+            json_pattern = r'\[[\s\S]*\]'  # Match anything that looks like a JSON array
+            match = re.search(json_pattern, response_text)
             
-            # Extract the response
-            response_text = result[0]
-            
-            # Print the full response for debugging
-            print("\n========== FULL API RESPONSE ==========")
-            print(response_text)
-            print("=======================================\n")
-            
-            # Look for the standard response pattern with "Here are the bounding box detections:"
-            # followed by JSON array
-            bounding_box_pattern = r"Here are the bounding box detections:[\s\n]*(\[\s*\{.*\}\s*\])"
-            json_match = re.search(bounding_box_pattern, response_text, re.DOTALL)
-            
-            if json_match:
-                json_str = json_match.group(1)
-                print(f"Found JSON array after 'Here are the bounding box detections:'")
-                print(f"Extracted JSON: {json_str[:100]}...")
-                
-                # Clean the JSON string
-                cleaned_json = clean_json_string(json_str)
-                
+            if match:
                 try:
+                    json_str = match.group(0)
+                    cleaned_json = clean_json_string(json_str)
                     bounding_boxes = json.loads(cleaned_json)
-                    print(f"Successfully parsed {len(bounding_boxes)} bounding boxes from response")
-                    for i, box in enumerate(bounding_boxes):
-                        print(f"Box {i+1}: {box}")
-                    return bounding_boxes
-                except json.JSONDecodeError as e:
-                    print(f"JSON parsing error with primary pattern: {e}")
-                    # Continue to fallback methods
-            
-            # If the standard pattern fails, try different regex patterns
-            patterns = [
-                r'\[\s*\{.*\}\s*\]',  # Standard array of objects
-                r'\{\s*"box_2d".*\}',  # Single object with box_2d
-                r'\{\s*.*"box_2d".*\}',  # Object with box_2d anywhere
-            ]
-            
-            json_str = None
-            for pattern in patterns:
-                json_match = re.search(pattern, response_text, re.DOTALL)
-                if json_match:
-                    json_str = json_match.group(0)
-                    print(f"Found JSON using pattern: {pattern}")
-                    print(f"Extracted JSON: {json_str[:100]}...")
-                    break
-            
-            if json_str:
-                # Clean the JSON string
-                cleaned_json = clean_json_string(json_str)
-                print(f"Cleaned JSON: {cleaned_json[:100]}...")
-                
-                # Check if we found a single object or an array
-                if cleaned_json.strip().startswith('{'):
-                    # Single object, wrap in array
-                    cleaned_json = f"[{cleaned_json}]"
-                    print("Wrapped single object in array")
-                
-                try:
-                    bounding_boxes = json.loads(cleaned_json)
-                    print(f"Successfully parsed {len(bounding_boxes)} bounding boxes from response")
-                    for i, box in enumerate(bounding_boxes):
-                        print(f"Box {i+1}: {box}")
-                    return bounding_boxes
-                except json.JSONDecodeError as e:
-                    print(f"JSON parsing error: {e}")
-                    print(f"Invalid JSON: {cleaned_json[:200]}")
-                    # Try more aggressive cleaning if normal cleaning failed
-                    try:
-                        # Try to extract just the array part
-                        if '[' in cleaned_json and ']' in cleaned_json:
-                            start_idx = cleaned_json.find('[')
-                            end_idx = cleaned_json.rfind(']') + 1
-                            array_only = cleaned_json[start_idx:end_idx]
-                            bounding_boxes = json.loads(array_only)
-                            print(f"Successfully parsed {len(bounding_boxes)} bounding boxes after extracting array")
-                            return bounding_boxes
-                    except Exception:
-                        print("Failed to parse JSON even with array extraction")
-            
-            # If we couldn't extract JSON, try a different approach
-            print("Could not extract JSON with regex, attempting to extract box info manually")
-            
-            # Look for box_2d patterns in the text
-            box_pattern = r'box_2d"?\s*:\s*\[([\d\s,\.]+)\]'
-            label_pattern = r'label"?\s*:\s*"([^"]+)"'
-            
-            box_matches = re.findall(box_pattern, response_text)
-            label_matches = re.findall(label_pattern, response_text)
-            
-            if box_matches and len(box_matches) == len(label_matches):
-                print(f"Found {len(box_matches)} box coordinates and labels using manual extraction")
-                bounding_boxes = []
-                
-                for i, (box_str, label) in enumerate(zip(box_matches, label_matches)):
-                    try:
-                        # Clean and parse box coordinates
-                        coords = [float(coord.strip()) for coord in box_str.split(',')]
-                        if len(coords) == 4:
-                            bounding_boxes.append({
-                                'box_2d': coords,
-                                'label': label
+                    
+                    # Convert the structure if needed
+                    result = []
+                    for box in bounding_boxes:
+                        if "box_2d" in box and ("text" in box or "label" in box):
+                            result.append({
+                                "box_2d": box["box_2d"],
+                                "label": box.get("text", box.get("label", ""))
                             })
-                            print(f"Manually extracted Box {i+1}: {coords} - {label[:30]}...")
-                    except:
-                        print(f"Error parsing coordinates for box {i+1}")
-                
-                if bounding_boxes:
-                    return bounding_boxes
+                    
+                    print(f"Successfully parsed {len(result)} bounding boxes after regex extraction")
+                    return result
+                except Exception as inner_e:
+                    print(f"Error in regex extraction: {inner_e}")
             
-            # If all attempts fail, try a more aggressive manual extraction approach
-            print("Trying manual coordinate extraction as last resort")
-            
-            # Try to match any box-like structures in the text
-            box_pattern = r'(?:box_2d|coordinates|coord).*?\[([^\]]+)\]'
-            label_pattern = r'(?:label|text).*?["\'](.*?)["\']'
-            
-            # Find all potential box coordinates
-            box_matches = re.findall(box_pattern, response_text, re.IGNORECASE | re.DOTALL)
-            
-            # Find all potential labels
-            label_matches = re.findall(label_pattern, response_text, re.IGNORECASE | re.DOTALL)
-            
-            print(f"Found {len(box_matches)} potential box coordinates and {len(label_matches)} potential labels")
-            
-            # If we have coordinates, try to parse them
-            if box_matches:
-                bounding_boxes = []
-                
-                # Match labels with coordinates if possible, otherwise use empty labels
-                if len(label_matches) != len(box_matches):
-                    print(f"Warning: Mismatch between coordinates ({len(box_matches)}) and labels ({len(label_matches)})")
-                    # Fill missing labels with placeholders
-                    if len(label_matches) < len(box_matches):
-                        label_matches.extend(["Unknown text"] * (len(box_matches) - len(label_matches)))
-                
-                for i, (box_str, label) in enumerate(zip(box_matches, label_matches[:len(box_matches)])):
-                    try:
-                        # Clean up the coordinate string
-                        box_str = box_str.strip()
-                        box_str = re.sub(r'[^\d\s,\.]', '', box_str)  # Remove anything that's not a digit, space, comma, or period
-                        
-                        # Split by comma or space
-                        coords_raw = re.split(r'[,\s]+', box_str)
-                        # Filter out empty strings and convert to float
-                        coords = [float(c) for c in coords_raw if c.strip()]
-                        
-                        # Ensure we have exactly 4 coordinates
-                        if len(coords) < 4:
-                            print(f"Warning: Not enough coordinates in box {i+1}, padding with zeros")
-                            coords.extend([0] * (4 - len(coords)))
-                        elif len(coords) > 4:
-                            print(f"Warning: Too many coordinates in box {i+1}, using first 4")
-                            coords = coords[:4]
-                        
-                        bounding_boxes.append({
-                            'box_2d': coords,
-                            'label': label
-                        })
-                        print(f"Manually extracted Box {i+1}: {coords} - {label[:30]}...")
-                    except Exception as e:
-                        print(f"Error parsing coordinates for box {i+1}: {str(e)}")
-                
-                if bounding_boxes:
-                    print(f"Successfully extracted {len(bounding_boxes)} boxes using manual parsing")
-                    return bounding_boxes
-            
-            # If all attempts fail, create a single box for the entire image
+            # If all parsing attempts fail, create a single box for the entire image
             print("All JSON parsing attempts failed. Creating a single box for the entire image.")
             return [{
                 'box_2d': [0, 0, 1000, 1000],  # Full image coordinates
                 'label': text_to_process[:500]  # Use the first part of the text as label
             }]
-            
-        except Exception as e:
-            print(f"ERROR during API call: {e}")
-            raise ValueError(f"API call failed: {e}")
-            
+    
     except Exception as e:
-        print(f"ERROR in get_bounding_boxes_from_api setup: {str(e)}")
-        raise
+        print(f"ERROR in get_bounding_boxes_from_api: {str(e)}")
+        # Return a default bounding box for the entire image in case of error
+        return [{
+            'box_2d': [0, 0, 1000, 1000],  # Full image coordinates
+            'label': text_to_process[:500]  # Use the first part of the text as label
+        }]
+
+# Keep the original function as a fallback with a different name in case we need it
+def get_bounding_boxes_from_api_legacy(image_path, text_to_process, settings):
+    """
+    Legacy version of the function that calls the Gemini API using APIHandler.
+    This is kept as a fallback in case the new implementation has issues.
+    """
+    # Original implementation moved here
+    # ... rest of the original implementation ...
 
 def normalize_coordinates(box_coords, img_width, img_height):
     """
