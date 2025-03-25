@@ -288,13 +288,27 @@ Current Document to Analyze: {text_to_process}''',
                 'top-p' : "0.95",
                 'structured_output' : True,
                 'general_instructions': '''You draw bounding boxes on an image of historical documents to identify the location of specific text. ''',
-                'specific_instructions': '''In the accompanying image, identify bounding boxes for each section of the image that would surround the following text blocks. Make sure your boxes will capture all the text by providing generous margins: \n\n {text_to_process}''',
+                'specific_instructions': '''In the accompanying image, detect the bounding box for each block of text as separated by "******". Do not overlap the boxes: \n\n {text_to_process}''',
                 'use_images': True,
                 'current_image': "Yes",
                 'num_prev_images': "0",
                 'num_after_images': "0",
                 'val_text': None
-            }          
+            },
+            {
+                'name': "Bounding_Boxes_By_Row",
+                'model': "gemini-2.0-flash",
+                'temperature': "0.0",
+                'top-p' : "0.95",
+                'structured_output' : True,
+                'general_instructions': '''You draw bounding boxes on an image of historical documents to identify the location of specific text. ''',
+                'specific_instructions': '''In the accompanying image, detect the bounding box around the following text block: \n\n {text_to_process}''',
+                'use_images': True,
+                'current_image': "Yes",
+                'num_prev_images': "0",
+                'num_after_images': "0",
+                'val_text': None
+            }            
         ] # List of dictionaries for analysis presets
         
         # Default metadata presets

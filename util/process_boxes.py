@@ -49,8 +49,6 @@ def get_bounding_boxes_from_api(image_path, text_to_process, settings):
     Returns:
         List of dictionaries with 'box_2d' and 'label' keys
     """
-    print(f"Calling Gemini API for bounding boxes with image: {image_path}")
-    print(f"Text to process length: {len(text_to_process)} characters")
     
     try:
         # Import the Google Generative AI library
@@ -62,11 +60,9 @@ def get_bounding_boxes_from_api(image_path, text_to_process, settings):
         if not api_key:
             raise ValueError("Google API key is not set")
             
-        print(f"Initializing Gemini client with API key")
         client = genai.Client(api_key=api_key)
         
         # Upload the image file
-        print(f"Uploading image: {image_path}")
         uploaded_file = client.files.upload(file=image_path)
         
         # Get the Bounding_Boxes preset from settings for system instructions
@@ -108,7 +104,6 @@ def get_bounding_boxes_from_api(image_path, text_to_process, settings):
         )
         
         # Make the API call
-        print("Making request to Gemini API...")
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=contents,
@@ -203,7 +198,6 @@ def normalize_coordinates(box_coords, img_width, img_height):
     Returns:
         Tuple of (x_min, y_min, x_max, y_max) in pixel coordinates
     """
-    print(f"Converting coordinates from normalized format: {box_coords}")
     
     y_min, x_min, y_max, x_max = box_coords
     
@@ -213,7 +207,6 @@ def normalize_coordinates(box_coords, img_width, img_height):
     x_max_px = int(x_max * img_width / 1000)
     y_max_px = int(y_max * img_height / 1000)
     
-    print(f"Initial pixel coordinates: ({x_min_px}, {y_min_px}, {x_max_px}, {y_max_px})")
     
     # Add buffer of 50 pixels in vertical direction
     buffer = 50
@@ -226,7 +219,6 @@ def normalize_coordinates(box_coords, img_width, img_height):
     y_min_px = max(0, y_min_px - buffer)  # Ensure not less than 0
     y_max_px = min(img_height, y_max_px + buffer)  # Ensure not greater than image height
     
-    print(f"Final pixel coordinates with buffer and horizontal extension: ({x_min_px}, {y_min_px}, {x_max_px}, {y_max_px})")
     
     return (x_min_px, y_min_px, x_max_px, y_max_px)
 
@@ -243,35 +235,27 @@ def crop_image(image_path, box_coords, output_path):
         Path to the saved cropped image
     """
     try:
-        print(f"Cropping image: {image_path}")
-        print(f"Box coordinates from API: {box_coords}")
         
         # Open the image
         img = Image.open(image_path)
         img_width, img_height = img.size
-        print(f"Original image size: {img_width}x{img_height}")
         
         # Normalize coordinates - only do this ONCE
         norm_coords = normalize_coordinates(box_coords, img_width, img_height)
         x_min, y_min, x_max, y_max = norm_coords
-        print(f"Using normalized coordinates for cropping: ({x_min}, {y_min}, {x_max}, {y_max})")
         
         # Crop the image
         cropped_img = img.crop((x_min, y_min, x_max, y_max))
-        print(f"Cropped image size: {cropped_img.width}x{cropped_img.height}")
-        
+       
         # Ensure the directory exists
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        print(f"Saving cropped image to: {output_path}")
         
         # Save the cropped image
         cropped_img.save(output_path)
-        print(f"Successfully saved cropped image to: {output_path}")
         
         return output_path
     
     except Exception as e:
-        print(f"Error cropping image: {e}")
         raise
 
 def get_split_images_dir(app=None):
@@ -304,9 +288,6 @@ def process_image_with_bounding_boxes(image_path, text_to_process, settings, app
     Returns:
         List of dictionaries with 'box_2d', 'label', and 'cropped_image_path' keys
     """
-    print(f"\n===== Processing image with bounding boxes =====")
-    print(f"Image path: {image_path}")
-    print(f"Text length: {len(text_to_process)} characters")
     
     # Check if we need to prompt the user to save the project first
     if app and (not hasattr(app, 'project_directory') or not app.project_directory):
@@ -322,29 +303,21 @@ def process_image_with_bounding_boxes(image_path, text_to_process, settings, app
     # Create split_images directory in the appropriate location
     split_images_dir = get_split_images_dir(app)
     os.makedirs(split_images_dir, exist_ok=True)
-    print(f"Created split_images directory at: {split_images_dir}")
     
     # Get bounding boxes from API
-    print("Calling Gemini API to get bounding boxes...")
     bounding_boxes = get_bounding_boxes_from_api(image_path, text_to_process, settings)
-    print(f"Received {len(bounding_boxes)} bounding boxes from API")
     
     # Get image file name without extension
     image_basename = os.path.splitext(os.path.basename(image_path))[0]
-    print(f"Image basename: {image_basename}")
     
     # Process each bounding box
     result = []
     for i, box_data in enumerate(bounding_boxes):
-        print(f"\nProcessing box {i+1}/{len(bounding_boxes)}")
         box_coords = box_data['box_2d']
         label = box_data['label']
-        print(f"Box coordinates: {box_coords}")
-        print(f"Label: {label[:50]}...")
         
         # Generate output path for cropped image
         output_path = os.path.join(split_images_dir, f"{image_basename}_{i+1}.jpg")
-        print(f"Output path: {output_path}")
         
         # Crop and save the image
         cropped_image_path = crop_image(image_path, box_coords, output_path)
@@ -356,91 +329,7 @@ def process_image_with_bounding_boxes(image_path, text_to_process, settings, app
             'cropped_image_path': cropped_image_path
         })
     
-    print(f"Successfully processed {len(result)} bounding boxes")
-    print(f"===== Finished processing image =====\n")
     return result
-
-def test_process_image(image_path, text_to_process):
-    """
-    Test function to manually process an image with bounding boxes.
-    
-    Args:
-        image_path: Path to the image file
-        text_to_process: Text to be processed by the Gemini API
-    """
-    print(f"\n===== TESTING IMAGE PROCESSING =====")
-    print(f"Image path: {image_path}")
-    print(f"Text length: {len(text_to_process)}")
-    
-    # Mock settings object
-    class MockSettings:
-        def __init__(self, api_key):
-            self.openai_api_key = ""
-            self.anthropic_api_key = ""
-            self.google_api_key = api_key
-            self.analysis_presets = [
-                {
-                    'name': "Bounding_Boxes",
-                    'model': "gemini-2.0-flash",
-                    'temperature': "0.0",
-                    'general_instructions': '''You are an API that generates bounding boxes for specific text blocks in historical document images. Your output must be strictly in JSON format following the exact schema provided.''',
-                    'specific_instructions': '''In the accompanying image, identify bounding boxes for each section of the image that would contain the following text blocks. 
-
-For each identified text block, you must output a JSON object with the following schema:
-{
-  "box_2d": [y_min, x_min, y_max, x_max],  // Values from 0-1000 representing normalized coordinates
-  "label": "the exact text found in this section"
-}
-
-Your response must be a JSON array of these objects, and nothing else. Do not include any explanations or additional text.
-
-Example valid output:
-[
-  {"box_2d": [45, 50, 159, 951], "label": "Text block 1"},
-  {"box_2d": [215, 14, 350, 968], "label": "Text block 2"}
-]
-
-Text blocks to identify:
-
-{text_to_process}''',
-                    'use_images': True,
-                    'current_image': "Yes",
-                    'num_prev_images': "0",
-                    'num_after_images': "0",
-                    'val_text': None
-                }
-            ]
-    
-    # Get API key from environment variable
-    import os
-    api_key = os.environ.get('GOOGLE_API_KEY', '')
-    
-    if not api_key:
-        print("ERROR: No Google API key found in environment variable GOOGLE_API_KEY")
-        return
-    
-    # Create mock settings
-    settings = MockSettings(api_key)
-    
-    # Process the image
-    try:
-        results = process_image_with_bounding_boxes(image_path, text_to_process, settings)
-        print(f"\nSuccessfully processed image with {len(results)} bounding boxes")
-        for i, result in enumerate(results):
-            print(f"Box {i+1}:")
-            print(f"  Coordinates: {result['box_2d']}")
-            print(f"  Label: {result['label'][:50]}...")
-            print(f"  Image: {result['cropped_image_path']}")
-    except Exception as e:
-        print(f"ERROR in test: {e}")
-    
-    print("===== TEST COMPLETED =====\n")
-
-# Uncomment to run the test
-# if __name__ == "__main__":
-#     image_path = "path/to/your/image.jpg"
-#     text_to_process = "Text to process..."
-#     test_process_image(image_path, text_to_process) 
 
 async def process_images_in_batches(image_paths, texts, settings, app=None):
     """
@@ -455,7 +344,6 @@ async def process_images_in_batches(image_paths, texts, settings, app=None):
     Returns:
         Dictionary mapping image paths to their bounding box results
     """
-    print(f"\n===== Processing {len(image_paths)} images in batches =====")
     
     # Check if we need to prompt the user to save the project first
     if app and (not hasattr(app, 'project_directory') or not app.project_directory):
@@ -470,7 +358,6 @@ async def process_images_in_batches(image_paths, texts, settings, app=None):
     
     # Get batch size from settings (default to 4 if not specified)
     batch_size = getattr(settings, 'batch_size', 4)
-    print(f"Using batch size: {batch_size}")
     
     # Process images in batches
     results = {}
@@ -479,13 +366,11 @@ async def process_images_in_batches(image_paths, texts, settings, app=None):
     for i in range(0, len(image_paths), batch_size):
         batch_image_paths = image_paths[i:i+batch_size]
         batch_texts = texts[i:i+batch_size]
-        print(f"\nProcessing batch {i//batch_size + 1} with {len(batch_image_paths)} images")
         
         # Process batch in parallel
         with ThreadPoolExecutor(max_workers=batch_size) as executor:
             futures = []
             for img_path, text in zip(batch_image_paths, batch_texts):
-                print(f"Submitting job for image: {img_path}")
                 future = executor.submit(process_image_with_bounding_boxes, img_path, text, settings, app)
                 futures.append((img_path, future))
             
@@ -499,7 +384,6 @@ async def process_images_in_batches(image_paths, texts, settings, app=None):
                     print(f"Error processing {img_path}: {e}")
                     results[img_path] = []
     
-    print(f"===== Completed processing {len(results)} images =====\n")
     return results
 
 def apply_separation_with_boxes_batched(app):
@@ -578,88 +462,155 @@ def apply_separation_with_boxes_batched(app):
     
     return results
 
-# For testing
-def test_batch_processing(image_paths, texts, batch_size=2, app=None):
+def apply_separation_with_boxes_by_row_batched(app, compiled_df, original_df):
     """
-    Test batch processing with multiple images
+    Process row-based document separation in batches for better performance.
     
     Args:
-        image_paths: List of image paths to process
-        texts: List of texts corresponding to each image
-        batch_size: Size of each batch (default 2)
-        app: The application instance with project directory information
+        app: The main application object
+        compiled_df: The compiled DataFrame with separated documents
+        original_df: The original DataFrame before separation
+        
+    Returns:
+        Dictionary mapping row indices to their processed bounding box results
     """
-    print(f"\n===== TESTING BATCH PROCESSING =====")
+    # Get batch size from settings (default to 50 if not specified)
+    batch_size = getattr(app.settings, 'batch_size', 50)
     
-    # Mock settings object
-    class MockSettings:
-        def __init__(self, api_key, batch_size):
-            self.openai_api_key = ""
-            self.anthropic_api_key = ""
-            self.google_api_key = api_key
-            self.batch_size = batch_size
-            self.analysis_presets = [
-                {
-                    'name': "Bounding_Boxes",
-                    'model': "gemini-2.0-flash",
-                    'temperature': "0.0",
-                    'general_instructions': '''You are an API that generates bounding boxes for specific text blocks in historical document images. Your output must be strictly in JSON format following the exact schema provided.''',
-                    'specific_instructions': '''In the accompanying image, identify bounding boxes for each section of the image that would contain the following text blocks. 
-
-For each identified text block, you must output a JSON object with the following schema:
-{
-  "box_2d": [y_min, x_min, y_max, x_max],  // Values from 0-1000 representing normalized coordinates
-  "label": "the exact text found in this section"
-}
-
-Your response must be a JSON array of these objects, and nothing else. Do not include any explanations or additional text.
-
-Example valid output:
-[
-  {"box_2d": [45, 50, 159, 951], "label": "Text block 1"},
-  {"box_2d": [215, 14, 350, 968], "label": "Text block 2"}
-]
-
-Text blocks to identify:
-
-{text_to_process}''',
-                    'use_images': True,
-                    'current_image': "Yes",
-                    'num_prev_images': "0",
-                    'num_after_images': "0",
-                    'val_text': None
-                }
-            ]
+    # Prepare batches of rows to process
+    rows_to_process = []
+    image_paths = []
+    texts = []
+    row_indices = []
     
-    # Get API key from environment variable
-    import os
-    api_key = os.environ.get('GOOGLE_API_KEY', '')
+    # Check if get_full_path method exists
+    has_get_full_path = hasattr(app, 'get_full_path') and callable(getattr(app, 'get_full_path'))
     
-    if not api_key:
-        print("ERROR: No Google API key found in environment variable GOOGLE_API_KEY")
-        return
+    # Collect row data for processing
+    for idx, row in compiled_df.iterrows():
+        # Skip rows with empty text
+        if 'Text' not in row or not pd.notna(row['Text']) or not row['Text'].strip():
+            continue
+            
+        # Get the original indices that make up this document
+        original_indices = row['Original_Index']
+        
+        # Use the first original index to get the image path
+        first_idx = original_indices[0] if isinstance(original_indices, list) and original_indices else 0
+        if first_idx < len(original_df):
+            image_path = original_df.loc[first_idx, 'Image_Path']
+        else:
+            # Fallback to the first available image if index is out of range
+            image_path = original_df.loc[0, 'Image_Path'] if not original_df.empty else ""
+            
+        if pd.isna(image_path) or not image_path:
+            continue
+            
+        # Get the full image path
+        if has_get_full_path:
+            full_path = app.get_full_path(image_path)
+        else:
+            # Try to handle relative paths
+            if os.path.isabs(image_path):
+                full_path = image_path
+            else:
+                # Try common patterns
+                if app.project_directory and os.path.exists(app.project_directory):
+                    full_path = os.path.join(app.project_directory, image_path)
+                else:
+                    full_path = os.path.join(os.getcwd(), image_path)
+        
+        if os.path.exists(full_path):
+            # Add this row to processing queue
+            document_text = row['Text']
+            
+            image_paths.append(full_path)
+            texts.append(document_text)
+            row_indices.append(idx)
     
-    # Create mock settings
-    settings = MockSettings(api_key, batch_size)
-    
-    # Create event loop
+    # Create event loop and run parallel processing
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
     try:
-        # Run batch processing
-        results = loop.run_until_complete(process_images_in_batches(image_paths, texts, settings, app))
+        # Process batches
+        results_by_indices = {}
         
-        # Print results
-        print("\nBatch processing results:")
-        for img_path, boxes in results.items():
-            print(f"Image: {img_path}")
-            print(f"Boxes: {len(boxes)}")
-            for i, box in enumerate(boxes):
-                print(f"  Box {i+1}: {box['box_2d']} - {box['label'][:30]}...")
-    except Exception as e:
-        print(f"ERROR in batch test: {e}")
+        # Process in batches of batch_size
+        for i in range(0, len(row_indices), batch_size):
+            batch_image_paths = image_paths[i:i+batch_size]
+            batch_texts = texts[i:i+batch_size]
+            batch_indices = row_indices[i:i+batch_size]
+            
+            # Run the batch asynchronously
+            batch_results = loop.run_until_complete(
+                process_rows_in_batches(batch_image_paths, batch_texts, batch_indices, app.settings, app)
+            )
+            
+            # Add batch results to overall results
+            results_by_indices.update(batch_results)
     finally:
         loop.close()
     
-    print("===== BATCH TEST COMPLETED =====\n") 
+    return results_by_indices
+
+async def process_rows_in_batches(image_paths, texts, row_indices, settings, app=None):
+    """
+    Process multiple document rows in parallel batches.
+    
+    Args:
+        image_paths: List of image paths to process
+        texts: List of texts corresponding to each row
+        row_indices: List of row indices in the compiled DataFrame
+        settings: Settings object containing API key and batch size
+        app: The application instance with project directory information
+        
+    Returns:
+        Dictionary mapping row indices to their bounding box results
+    """
+    
+    # Get batch size from settings (default to 50 if not specified)
+    batch_size = getattr(settings, 'batch_size', 50)
+    
+    # Process rows in batches
+    results = {}
+    
+    # Split into smaller batches for concurrent processing
+    max_workers = min(batch_size, 10)  # Limit concurrent API calls
+    
+    # Process batch in parallel
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = []
+        for idx, (img_path, text, row_idx) in enumerate(zip(image_paths, texts, row_indices)):
+            # Check if Bounding_Boxes_By_Row preset exists
+            preset_name = "Bounding_Boxes_By_Row"
+            found_preset = False
+            
+            for preset in settings.analysis_presets:
+                if preset.get('name') == preset_name:
+                    found_preset = True
+                    break
+            
+            # If the preset doesn't exist, fall back to the regular Bounding_Boxes preset
+            if not found_preset:
+                preset_name = "Bounding_Boxes"
+                
+            # Submit task to executor
+            future = executor.submit(get_bounding_boxes_from_api, img_path, text, settings)
+            futures.append((row_idx, future))
+        
+        # Collect results as they complete
+        for row_idx, future in futures:
+            try:
+                bounding_boxes = future.result()
+                if bounding_boxes and len(bounding_boxes) > 0:
+                    results[row_idx] = bounding_boxes[0]  # Take first bounding box for row
+                else:
+                    results[row_idx] = None
+                print(f"Completed processing for row {row_idx}")
+            except Exception as e:
+                print(f"Error processing row {row_idx}: {e}")
+                results[row_idx] = None
+    
+    return results
+
