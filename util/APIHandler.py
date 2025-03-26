@@ -13,6 +13,9 @@ import anthropic
 # Google API
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
+# Add new imports for updated Gemini approach
+from google import genai as genai_client
+from google.genai import types
 
 class APIHandler:
     def __init__(self, openai_api_key, anthropic_api_key, google_api_key, app=None):
@@ -260,39 +263,23 @@ class APIHandler:
                                 text_to_process, val_text, engine, index, 
                                 is_base64=True, formatting_function=False, api_timeout=120.0,
                                 job_type=None, required_headers=None):
-        genai.configure(api_key=self.google_api_key)
-        # Add generation config
-        generation_config = {
-            "temperature": temp,
-            "top_p": 0.95,
-            "top_k": 40,
-            "max_output_tokens": 8192,
-        }
-
-        model = genai.GenerativeModel(
-            model_name=engine,
-            generation_config=generation_config,
-            system_instruction=system_prompt
-        )
-
+        # Initialize client with API key
+        client = genai_client.Client(api_key=self.google_api_key)
+        
         populated_user_prompt = (user_prompt if formatting_function 
                             else user_prompt.format(text_to_process=text_to_process))
 
-        # Handle file uploads
-        content = [populated_user_prompt]
-        
-        if image_data:
-            if isinstance(image_data, (str, Path)):
-                # Single image case
-                file = genai.upload_file(image_data, mime_type="image/jpeg")
-                content.append(file)
-            else:
-                # Multiple images case
-                for img_path, label in image_data:
-                    if label:
-                        content.append(label)
-                    file = genai.upload_file(img_path, mime_type="image/jpeg")
-                    content.append(file)
+        # Generate content config
+        generate_content_config = types.GenerateContentConfig(
+            temperature=temp,
+            top_p=0.95,
+            top_k=40,
+            max_output_tokens=8192,
+            response_mime_type="text/plain",
+            system_instruction=[
+                types.Part.from_text(text=system_prompt),
+            ],
+        )
 
         # Use more retries for metadata jobs which are more complex
         max_retries = 5 if job_type == "Metadata" else 3
@@ -300,41 +287,59 @@ class APIHandler:
         
         while retries < max_retries:
             try:
-                response = model.generate_content(
-                    content,
-                    safety_settings=[
-                                    {
-                                        "category": HarmCategory.HARM_CATEGORY_HARASSMENT,
-                                        "threshold": "BLOCK_NONE",
-                                    },
-                                    {
-                                        "category": HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                                        "threshold": "BLOCK_NONE",
-                                    },
-                                    {
-                                        "category": HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                                        "threshold": "BLOCK_NONE",
-                                    },
-                                    {
-                                        "category": HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                                        "threshold": "BLOCK_NONE",
-                                    }
-                                ],
-                                    )
+                # Prepare content object
+                parts = []
                 
-                validation_result = self._validate_response(response.text, val_text, index, job_type, required_headers)
+                # Handle image data
+                if image_data:
+                    if isinstance(image_data, (str, Path)):
+                        # Single image case
+                        uploaded_file = client.files.upload(file=image_data)
+                        parts.append(types.Part.from_uri(
+                            file_uri=uploaded_file.uri,
+                            mime_type="image/jpeg"
+                        ))
+                    else:
+                        # Multiple images case
+                        for img_path, label in image_data:
+                            if label:
+                                parts.append(types.Part.from_text(text=label))
+                            uploaded_file = client.files.upload(file=img_path)
+                            parts.append(types.Part.from_uri(
+                                file_uri=uploaded_file.uri,
+                                mime_type="image/jpeg"
+                            ))
+                
+                # Add the user prompt
+                parts.append(types.Part.from_text(text=populated_user_prompt))
+                
+                # Create content object
+                contents = [
+                    types.Content(
+                        role="user",
+                        parts=parts,
+                    ),
+                ]
+
+                # Stream the response and collect the text
+                response_text = ""
+                for chunk in client.models.generate_content_stream(
+                    model=engine,
+                    contents=contents,
+                    config=generate_content_config,
+                ):
+                    if hasattr(chunk, 'text'):
+                        response_text += chunk.text
+                
+                # Validate the response
+                validation_result = self._validate_response(response_text, val_text, index, job_type, required_headers)
                 
                 # If validation failed and we have retries left, try again with higher temperature
                 if validation_result[0] == "Error" and retries < max_retries - 1:
                     # Gradually increase temperature for creativity if we keep getting invalid responses
                     if job_type == "Metadata":
                         new_temp = min(0.9, float(temp) + (retries * 0.1))
-                        generation_config["temperature"] = new_temp
-                        model = genai.GenerativeModel(
-                            model_name=engine,
-                            generation_config=generation_config,
-                            system_instruction=system_prompt
-                        )
+                        generate_content_config.temperature = new_temp
                     
                     retries += 1
                     # Add backoff between retries
@@ -568,6 +573,11 @@ class APIHandler:
         """
         if not image_data:
             return None
+
+        # For Gemini, just return the file paths, no need for base64 encoding
+        # as we'll upload them directly using client.files.upload
+        if "gemini" in engine.lower():
+            return image_data
 
         needs_base64 = is_base64 and ("gpt" in engine.lower() or "o1" in engine.lower() or "o3" in engine.lower() or "claude" in engine.lower())
         
