@@ -2727,20 +2727,32 @@ class App(TkinterDnD.Tk):
                         messagebox.showinfo("Skip", "This page already has recognized text.")
                         return
                 else:
+                    # First ensure we have images to process
+                    pages_with_images = self.main_df[
+                        (self.main_df['Image_Path'].notna()) & 
+                        (self.main_df['Image_Path'] != '')
+                    ]
+                    
+                    if pages_with_images.empty:
+                        messagebox.showwarning("No Images", "No images are available for processing.")
+                        return
+                        
                     if skip_completed:
-                        # Filter for pages without Original_Text
-                        batch_df = self.main_df[
-                            (self.main_df['Image_Path'].notna()) & 
-                            (self.main_df['Image_Path'] != '') & 
-                            ((self.main_df['Original_Text'].isna()) | (self.main_df['Original_Text'] == ''))
+                        # Filter for pages without Original_Text or with empty Original_Text
+                        # This catches both NaN values and empty strings
+                        batch_df = pages_with_images[
+                            pages_with_images.apply(
+                                lambda row: pd.isna(row['Original_Text']) or row['Original_Text'].strip() == '', 
+                                axis=1
+                            )
                         ]
+                        # If all pages have recognized text, batch_df will be empty
+                        if batch_df.empty:
+                            messagebox.showinfo("No Work Needed", "All pages already have recognized text.")
+                            return
                     else:
                         # Process all pages with images regardless of content
-                        batch_df = self.main_df[
-                            (self.main_df['Image_Path'].notna()) & 
-                            (self.main_df['Image_Path'] != '')
-                        ]
-
+                        batch_df = pages_with_images
             elif ai_job == "Correct_Text":
                 if all_or_one_flag == "Current Page":
                     # Logic for Current Page with Skip Completed option
