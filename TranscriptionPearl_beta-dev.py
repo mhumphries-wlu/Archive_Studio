@@ -226,6 +226,11 @@ class App(TkinterDnD.Tk):
         self.file_menu.add_command(label="Save Project", command=self.save_project)
         self.file_menu.add_command(label="Save Project As", command=self.save_project_as)
         self.file_menu.add_separator()
+        # Add import options
+        self.file_menu.add_command(label="Import PDF...", command=self.import_pdf)
+        self.file_menu.add_command(label="Import Images from Folder...", command=lambda: self.open_folder("Images without Text"))
+        self.file_menu.add_command(label="Import Text and Images...", command=lambda: self.open_folder("With Text"))
+        self.file_menu.add_separator()
         self.file_menu.add_command(label="Export Text...", command=self.export_manager.export_menu)
         self.file_menu.add_command(label="Export CSV...", command=self.export_manager.show_csv_export_options)
         self.file_menu.add_separator()
@@ -1109,6 +1114,15 @@ class App(TkinterDnD.Tk):
 
     def open_pdf(self, pdf_file=None):
         self.project_io.open_pdf(pdf_file)
+        
+    def import_pdf(self):
+        """Opens a file dialog to select a PDF file and imports it"""
+        pdf_file = filedialog.askopenfilename(
+            title="Select PDF File",
+            filetypes=[("PDF Files", "*.pdf")]
+        )
+        if pdf_file:
+            self.open_pdf(pdf_file)
 
 # Loading Functions
 
@@ -1144,28 +1158,42 @@ class App(TkinterDnD.Tk):
             messagebox.showinfo("No Files", "No image files found in the selected directory.")
             return
 
-        # Sort the files based on a numeric prefix.
-        def sort_key(filename):
-            match = re.match(r'(\d+)', filename)
-            return int(match.group(1)) if match else float('inf')
-        image_files.sort(key=sort_key)
-        text_files.sort(key=sort_key)
+        # Create a dictionary of text files for easy lookup by name (without extension)
+        text_files_dict = {}
+        for text_file in text_files:
+            text_base_name = os.path.splitext(text_file)[0]
+            text_files_dict[text_base_name] = text_file
 
-        # Check that there is a matching text file for every image.
-        if len(image_files) != len(text_files):
-            messagebox.showerror("Error", "The number of image files and text files does not match.")
-            return
+        # Sort image files naturally (handling both numeric and text-based filenames)
+        def natural_sort_key(s):
+            # Split the string into text and numeric parts
+            return [int(text) if text.isdigit() else text.lower() 
+                    for text in re.split(r'([0-9]+)', s)]
+        
+        image_files.sort(key=natural_sort_key)
 
-        # Populate the DataFrame.
-        for i, (image_file, text_file) in enumerate(zip(image_files, text_files), start=1):
+        # Populate the DataFrame with all image files
+        for i, image_file in enumerate(image_files, start=1):
             image_path = os.path.join(self.directory_path, image_file)
-            text_path = os.path.join(self.directory_path, text_file)
-
-            # Read text content.
-            with open(text_path, "r", encoding='utf-8') as f:
-                text_content = f.read()
-
-            # NEW: Set Text_Toggle to "Original_Text" only if text_content is non-empty; otherwise "None".
+            
+            # Get the image base name (without extension)
+            image_base_name = os.path.splitext(image_file)[0]
+            
+            # Check if there's a matching text file
+            text_content = ""
+            text_path = ""
+            if image_base_name in text_files_dict:
+                matching_text_file = text_files_dict[image_base_name]
+                text_path = os.path.join(self.directory_path, matching_text_file)
+                
+                # Read text content using UTF-8 encoding
+                try:
+                    with open(text_path, "r", encoding='utf-8') as f:
+                        text_content = f.read()
+                except Exception as e:
+                    self.error_logging(f"Error reading text file {text_path}", f"{e}")
+            
+            # Set Text_Toggle to "Original_Text" only if text_content is non-empty; otherwise "None"
             text_toggle = "Original_Text" if text_content.strip() else "None"
 
             page = f"{i:04d}_p{i:03d}"
@@ -1181,8 +1209,8 @@ class App(TkinterDnD.Tk):
                 "Text_Toggle": text_toggle,
                 "People": "",
                 "Places": "",
-                "Errors": "",  # Add Errors column initialization
-                "Errors_Source": ""  # Add Errors_Source column initialization
+                "Errors": "",
+                "Errors_Source": ""
             }
             self.main_df.loc[i - 1] = new_row
 
