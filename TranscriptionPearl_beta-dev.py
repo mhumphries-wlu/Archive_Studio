@@ -930,7 +930,7 @@ class App(TkinterDnD.Tk):
                     "Formatted_Text": [""],
                     "Image_Path": [dest_path],
                     "Text_Path": [text_file_path],
-                    "Text_Toggle": ["Original_Text"]
+                    "Text_Toggle": ["None"]  # Changed from "Original_Text" to "None"
                 })
 
                 self.main_df = pd.concat([self.main_df, new_row], ignore_index=True)
@@ -940,6 +940,8 @@ class App(TkinterDnD.Tk):
                 messagebox.showerror("Error", f"Failed to process the image {source_path}:\n{e}")
 
         if successful_copies > 0:
+            # Set text display to "None" before refreshing the display
+            self.text_display_var.set("None")
             self.refresh_display()
 
             # Add auto-rotation if enabled in settings
@@ -2279,11 +2281,17 @@ class App(TkinterDnD.Tk):
             if ai_job == "HTR":
                 self.main_df.loc[index, 'Original_Text'] = response
                 self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
+                # Update display dropdown if this is the current page
+                if index == self.page_counter:
+                    self.text_display_var.set("Original_Text")
             elif ai_job == "Correct_Text":
                 self.main_df.loc[index, 'Corrected_Text'] = response
                 self.main_df.loc[index, 'Text_Toggle'] = "Corrected_Text"
                 # Enable changes highlighting when correction is run
                 self.highlight_changes_var.set(True)
+                # Update display dropdown if this is the current page
+                if index == self.page_counter:
+                    self.text_display_var.set("Corrected_Text")
             elif ai_job == "Get_Names_and_Places":
                 print(f"\nProcessing Names and Places response: {response}")
                 # Make sure the People and Places columns exist
@@ -2376,6 +2384,9 @@ class App(TkinterDnD.Tk):
                 # Always store the response in Formatted_Text, regardless of source
                 self.main_df.loc[index, 'Formatted_Text'] = response
                 self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
+                # Update display dropdown if this is the current page
+                if index == self.page_counter:
+                    self.text_display_var.set("Formatted_Text")
                 
                 # Additional info about the source text if needed for debugging
                 source_text_type = getattr(self, 'chunk_text_source_var', tk.StringVar()).get()
@@ -2386,6 +2397,9 @@ class App(TkinterDnD.Tk):
                 # Special job type for chunking translations
                 if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
                     self.main_df.loc[index, 'Translation'] = response
+                    # Update display dropdown if this is the current page and Translation was showing
+                    if index == self.page_counter and self.text_display_var.get() == "Translation":
+                        self.text_display_var.set("Translation")
             elif ai_job == "Auto_Rotate":
                 self.update_image_rotation(index, response)
             elif ai_job == "Identify_Errors":
@@ -2431,6 +2445,9 @@ class App(TkinterDnD.Tk):
             elif ai_job == "Translation":
                 self.main_df.loc[index, 'Translation'] = response
                 self.main_df.loc[index, 'Text_Toggle'] = "Translation"
+                # Update display dropdown if this is the current page
+                if index == self.page_counter:
+                    self.text_display_var.set("Translation")
                 # Enable changes highlighting for translation
                 self.highlight_changes_var.set(True)
             
