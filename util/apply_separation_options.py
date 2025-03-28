@@ -8,6 +8,12 @@ from util.process_boxes import process_image_with_bounding_boxes, apply_separati
 def create_separation_options_window(app):
     """
     Creates a window with options for document separation methods.
+    
+    Args:
+        app: The main application instance
+        
+    Returns:
+        options_window: The created window object
     """
     # Create the window
     options_window = tk.Toplevel(app)
@@ -152,6 +158,9 @@ def create_separation_options_window(app):
     x = (options_window.winfo_screenwidth() // 2) - (width // 2)
     y = (options_window.winfo_screenheight() // 2) - (height // 2)
     options_window.geometry(f'{width}x{height}+{x}+{y}')
+    
+    # Return the window object
+    return options_window
 
 def check_google_api_key(app):
     """Check if Google API key is set and valid"""

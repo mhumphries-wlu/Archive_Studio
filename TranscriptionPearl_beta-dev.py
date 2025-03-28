@@ -15,7 +15,6 @@ from util.APIHandler import APIHandler
 from util.ProgressBar import ProgressBar
 from util.SettingsWindow import SettingsWindow
 from util.Settings import Settings
-from util.AnalyzeDocuments import AnalyzeDocuments
 from util.ImageHandler import ImageHandler
 from util.ProjectIO import ProjectIO
 from util.ExportFunctions import ExportManager
@@ -515,7 +514,7 @@ class App(TkinterDnD.Tk):
         # Create the window
         chunk_window = tk.Toplevel(self)
         chunk_window.title("Select Document Type")
-        chunk_window.geometry("400x200")
+        chunk_window.geometry("400x300")  # Made taller to accommodate new dropdown
         chunk_window.grab_set()  # Make window modal
         
         # Message explaining purpose
@@ -552,6 +551,27 @@ class App(TkinterDnD.Tk):
         # Set a default value if available
         if preset_names and not window_chunking_var.get():
             window_chunking_var.set(preset_names[0])
+        
+        # Add a new frame for text source selection
+        text_source_frame = tk.Frame(chunk_window)
+        text_source_frame.pack(pady=15)
+        
+        text_source_label = tk.Label(text_source_frame, text="Text Source:")
+        text_source_label.pack(side="left", padx=5)
+        
+        # Create a StringVar for the text source dropdown
+        self.chunk_text_source_var = tk.StringVar()
+        
+        # Create the text source dropdown (populate with available options)
+        text_source_dropdown = ttk.Combobox(text_source_frame,
+                                         textvariable=self.chunk_text_source_var,
+                                         values=["Original_Text", "First_Draft", "Translation"],
+                                         state="readonly",
+                                         width=20)
+        text_source_dropdown.pack(side="left", padx=5)
+        
+        # Set default to First_Draft (most common use case)
+        self.chunk_text_source_var.set("First_Draft")
         
         # Buttons frame
         button_frame = tk.Frame(chunk_window)
@@ -628,7 +648,11 @@ class App(TkinterDnD.Tk):
         self.counter_update()
 
         # Reset contingent menu items
-        self.document_menu.entryconfig("Remove Pagination", state="disabled")
+        # Remove the reference to the non-existent "Remove Pagination" menu item
+        # self.document_menu.entryconfig("Remove Pagination", state="disabled")
+        
+        # Ensure Apply Separation menu item is enabled
+        self.update_separation_menu_state("normal")
 
         # Clear project and image directories
         self.initialize_temp_directory()
@@ -1152,6 +1176,13 @@ class App(TkinterDnD.Tk):
         if len(self.main_df) > 0:
             self.current_image_path = self.main_df.loc[0, 'Image_Path']
             self.image_handler.load_image(self.current_image_path)
+            
+            # Ensure text_display_var is set to the proper value based on text_toggle
+            if self.main_df.loc[0, 'Text_Toggle'] == "None":
+                self.text_display_var.set("None")
+            else:
+                self.text_display_var.set(self.main_df.loc[0, 'Text_Toggle'])
+                
             self.load_text()
         else:
             messagebox.showinfo("No Files", "No files found in the selected directory.")
@@ -1648,7 +1679,6 @@ class App(TkinterDnD.Tk):
                         self.main_df.loc[self.page_counter, 'Translation'] = text
             
             self.quit()
-            
 
 # GUI Actions / Toggles
 
@@ -1678,6 +1708,11 @@ class App(TkinterDnD.Tk):
                 if os.path.exists(image_path):
                     self.current_image_path = image_path
                     self.image_handler.load_image(self.current_image_path)
+                    
+                    # Make sure the text_display_var matches the Text_Toggle
+                    current_toggle = self.main_df.loc[self.page_counter, 'Text_Toggle']
+                    self.text_display_var.set(current_toggle if pd.notna(current_toggle) else "None")
+                    
                     self.load_text()
                 else:
                     messagebox.showerror("Error", f"Image file not found: {image_path}")
@@ -1688,11 +1723,13 @@ class App(TkinterDnD.Tk):
                 messagebox.showerror("Error", f"Failed to refresh display: {str(e)}")
                 self.error_logging(f"Refresh display error: {str(e)}")
         else:
-            print("No images to display")
+            self.error_logging("No images to display", level="INFO")
             # Clear the image display
             self.image_display.delete("all")
             # Clear the text display
             self.text_display.delete("1.0", tk.END)
+            # Reset the text display dropdown to "None"
+            self.text_display_var.set("None")
             self.counter_update()
     
     def on_text_display_change(self, event=None):
@@ -2283,14 +2320,15 @@ class App(TkinterDnD.Tk):
             elif ai_job == "Metadata":
                 self.extract_metadata_from_response(index, response)
             elif ai_job == "Chunk_Text":
-                # Store the response in Final_Draft
+                # Always store the response in Final_Draft, regardless of source
                 self.main_df.loc[index, 'Final_Draft'] = response
                 self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
                 
-                # If translation exists, also store a copy in Translation column
-                if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
-                    # We'll handle this in a separate AI job for translation chunking
-                    pass
+                # Additional info about the source text if needed for debugging
+                source_text_type = getattr(self, 'chunk_text_source_var', tk.StringVar()).get()
+                if not source_text_type:
+                    source_text_type = "First_Draft"  # Default if not set
+                self.error_logging(f"Chunk_Text processed from {source_text_type} and saved to Final_Draft", level="DEBUG")
             elif ai_job == "Chunk_Translation":
                 # Special job type for chunking translations
                 if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
@@ -2665,37 +2703,73 @@ class App(TkinterDnD.Tk):
         try:
             # Handle Chunk_Text separately since it will create its own progress windows
             if ai_job == "Chunk_Text":
+                # Check if we have a text source selection
+                selected_text_source = getattr(self, 'chunk_text_source_var', tk.StringVar()).get()
+                if not selected_text_source:
+                    selected_text_source = "First_Draft"  # Default if not set
+                    
                 if all_or_one_flag == "Current Page":
                     row = self.page_counter
-                    # Check if there's text to process using the new find_chunk_text method
-                    text_to_process, has_translation = self.find_chunk_text(row)
+                    
+                    # Get text based on the selected source
+                    if selected_text_source == "Original_Text" and pd.notna(self.main_df.loc[row, 'Original_Text']) and self.main_df.loc[row, 'Original_Text'].strip():
+                        text_to_process = self.main_df.loc[row, 'Original_Text']
+                    elif selected_text_source == "First_Draft" and pd.notna(self.main_df.loc[row, 'First_Draft']) and self.main_df.loc[row, 'First_Draft'].strip():
+                        text_to_process = self.main_df.loc[row, 'First_Draft']
+                    elif selected_text_source == "Translation" and pd.notna(self.main_df.loc[row, 'Translation']) and self.main_df.loc[row, 'Translation'].strip():
+                        text_to_process = self.main_df.loc[row, 'Translation']
+                    else:
+                        # Fallback if selected source has no text
+                        text_to_process, _ = self.find_chunk_text(row)
+                    
                     if text_to_process.strip():
                         batch_df = self.main_df.loc[[row]]
                     else:
-                        messagebox.showinfo("Skip", "This page has no text to chunk.")
+                        messagebox.showinfo("Skip", f"This page has no text in {selected_text_source} to chunk.")
+                        self.toggle_button_state()  # Re-enable buttons before return
                         return
                 else:
-                    # Process only pages that have text using find_chunk_text
-                    batch_df = self.main_df[
-                        self.main_df.apply(lambda row: bool(self.find_chunk_text(row.name)[0].strip()), axis=1)
-                    ]
-                        
+                    # Process only pages that have text in the selected source
+                    def page_has_text(row):
+                        if selected_text_source == "Original_Text" and pd.notna(row['Original_Text']) and row['Original_Text'].strip():
+                            return True
+                        elif selected_text_source == "First_Draft" and pd.notna(row['First_Draft']) and row['First_Draft'].strip():
+                            return True
+                        elif selected_text_source == "Translation" and pd.notna(row['Translation']) and row['Translation'].strip():
+                            return True
+                        else:
+                            # Fallback to checking if any text exists
+                            return bool(self.find_chunk_text(row.name)[0].strip())
+                    
+                    batch_df = self.main_df[self.main_df.apply(page_has_text, axis=1)]
+                    
+                    if batch_df.empty:
+                        messagebox.showinfo("Skip", f"No pages have text in {selected_text_source} to chunk.")
+                        self.toggle_button_state()  # Re-enable buttons before return
+                        return
+                
                 # First process normal text
                 self.process_chunk_text(batch_df, all_or_one_flag, "Chunk_Text")
                 
                 # Then process translations if they exist
                 if all_or_one_flag == "Current Page":
-                    # Check if current page has translation
+                    # Check if current page has translation and Text_Toggle is set to Translation
                     row = self.page_counter
-                    _, has_translation = self.find_chunk_text(row)
-                    if has_translation:
+                    has_translation = pd.notna(self.main_df.loc[row, 'Translation']) and self.main_df.loc[row, 'Translation'].strip()
+                    text_toggle = self.main_df.loc[row, 'Text_Toggle']
+                    
+                    # Only process translation if it's currently selected or explicitly requested
+                    if has_translation and (text_toggle == "Translation" or ai_job == "Translation"):
                         # Process translation for current page
                         self.process_translation_chunks(self.main_df.loc[[row]], all_or_one_flag)
                 else:
-                    # Find all pages with translations and process them
+                    # Find all pages with translations that have Translation selected as their display
                     translation_df = self.main_df[
-                        self.main_df.apply(lambda row: bool(self.find_chunk_text(row.name)[1]), axis=1)
+                        (self.main_df['Translation'].notna()) & 
+                        (self.main_df['Translation'] != '') &
+                        (self.main_df['Text_Toggle'] == "Translation")
                     ]
+                    
                     if not translation_df.empty:
                         self.process_translation_chunks(translation_df, all_or_one_flag)
                 
@@ -2725,6 +2799,7 @@ class App(TkinterDnD.Tk):
                         batch_df = self.main_df.loc[[row]]
                     else:
                         messagebox.showinfo("Skip", "This page already has recognized text.")
+                        self.toggle_button_state()  # Re-enable buttons before return
                         return
                 else:
                     # First ensure we have images to process
@@ -2735,6 +2810,7 @@ class App(TkinterDnD.Tk):
                     
                     if pages_with_images.empty:
                         messagebox.showwarning("No Images", "No images are available for processing.")
+                        self.toggle_button_state()  # Re-enable buttons before return
                         return
                         
                     if skip_completed:
@@ -2749,6 +2825,7 @@ class App(TkinterDnD.Tk):
                         # If all pages have recognized text, batch_df will be empty
                         if batch_df.empty:
                             messagebox.showinfo("No Work Needed", "All pages already have recognized text.")
+                            self.toggle_button_state()  # Re-enable buttons before return
                             return
                     else:
                         # Process all pages with images regardless of content
@@ -2764,6 +2841,7 @@ class App(TkinterDnD.Tk):
                             batch_df = self.main_df.loc[[row]]
                         else:
                             messagebox.showinfo("Skip", "This page either lacks Original_Text or already has corrections.")
+                            self.toggle_button_state()  # Re-enable buttons before return
                             return
                     else:
                         # Process regardless of First_Draft status as long as Original_Text exists
@@ -2771,6 +2849,7 @@ class App(TkinterDnD.Tk):
                             batch_df = self.main_df.loc[[row]]
                         else:
                             messagebox.showinfo("Skip", "This page lacks Original_Text.")
+                            self.toggle_button_state()  # Re-enable buttons before return
                             return
                 else:
                     # Logic for All Pages with Skip Completed option
@@ -2798,6 +2877,7 @@ class App(TkinterDnD.Tk):
                             batch_df = self.main_df.loc[[row]]
                         else:
                             messagebox.showinfo("Skip", "This page either lacks First_Draft or already has Final_Draft.")
+                            self.toggle_button_state()  # Re-enable buttons before return
                             return
                     else:
                         # Process regardless of Final_Draft status as long as First_Draft exists
@@ -2805,6 +2885,7 @@ class App(TkinterDnD.Tk):
                             batch_df = self.main_df.loc[[row]]
                         else:
                             messagebox.showinfo("Skip", "This page lacks First_Draft.")
+                            self.toggle_button_state()  # Re-enable buttons before return
                             return
                 else:
                     # Logic for All Pages with Skip Completed option
@@ -2879,6 +2960,7 @@ class App(TkinterDnD.Tk):
                     messagebox.showinfo("No Work Needed", "All pages either lack text to translate or already have translations.")
                 else:
                     messagebox.showwarning("No Images", "No images are available for processing.")
+                self.toggle_button_state()  # Re-enable buttons before return
                 return
 
             # Set up job parameters
@@ -2966,7 +3048,7 @@ class App(TkinterDnD.Tk):
                 self.progress_bar.close_progress_window()
             self.load_text()
             self.counter_update()
-            self.toggle_button_state()
+            self.toggle_button_state()  # Always re-enable buttons in finally block
 
             if error_count > 0:
                 message = f"An error occurred while processing the current page." if all_or_one_flag == "Current Page" else f"Errors occurred while processing {error_count} page(s)."
@@ -3346,6 +3428,11 @@ class App(TkinterDnD.Tk):
             job_params = self.setup_job_parameters(ai_job_type)
             batch_size = job_params.get('batch_size', 50)
             
+            # Get selected text source
+            selected_text_source = getattr(self, 'chunk_text_source_var', tk.StringVar()).get()
+            if not selected_text_source:
+                selected_text_source = "First_Draft"  # Default if not set
+            
             # Show progress window
             progress_title = f"Applying {ai_job_type} to {'Current Page' if all_or_one_flag == 'Current Page' else 'All Pages'}..."
             progress_window, progress_bar, progress_label = self.progress_bar.create_progress_window(progress_title)
@@ -3361,8 +3448,20 @@ class App(TkinterDnD.Tk):
                 futures_to_index = {}
                 
                 for index, row_data in batch_df.iterrows():
-                    # Get text to process from the find_chunk_text method (use only the first element of the tuple)
-                    text_to_process, _ = self.find_chunk_text(index)
+                    # Get text based on the selected source
+                    if selected_text_source == "Original_Text" and pd.notna(row_data['Original_Text']) and row_data['Original_Text'].strip():
+                        text_to_process = row_data['Original_Text']
+                    elif selected_text_source == "First_Draft" and pd.notna(row_data['First_Draft']) and row_data['First_Draft'].strip():
+                        text_to_process = row_data['First_Draft']
+                    elif selected_text_source == "Translation" and pd.notna(row_data['Translation']) and row_data['Translation'].strip():
+                        text_to_process = row_data['Translation']
+                    else:
+                        # Fallback if selected source has no text
+                        text_to_process, _ = self.find_chunk_text(index)
+                        
+                    if not text_to_process.strip():
+                        # Skip if no text to process
+                        continue
                     
                     # Get images
                     images_data = self.get_images_for_job(ai_job_type, index, row_data, job_params)
@@ -3418,10 +3517,20 @@ class App(TkinterDnD.Tk):
             
         finally:
             # Close progress window
-            self.progress_bar.close_progress_window()
+            try:
+                self.progress_bar.close_progress_window()
+            except:
+                pass
+            
             self.load_text()
             self.counter_update()
-    
+            # Ensure buttons are re-enabled even if there was an error
+            try:
+                if self.button1['state'] == "disabled":
+                    self.toggle_button_state()
+            except:
+                pass
+
     def process_translation_chunks(self, translation_df, all_or_one_flag):
         """
         Process text chunking specifically for Translation field
@@ -3435,11 +3544,14 @@ class App(TkinterDnD.Tk):
             if translation_df.empty:
                 return
                 
-            # Count actual non-empty translations
+            # Count actual non-empty translations that have Translation selected
             translations_to_process = 0
             for index, row_data in translation_df.iterrows():
                 text = row_data['Translation'] if pd.notna(row_data['Translation']) else ""
-                if text.strip():
+                text_toggle = row_data['Text_Toggle']
+                
+                # Only count if there's text and it's selected for display
+                if text.strip() and (text_toggle == "Translation"):
                     translations_to_process += 1
                     
             # If no actual translations to process, return early
@@ -3467,9 +3579,10 @@ class App(TkinterDnD.Tk):
                 for index, row_data in translation_df.iterrows():
                     # Get translation text
                     text_to_process = row_data['Translation'] if pd.notna(row_data['Translation']) else ""
+                    text_toggle = row_data['Text_Toggle']
                     
-                    # Skip if no translation
-                    if not text_to_process.strip():
+                    # Skip if no translation or not selected for display
+                    if not text_to_process.strip() or text_toggle != "Translation":
                         continue
                     
                     # Get images
@@ -3527,10 +3640,20 @@ class App(TkinterDnD.Tk):
             
         finally:
             # Only close progress window if we created one
-            if 'progress_window' in locals():
-                self.progress_bar.close_progress_window()
+            try:
+                if 'progress_window' in locals():
+                    self.progress_bar.close_progress_window()
+            except:
+                pass
+                
             self.load_text()
             self.counter_update()
+            # Ensure buttons are re-enabled even if there was an error
+            try:
+                if self.button1['state'] == "disabled":
+                    self.toggle_button_state()
+            except:
+                pass
 
     def run_collation_and_open_window(self):
         """
@@ -3561,6 +3684,11 @@ class App(TkinterDnD.Tk):
                 if os.path.exists(image_path):
                     self.current_image_path = image_path
                     self.image_handler.load_image(self.current_image_path)
+                    
+                    # Make sure the text_display_var matches the Text_Toggle
+                    current_toggle = self.main_df.loc[self.page_counter, 'Text_Toggle']
+                    self.text_display_var.set(current_toggle if pd.notna(current_toggle) else "None")
+                    
                     self.load_text()
                 else:
                     messagebox.showerror("Error", f"Image file not found: {image_path}")
@@ -3576,6 +3704,8 @@ class App(TkinterDnD.Tk):
             self.image_display.delete("all")
             # Clear the text display
             self.text_display.delete("1.0", tk.END)
+            # Reset the text display dropdown to "None"
+            self.text_display_var.set("None")
             self.counter_update()
 
     def update_highlight_menu_states(self):
@@ -3788,20 +3918,84 @@ class App(TkinterDnD.Tk):
 
     def apply_document_separation(self):
         """Apply document separation based on ***** markers and replace main_df with the compiled documents."""
-        from util.apply_separation_options import apply_document_separation
-        apply_document_separation(self)
-
+        try:
+            # Check if any pages have no recognized text
+            unrecognized_pages = self.main_df[
+                (self.main_df['Original_Text'].isna()) | 
+                (self.main_df['Original_Text'] == '')
+            ]
+            
+            if not unrecognized_pages.empty:
+                warning_message = (
+                    f"Warning: {len(unrecognized_pages)} page(s) have no recognized text and will be lost during separation. "
+                    "Do you want to continue anyway?"
+                )
+                if not messagebox.askyesno("Unrecognized Pages", warning_message):
+                    return
+            
+            from util.apply_separation_options import apply_document_separation
+            apply_document_separation(self)
+        finally:
+            # Make sure buttons are re-enabled regardless of success or failure
+            self.toggle_button_state()
+            
     def apply_document_separation_with_boxes(self):
         """Apply document separation based on ***** markers and replace main_df with the compiled documents,
         while also creating cropped images for each section."""
-        from util.apply_separation_options import apply_document_separation_with_boxes
-        apply_document_separation_with_boxes(self)
+        try:
+            # Check if any pages have no recognized text
+            unrecognized_pages = self.main_df[
+                (self.main_df['Original_Text'].isna()) | 
+                (self.main_df['Original_Text'] == '')
+            ]
+            
+            if not unrecognized_pages.empty:
+                warning_message = (
+                    f"Warning: {len(unrecognized_pages)} page(s) have no recognized text and will be lost during separation. "
+                    "Do you want to continue anyway?"
+                )
+                if not messagebox.askyesno("Unrecognized Pages", warning_message):
+                    return
+                    
+            from util.apply_separation_options import apply_document_separation_with_boxes
+            apply_document_separation_with_boxes(self)
+        finally:
+            # Make sure buttons are re-enabled regardless of success or failure
+            self.toggle_button_state()
         
     def open_document_separation_options(self):
         """Opens a window with document separation options."""
-        from util.apply_separation_options import create_separation_options_window
-        create_separation_options_window(self)
-        
+        try:
+            from util.apply_separation_options import create_separation_options_window
+            
+            # Fix for the By Page / By Row dropdown issue
+            def fix_separation_dropdown(options_window):
+                # Find the mode dropdown in the window's children
+                for widget in options_window.winfo_children():
+                    if isinstance(widget, tk.Frame):
+                        for child in widget.winfo_children():
+                            if isinstance(child, tk.OptionMenu):
+                                # Reset the dropdown state to make it properly active
+                                child.config(state="normal")
+                                # If there's a StringVar attached to it, verify it has a valid value
+                                for var in options_window.winfo_variables():
+                                    if isinstance(var, tk.StringVar) and var.get() in ["By Page", "By Row"]:
+                                        # Ensure it has a valid selection
+                                        if not var.get():
+                                            var.set("By Page")
+            
+            # Create the window with the fix applied afterward
+            options_window = create_separation_options_window(self)
+            
+            # Apply the fix if the window was created
+            if options_window:
+                self.after(100, lambda: fix_separation_dropdown(options_window))
+                
+        finally:
+            # Make sure buttons are properly enabled
+            if self.button1['state'] == "disabled" and self.button2['state'] == "disabled":
+                self.toggle_button_state()
+
     def update_separation_menu_state(self, state="normal"):
         """Update the state of the document separation menu items."""
         self.process_menu.entryconfig("Apply Separation", state=state)
