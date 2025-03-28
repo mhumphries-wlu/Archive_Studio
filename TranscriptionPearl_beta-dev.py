@@ -266,7 +266,7 @@ class App(TkinterDnD.Tk):
         self.menubar.add_cascade(label="Process", menu=self.process_menu)
 
         # Add process mode toggle (Current Page vs All Pages)
-        self.process_mode = tk.StringVar(value="Current Page")  # Default to Current Page
+        self.process_mode = tk.StringVar(value="All Pages")  # Default to All Pages
         
         # Mode selection submenu
         mode_menu = tk.Menu(self.process_menu, tearoff=0)
@@ -323,7 +323,7 @@ class App(TkinterDnD.Tk):
         # Document Menu
 
         self.document_menu = tk.Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label="Document", menu=self.document_menu)
+        self.menubar.add_cascade(label="Highlights", menu=self.document_menu)
 
         self.document_menu.add_separator()
 
@@ -620,10 +620,12 @@ class App(TkinterDnD.Tk):
         self.original_image = None
         self.photo_image = None
         self.pagination_added = False
-        self.highlight_names_var = tk.BooleanVar()
-        self.highlight_places_var = tk.BooleanVar()
-        self.highlight_changes_var = tk.BooleanVar()
-        self.highlight_errors_var = tk.BooleanVar()
+        
+        # Reset highlight toggles to False instead of recreating them
+        self.highlight_names_var.set(False)
+        self.highlight_places_var.set(False)
+        self.highlight_changes_var.set(False)
+        self.highlight_errors_var.set(False)
         
         # Reset page counter
         self.page_counter = 0
@@ -1844,7 +1846,7 @@ class App(TkinterDnD.Tk):
                           level="DEBUG")
         
         # No more mutual exclusivity between highlight types
-        # Just apply whatever is toggled
+        # Just apply whatever is toggled, without disabling any other toggles
         
         # Apply highlighting
         self.highlight_text()
@@ -2231,6 +2233,8 @@ class App(TkinterDnD.Tk):
             elif ai_job == "Correct_Text":
                 self.main_df.loc[index, 'First_Draft'] = response
                 self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
+                # Enable changes highlighting when correction is run
+                self.highlight_changes_var.set(True)
             elif ai_job == "Get_Names_and_Places":
                 print(f"\nProcessing Names and Places response: {response}")
                 # Make sure the People and Places columns exist
@@ -2367,6 +2371,8 @@ class App(TkinterDnD.Tk):
             elif ai_job == "Translation":
                 self.main_df.loc[index, 'Translation'] = response
                 self.main_df.loc[index, 'Text_Toggle'] = "Translation"
+                # Enable changes highlighting for translation
+                self.highlight_changes_var.set(True)
             
             # Load the updated text
             self.load_text()
@@ -3727,6 +3733,8 @@ class App(TkinterDnD.Tk):
         if 'People' in self.main_df.columns:
             names = self.main_df.loc[index, 'People']
             has_names = pd.notna(names) and names.strip() != ""
+        
+        # Only enable the menu item if there's data, never disable the toggle if already on
         self.document_menu.entryconfig("Highlight Names", state="normal" if has_names else "disabled")
         
         # Check for places data
@@ -3734,6 +3742,8 @@ class App(TkinterDnD.Tk):
         if 'Places' in self.main_df.columns:
             places = self.main_df.loc[index, 'Places']
             has_places = pd.notna(places) and places.strip() != ""
+        
+        # Only enable the menu item if there's data, never disable the toggle if already on
         self.document_menu.entryconfig("Highlight Places", state="normal" if has_places else "disabled")
         
         # Check for changes - needs at least two text versions
@@ -3753,6 +3763,18 @@ class App(TkinterDnD.Tk):
                 original_text = self.main_df.loc[index, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
                 has_changes = (pd.notna(original_text) and original_text.strip() != "" and 
                               pd.notna(final_draft) and final_draft.strip() != "")
+        elif current_toggle == "Translation":
+            # Add check for Translation vs Original Text or First Draft
+            original_text = self.main_df.loc[index, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
+            first_draft = self.main_df.loc[index, 'First_Draft'] if 'First_Draft' in self.main_df.columns else ""
+            translation = self.main_df.loc[index, 'Translation'] if 'Translation' in self.main_df.columns else ""
+            
+            has_changes = (pd.notna(translation) and translation.strip() != "") and (
+                (pd.notna(original_text) and original_text.strip() != "") or
+                (pd.notna(first_draft) and first_draft.strip() != "")
+            )
+        
+        # Only enable the menu item if there's data, never disable the toggle if already on
         self.document_menu.entryconfig("Highlight Changes", state="normal" if has_changes else "disabled")
         
         # Check for errors data
@@ -3760,6 +3782,8 @@ class App(TkinterDnD.Tk):
         if 'Errors' in self.main_df.columns:
             errors = self.main_df.loc[index, 'Errors']
             has_errors = pd.notna(errors) and errors.strip() != ""
+        
+        # Only enable the menu item if there's data, never disable the toggle if already on
         self.document_menu.entryconfig("Highlight Errors", state="normal" if has_errors else "disabled")
 
     def extract_metadata_from_response(self, index, response):

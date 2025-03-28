@@ -80,6 +80,9 @@ class ProjectIO:
             # so we don't need to convert them again. The get_full_path method
             # will handle proper resolution when images and texts are loaded.
 
+            # Initialize highlight toggles based on data presence
+            self.initialize_highlight_toggles()
+
             # Reset page counter and load the first image and text.
             self.app.page_counter = 0
             if not self.app.main_df.empty:
@@ -95,6 +98,75 @@ class ProjectIO:
         except Exception as e:
             messagebox.showerror("Error", f"Failed to open project: {e}")
             self.app.error_logging("Failed to open project", str(e))
+    
+    def initialize_highlight_toggles(self):
+        """Check for existing data in the DataFrame and set highlight toggles accordingly"""
+        try:
+            if self.app.main_df.empty:
+                return
+                
+            # Turn off all toggles first
+            self.app.highlight_names_var.set(False)
+            self.app.highlight_places_var.set(False)
+            self.app.highlight_changes_var.set(False)
+            self.app.highlight_errors_var.set(False)
+            
+            # Check for People column data
+            if 'People' in self.app.main_df.columns:
+                has_people = self.app.main_df['People'].apply(
+                    lambda x: pd.notna(x) and str(x).strip() != ""
+                ).any()
+                if has_people:
+                    self.app.highlight_names_var.set(True)
+                    self.app.error_logging("Enabled Names highlighting due to existing People data")
+            
+            # Check for Places column data
+            if 'Places' in self.app.main_df.columns:
+                has_places = self.app.main_df['Places'].apply(
+                    lambda x: pd.notna(x) and str(x).strip() != ""
+                ).any()
+                if has_places:
+                    self.app.highlight_places_var.set(True)
+                    self.app.error_logging("Enabled Places highlighting due to existing Places data")
+            
+            # Check for Errors column data
+            if 'Errors' in self.app.main_df.columns:
+                has_errors = self.app.main_df['Errors'].apply(
+                    lambda x: pd.notna(x) and str(x).strip() != ""
+                ).any()
+                if has_errors:
+                    self.app.highlight_errors_var.set(True)
+                    self.app.error_logging("Enabled Errors highlighting due to existing Errors data")
+            
+            # Check for First_Draft (enables Changes if Original_Text also exists)
+            if 'First_Draft' in self.app.main_df.columns and 'Original_Text' in self.app.main_df.columns:
+                has_changes = False
+                
+                # Check if any row has both Original_Text and First_Draft
+                for _, row in self.app.main_df.iterrows():
+                    has_original = pd.notna(row['Original_Text']) and row['Original_Text'].strip() != ""
+                    has_first_draft = pd.notna(row['First_Draft']) and row['First_Draft'].strip() != ""
+                    
+                    if has_original and has_first_draft:
+                        has_changes = True
+                        break
+                        
+                # Also check for Translation or Final_Draft
+                if not has_changes and 'Translation' in self.app.main_df.columns:
+                    for _, row in self.app.main_df.iterrows():
+                        has_original = pd.notna(row['Original_Text']) and row['Original_Text'].strip() != ""
+                        has_translation = pd.notna(row['Translation']) and row['Translation'].strip() != ""
+                        
+                        if has_original and has_translation:
+                            has_changes = True
+                            break
+                            
+                if has_changes:
+                    self.app.highlight_changes_var.set(True)
+                    self.app.error_logging("Enabled Changes highlighting due to existing draft/translation data")
+                    
+        except Exception as e:
+            self.app.error_logging(f"Error initializing highlight toggles: {e}")
     
     def save_project_as(self):
         # Ask the user to select a parent directory and project name.
