@@ -2082,6 +2082,7 @@ class App(TkinterDnD.Tk):
         self.text_display.tag_remove("name_highlight", "1.0", tk.END)
         self.text_display.tag_remove("place_highlight", "1.0", tk.END)
         self.text_display.tag_remove("change_highlight", "1.0", tk.END)
+        self.text_display.tag_remove("word_change_highlight", "1.0", tk.END)
         self.text_display.tag_remove("error_highlight", "1.0", tk.END)
 
         # Apply each highlight type if its toggle is on
