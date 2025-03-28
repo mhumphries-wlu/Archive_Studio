@@ -581,7 +581,7 @@ class ExportManager:
     def _prepare_temp_df_for_ai(self, df):
         """Prepare a temporary dataframe for AI processing."""
         # Ensure all required columns for AI function exist
-        text_columns = ['Text_Toggle', 'Original_Text', 'First_Draft', 'Final_Draft', 'Translation']
+        text_columns = ['Text_Toggle', 'Original_Text', 'Corrected_Text', 'Formatted_Text', 'Translation']
         for col in text_columns:
             if col not in df.columns:
                 if col == 'Text_Toggle':

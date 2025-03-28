@@ -66,7 +66,7 @@ class ProjectIO:
             self.app.main_df = pd.read_csv(project_file, encoding='utf-8')
             
             # Ensure required text columns exist...
-            for col in ["Original_Text", "First_Draft", "Final_Draft", "Text_Toggle"]:
+            for col in ["Original_Text", "Corrected_Text", "Formatted_Text", "Text_Toggle"]:
                 if col not in self.app.main_df.columns:
                     self.app.main_df[col] = ""
                 else:
@@ -138,20 +138,20 @@ class ProjectIO:
                     self.app.highlight_errors_var.set(True)
                     self.app.error_logging("Enabled Errors highlighting due to existing Errors data")
             
-            # Check for First_Draft (enables Changes if Original_Text also exists)
-            if 'First_Draft' in self.app.main_df.columns and 'Original_Text' in self.app.main_df.columns:
+            # Check for Corrected_Text (enables Changes if Original_Text also exists)
+            if 'Corrected_Text' in self.app.main_df.columns and 'Original_Text' in self.app.main_df.columns:
                 has_changes = False
                 
-                # Check if any row has both Original_Text and First_Draft
+                # Check if any row has both Original_Text and Corrected_Text
                 for _, row in self.app.main_df.iterrows():
                     has_original = pd.notna(row['Original_Text']) and row['Original_Text'].strip() != ""
-                    has_first_draft = pd.notna(row['First_Draft']) and row['First_Draft'].strip() != ""
+                    has_Corrected_Text = pd.notna(row['Corrected_Text']) and row['Corrected_Text'].strip() != ""
                     
-                    if has_original and has_first_draft:
+                    if has_original and has_Corrected_Text:
                         has_changes = True
                         break
                         
-                # Also check for Translation or Final_Draft
+                # Also check for Translation or Formatted_Text
                 if not has_changes and 'Translation' in self.app.main_df.columns:
                     for _, row in self.app.main_df.iterrows():
                         has_original = pd.notna(row['Original_Text']) and row['Original_Text'].strip() != ""
@@ -261,8 +261,8 @@ class ProjectIO:
                     "Index": [new_index],
                     "Page": [f"{new_page_num:04d}_p{new_page_num:03d}"],
                     "Original_Text": [text_content],
-                    "First_Draft": [""],
-                    "Final_Draft": [""],
+                    "Corrected_Text": [""],
+                    "Formatted_Text": [""],
                     "Image_Path": [image_path],
                     "Text_Path": [text_path],
                     "Text_Toggle": ["Original_Text"]

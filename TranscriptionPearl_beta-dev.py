@@ -784,6 +784,9 @@ class App(TkinterDnD.Tk):
             elif current_display == "Translation":
                 self.main_df.loc[self.page_counter, 'Translation'] = text
             
+        # Store the current display type to maintain it across pages
+        selected_display = self.text_display_var.get()
+            
         # Handle double-arrow navigation
         if abs(direction) == 2:
             # Go to first image
@@ -820,6 +823,11 @@ class App(TkinterDnD.Tk):
                 
             self.current_image_path = image_path
             self.image_handler.load_image(self.current_image_path)
+            
+            # Update the Text_Toggle in the DataFrame to maintain display type
+            if selected_display != "None":
+                self.main_df.at[self.page_counter, 'Text_Toggle'] = selected_display
+            
             self.load_text()
             self.counter_update()
             

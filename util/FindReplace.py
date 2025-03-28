@@ -244,8 +244,8 @@ class FindReplace:
             text_toggle = self.main_df.loc[row_index, 'Text_Toggle']
             column_map = {
                 "Original_Text": "Original_Text",
-                "First_Draft": "First_Draft",
-                "Final_Draft": "Final_Draft",
+                "Corrected_Text": "Corrected_Text",
+                "Formatted_Text": "Formatted_Text",
                 "None": None
             }
             return column_map.get(text_toggle)

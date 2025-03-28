@@ -18,7 +18,7 @@ def create_separation_options_window(app):
     # Create the window
     options_window = tk.Toplevel(app)
     options_window.title("Document Separation Options")
-    options_window.geometry("450x350")
+    options_window.geometry("450x300")  # Reduced height since we removed the dropdown
     options_window.grab_set()  # Make window modal
     
     # Header message
@@ -37,21 +37,8 @@ def create_separation_options_window(app):
     )
     description_label.pack(pady=(0, 15))
     
-    # Processing mode frame
-    mode_frame = tk.Frame(options_window)
-    mode_frame.pack(fill="x", padx=25, pady=5)
-    
-    mode_label = tk.Label(
-        mode_frame,
-        text="Processing Mode:",
-        font=("Calibri", 11, "bold")
-    )
-    mode_label.pack(side="left")
-    
-    # Processing mode dropdown
-    mode_var = tk.StringVar(value="By Page")
-    mode_dropdown = tk.OptionMenu(mode_frame, mode_var, "By Page", "By Row")
-    mode_dropdown.pack(side="left", padx=10)
+    # Remove the processing mode frame and dropdown
+    # Always process by row (hidden from user)
     
     # Option variable
     option_var = tk.IntVar(value=0)
@@ -121,7 +108,6 @@ def create_separation_options_window(app):
     # Function to handle the Apply button
     def on_apply():
         option = option_var.get()
-        processing_mode = mode_var.get()
         options_window.destroy()
         
         if option == 0:
@@ -129,16 +115,12 @@ def create_separation_options_window(app):
             apply_document_separation(app)
         elif option == 1:
             # Option 2: Apply separation with cropped images
-            if processing_mode == "By Page":
-                apply_document_separation_with_boxes(app)
-            else:  # By Row
-                apply_document_separation_with_boxes_by_row(app)
+            # Always use By Row separation
+            apply_document_separation_with_boxes_by_row(app)
         elif option == 2:
             # Option 3: Apply separation with highlighted images
-            if processing_mode == "By Page":
-                apply_document_separation_with_highlights(app)
-            else:  # By Row
-                apply_document_separation_with_highlights_by_row(app)
+            # Always use By Row separation
+            apply_document_separation_with_highlights_by_row(app)
     
     # Function to handle Cancel button
     def on_cancel():

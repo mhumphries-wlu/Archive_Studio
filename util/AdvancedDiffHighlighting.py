@@ -230,9 +230,9 @@ def highlight_text_changes(self):
         return
         
     # Determine which texts to compare based on current level
-    if current_toggle == "First_Draft":
-        # Compare First_Draft with Original_Text
-        current_text = self.main_df.loc[index, 'First_Draft']
+    if current_toggle == "Corrected_Text":
+        # Compare Corrected_Text with Original_Text
+        current_text = self.main_df.loc[index, 'Corrected_Text']
         previous_text = self.main_df.loc[index, 'Original_Text']
         
         # Skip if either text is missing
@@ -240,11 +240,11 @@ def highlight_text_changes(self):
             return
             
     elif current_toggle == "Final_Draft":
-        # Compare Final_Draft with First_Draft
+        # Compare Final_Draft with Corrected_Text
         current_text = self.main_df.loc[index, 'Final_Draft']
-        previous_text = self.main_df.loc[index, 'First_Draft']
+        previous_text = self.main_df.loc[index, 'Corrected_Text']
         
-        # If First_Draft is empty, compare with Original_Text instead
+        # If Corrected_Text is empty, compare with Original_Text instead
         if pd.isna(previous_text) or previous_text.strip() == '':
             previous_text = self.main_df.loc[index, 'Original_Text']
             
