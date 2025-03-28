@@ -4270,11 +4270,13 @@ class App(TkinterDnD.Tk):
             # First check if any separators exist in the document
             has_separators = False
             for index, row in self.main_df.iterrows():
-                # Check Original_Text, Corrected_Text, and Formatted_Text columns
-                for col in ['Original_Text', 'Corrected_Text', 'Formatted_Text']:
-                    if col in row and pd.notna(row[col]) and "*****" in row[col]:
-                        has_separators = True
-                        break
+                # Check all text columns
+                for col in ['Original_Text', 'Corrected_Text', 'Formatted_Text', 'Translation', 'Separated_Text']:
+                    if col in self.main_df.columns and pd.notna(row.get(col)) and isinstance(row.get(col), str):
+                        # Use regex to look for 5 or more consecutive asterisks (allowing for whitespace)
+                        if re.search(r'\*{5,}', row.get(col)):
+                            has_separators = True
+                            break
                 if has_separators:
                     break
             
