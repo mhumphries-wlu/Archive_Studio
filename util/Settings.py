@@ -265,6 +265,7 @@ Current Document to Analyze: {text_to_process}''',
                 'num_after_images': "0",
                 'val_text': "Translation:"
             }
+
         ]
 
         self.analysis_presets = [
@@ -311,6 +312,32 @@ Current Document to Analyze: {text_to_process}''',
             }            
         ] # List of dictionaries for analysis presets
         
+        self.format_presets = [
+            {
+                'name': "Parish_Record",
+                'model': "gemini-2.0-flash",
+                'temperature': "0.2",
+                'general_instructions': '''You re-format historical documents to make them easier to read while retaining the original text. Remove all page numbers, headers, footers, archival stamps/references, etc. Remove all line breaks and other formatting. When identifying information is present in the margins, move this to a title line above the main record,In your response, write "Formatted Text:" followed by a formatted version of the document.''',
+                'specific_instructions': '''Text to format:\n\n{text_to_process}''',
+                'use_images': False,
+                'current_image': "No",
+            },
+            {
+                'name': "Diary",
+                'model': "gemini-2.0-flash",
+                'temperature': "0.2",
+                'general_instructions': '''You re-format historical documents to make them easier to read while retaining the original text. Remove all page numbers, headers, footers, archival stamps/references, etc. Remove all line breaks and other formatting. Ensure that each entry is starts on a new line and that they are separated by a blank line. Include any marginalia at the end of the entry in square brackets with the notation "Marginalia:". In your response, write "Formatted Text:" followed by a formatted version of the document.''',
+                'specific_instructions': '''Text to format:\n\n{text_to_process}''',
+            },
+            {
+                'name': "Letter",
+                'model': "gemini-2.0-flash",
+                'temperature': "0.2",
+                'general_instructions': '''You re-format historical documents to make them easier to read while retaining the original text. Remove all page numbers, headers, footers, archival stamps/references, etc. Remove all line breaks and other formatting. For the text in the heading and/or salutation (ie above the main body of the letter), order the material in this way (where applicable): place the letter was written, date, salutation. Follow this with the body of the letter. Include any marginalia on a separate line at the end of the paragraph encased in square brackets beginning with "Marginalia:". In your response, write "Formatted Text:" followed by a formatted version of the document.''',
+                'specific_instructions': '''Text to format:\n\n{text_to_process}''',
+            }
+        ]
+
         # Default metadata presets
         self.metadata_presets = [
             {

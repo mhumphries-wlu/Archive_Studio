@@ -82,7 +82,7 @@ class App(TkinterDnD.Tk):
         self.text_display_dropdown = ttk.Combobox(
             left_group, 
             textvariable=self.text_display_var,
-            values=["None", "Original_Text", "First_Draft", "Final_Draft", "Translation"],
+            values=["None", "Original_Text", "Corrected_Text", "Formatted_Text", "Translation"],
             width=15,
             state="readonly"
         )
@@ -565,13 +565,13 @@ class App(TkinterDnD.Tk):
         # Create the text source dropdown (populate with available options)
         text_source_dropdown = ttk.Combobox(text_source_frame,
                                          textvariable=self.chunk_text_source_var,
-                                         values=["Original_Text", "First_Draft", "Translation"],
+                                         values=["Original_Text", "Corrected_Text", "Translation"],
                                          state="readonly",
                                          width=20)
         text_source_dropdown.pack(side="left", padx=5)
         
-        # Set default to First_Draft (most common use case)
-        self.chunk_text_source_var.set("First_Draft")
+        # Set default to Corrected_Text (most common use case)
+        self.chunk_text_source_var.set("Corrected_Text")
         
         # Buttons frame
         button_frame = tk.Frame(chunk_window)
@@ -726,8 +726,8 @@ class App(TkinterDnD.Tk):
             "Index", 
             "Page", 
             "Original_Text", 
-            "First_Draft", 
-            "Final_Draft",
+            "Corrected_Text", 
+            "Formatted_Text",
             "Translation",
             "Image_Path", 
             "Text_Path", 
@@ -736,13 +736,14 @@ class App(TkinterDnD.Tk):
             "People",
             "Places",
             # Error tracking
-            "Errors"
+            "Errors",
+            "Errors_Source"
         ])
         
         # Initialize all text columns as empty strings instead of NaN
         text_columns = [
-            "Original_Text", "First_Draft", "Final_Draft", "Translation",
-            "People", "Places", "Errors"
+            "Original_Text", "Corrected_Text", "Formatted_Text", "Translation",
+            "People", "Places", "Errors", "Errors_Source"
         ]
         for col in text_columns:
             self.main_df[col] = ""
@@ -776,10 +777,10 @@ class App(TkinterDnD.Tk):
             # Save the text to the appropriate column based on CURRENT display type
             if current_display == "Original_Text":
                 self.main_df.loc[self.page_counter, 'Original_Text'] = text
-            elif current_display == "First_Draft":
-                self.main_df.loc[self.page_counter, 'First_Draft'] = text
-            elif current_display == "Final_Draft":
-                self.main_df.loc[self.page_counter, 'Final_Draft'] = text
+            elif current_display == "Corrected_Text":
+                self.main_df.loc[self.page_counter, 'Corrected_Text'] = text
+            elif current_display == "Formatted_Text":
+                self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
             elif current_display == "Translation":
                 self.main_df.loc[self.page_counter, 'Translation'] = text
             
@@ -917,8 +918,8 @@ class App(TkinterDnD.Tk):
                     "Index": [new_index],
                     "Page": [f"{new_index+1:04d}_p{new_index+1:03d}"],
                     "Original_Text": [""],
-                    "First_Draft": [""],
-                    "Final_Draft": [""],
+                    "Corrected_Text": [""],
+                    "Formatted_Text": [""],
                     "Image_Path": [dest_path],
                     "Text_Path": [text_file_path],
                     "Text_Toggle": ["Original_Text"]
@@ -1047,10 +1048,10 @@ class App(TkinterDnD.Tk):
                 # Save the text to the appropriate column based on CURRENT display type
                 if current_display == "Original_Text":
                     self.main_df.loc[self.page_counter, 'Original_Text'] = text
-                elif current_display == "First_Draft":
-                    self.main_df.loc[self.page_counter, 'First_Draft'] = text
-                elif current_display == "Final_Draft":
-                    self.main_df.loc[self.page_counter, 'Final_Draft'] = text
+                elif current_display == "Corrected_Text":
+                    self.main_df.loc[self.page_counter, 'Corrected_Text'] = text
+                elif current_display == "Formatted_Text":
+                    self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
                 elif current_display == "Translation":
                     self.main_df.loc[self.page_counter, 'Translation'] = text
         
@@ -1067,10 +1068,10 @@ class App(TkinterDnD.Tk):
                 # Save the text to the appropriate column based on CURRENT display type
                 if current_display == "Original_Text":
                     self.main_df.loc[self.page_counter, 'Original_Text'] = text
-                elif current_display == "First_Draft":
-                    self.main_df.loc[self.page_counter, 'First_Draft'] = text
-                elif current_display == "Final_Draft":
-                    self.main_df.loc[self.page_counter, 'Final_Draft'] = text
+                elif current_display == "Corrected_Text":
+                    self.main_df.loc[self.page_counter, 'Corrected_Text'] = text
+                elif current_display == "Formatted_Text":
+                    self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
                 elif current_display == "Translation":
                     self.main_df.loc[self.page_counter, 'Translation'] = text
         
@@ -1087,10 +1088,10 @@ class App(TkinterDnD.Tk):
                 # Save the text to the appropriate column based on CURRENT display type
                 if current_display == "Original_Text":
                     self.main_df.loc[self.page_counter, 'Original_Text'] = text
-                elif current_display == "First_Draft":
-                    self.main_df.loc[self.page_counter, 'First_Draft'] = text
-                elif current_display == "Final_Draft":
-                    self.main_df.loc[self.page_counter, 'Final_Draft'] = text
+                elif current_display == "Corrected_Text":
+                    self.main_df.loc[self.page_counter, 'Corrected_Text'] = text
+                elif current_display == "Formatted_Text":
+                    self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
                 elif current_display == "Translation":
                     self.main_df.loc[self.page_counter, 'Translation'] = text
         
@@ -1162,15 +1163,16 @@ class App(TkinterDnD.Tk):
                 "Index": i - 1,
                 "Page": page,
                 "Original_Text": text_content,
-                "First_Draft": "",
-                "Final_Draft": "",
+                "Corrected_Text": "",
+                "Formatted_Text": "",
                 "Translation": "",
                 "Image_Path": image_path,
                 "Text_Path": text_path,
                 "Text_Toggle": text_toggle,
                 "People": "",
                 "Places": "",
-                "Errors": ""  # Add Errors column initialization
+                "Errors": "",  # Add Errors column initialization
+                "Errors_Source": ""  # Add Errors_Source column initialization
             }
             self.main_df.loc[i - 1] = new_row
 
@@ -1230,15 +1232,16 @@ class App(TkinterDnD.Tk):
                     "Index": i - 1,
                     "Page": page,
                     "Original_Text": "",
-                    "First_Draft": "",
-                    "Final_Draft": "",
+                    "Corrected_Text": "",
+                    "Formatted_Text": "",
                     "Translation": "",
                     "Image_Path": image_path,
                     "Text_Path": text_path,
                     "Text_Toggle": "None",
                     "People": "",
                     "Places": "",
-                    "Errors": ""  # Add Errors column initialization
+                    "Errors": "",  # Add Errors column initialization
+                    "Errors_Source": ""  # Add Errors_Source column initialization
                 }
                 self.main_df = pd.concat([self.main_df, pd.DataFrame([new_row])], ignore_index=True)
 
@@ -1264,8 +1267,8 @@ class App(TkinterDnD.Tk):
         display_map = {
             "None": "None",
             "Original_Text": "Original_Text",
-            "First_Draft": "First_Draft",
-            "Final_Draft": "Final_Draft",
+            "Corrected_Text": "Corrected_Text",
+            "Formatted_Text": "Formatted_Text",
             "Translation": "Translation"
         }
         self.text_display_var.set(display_map.get(current_toggle, "None"))
@@ -1275,10 +1278,10 @@ class App(TkinterDnD.Tk):
             text = ""
         elif self.text_display_var.get() == "Original_Text":
             text = self.main_df.loc[index, 'Original_Text'] if pd.notna(self.main_df.loc[index, 'Original_Text']) else ""
-        elif self.text_display_var.get() == "First_Draft":
-            text = self.main_df.loc[index, 'First_Draft'] if pd.notna(self.main_df.loc[index, 'First_Draft']) else ""
-        elif self.text_display_var.get() == "Final_Draft":
-            text = self.main_df.loc[index, 'Final_Draft'] if pd.notna(self.main_df.loc[index, 'Final_Draft']) else ""
+        elif self.text_display_var.get() == "Corrected_Text":
+            text = self.main_df.loc[index, 'Corrected_Text'] if pd.notna(self.main_df.loc[index, 'Corrected_Text']) else ""
+        elif self.text_display_var.get() == "Formatted_Text":
+            text = self.main_df.loc[index, 'Formatted_Text'] if pd.notna(self.main_df.loc[index, 'Formatted_Text']) else ""
         elif self.text_display_var.get() == "Translation":
             text = self.main_df.loc[index, 'Translation'] if pd.notna(self.main_df.loc[index, 'Translation']) else ""
         else:
@@ -1292,10 +1295,10 @@ class App(TkinterDnD.Tk):
         available_options = ["None"]
         if pd.notna(self.main_df.loc[index, 'Original_Text']) and self.main_df.loc[index, 'Original_Text'].strip():
             available_options.append("Original_Text")
-        if pd.notna(self.main_df.loc[index, 'First_Draft']) and self.main_df.loc[index, 'First_Draft'].strip():
-            available_options.append("First_Draft")
-        if pd.notna(self.main_df.loc[index, 'Final_Draft']) and self.main_df.loc[index, 'Final_Draft'].strip():
-            available_options.append("Final_Draft")
+        if pd.notna(self.main_df.loc[index, 'Corrected_Text']) and self.main_df.loc[index, 'Corrected_Text'].strip():
+            available_options.append("Corrected_Text")
+        if pd.notna(self.main_df.loc[index, 'Formatted_Text']) and self.main_df.loc[index, 'Formatted_Text'].strip():
+            available_options.append("Formatted_Text")
         if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
             available_options.append("Translation")
         self.text_display_dropdown['values'] = available_options
@@ -1357,19 +1360,19 @@ class App(TkinterDnD.Tk):
 
     def find_right_text(self, index_no):
         original_text = self.main_df.loc[index_no, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
-        first_draft = self.main_df.loc[index_no, 'First_Draft'] if 'First_Draft' in self.main_df.columns else ""
-        final_draft = self.main_df.loc[index_no, 'Final_Draft'] if 'Final_Draft' in self.main_df.columns else ""
+        Corrected_Text = self.main_df.loc[index_no, 'Corrected_Text'] if 'Corrected_Text' in self.main_df.columns else ""
+        Formatted_Text = self.main_df.loc[index_no, 'Formatted_Text'] if 'Formatted_Text' in self.main_df.columns else ""
         translation = self.main_df.loc[index_no, 'Translation'] if 'Translation' in self.main_df.columns else ""
 
         # First check if there's a translation and if the current toggle is set to Translation
         if pd.notna(translation) and translation.strip() and self.main_df.loc[index_no, 'Text_Toggle'] == "Translation":
             text = translation
-        # Then check for final draft
-        elif pd.notna(final_draft) and final_draft.strip() and self.main_df.loc[index_no, 'Text_Toggle'] == "Final_Draft":
-            text = final_draft
-        # Then check for first draft
-        elif pd.notna(first_draft) and first_draft.strip() and self.main_df.loc[index_no, 'Text_Toggle'] == "First_Draft":
-            text = first_draft
+        # Then check for Formatted_Text
+        elif pd.notna(Formatted_Text) and Formatted_Text.strip() and self.main_df.loc[index_no, 'Text_Toggle'] == "Formatted_Text":
+            text = Formatted_Text
+        # Then check for Corrected_Text
+        elif pd.notna(Corrected_Text) and Corrected_Text.strip() and self.main_df.loc[index_no, 'Text_Toggle'] == "Corrected_Text":
+            text = Corrected_Text
         # Finally use original text if available
         elif pd.notna(original_text) and original_text.strip():
             text = original_text
@@ -1381,19 +1384,19 @@ class App(TkinterDnD.Tk):
     def find_chunk_text(self, index_no):
         """
         Special version of find_right_text specifically for Chunk_Text operations.
-        Prioritizes First_Draft -> Original_Text, never uses Translation.
+        Prioritizes Corrected_Text -> Original_Text, never uses Translation.
         Returns a tuple of (text_to_use, has_translation) where has_translation is a boolean.
         """
-        first_draft = self.main_df.loc[index_no, 'First_Draft'] if 'First_Draft' in self.main_df.columns else ""
+        Corrected_Text = self.main_df.loc[index_no, 'Corrected_Text'] if 'Corrected_Text' in self.main_df.columns else ""
         original_text = self.main_df.loc[index_no, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
         translation = self.main_df.loc[index_no, 'Translation'] if 'Translation' in self.main_df.columns else ""
         
         # Check if translation exists and is non-empty
         has_translation = pd.notna(translation) and translation.strip() != ""
         
-        # First try First_Draft
-        if pd.notna(first_draft) and first_draft.strip():
-            return first_draft, has_translation
+        # First try Corrected_Text
+        if pd.notna(Corrected_Text) and Corrected_Text.strip():
+            return Corrected_Text, has_translation
         # Then try Original_Text
         elif pd.notna(original_text) and original_text.strip():
             return original_text, has_translation
@@ -1641,7 +1644,7 @@ class App(TkinterDnD.Tk):
 
         for idx, row in self.main_df.iterrows():
             active_col = row.get('Text_Toggle', None)
-            if active_col not in ["Original_Text", "First_Draft", "Final_Draft"]:
+            if active_col not in ["Original_Text", "Corrected_Text", "Formatted_Text"]:
                 continue
             
             old_text = row[active_col]
@@ -1673,10 +1676,10 @@ class App(TkinterDnD.Tk):
                     # Save the text to the appropriate column based on CURRENT display type
                     if current_display == "Original_Text":
                         self.main_df.loc[self.page_counter, 'Original_Text'] = text
-                    elif current_display == "First_Draft":
-                        self.main_df.loc[self.page_counter, 'First_Draft'] = text
-                    elif current_display == "Final_Draft":
-                        self.main_df.loc[self.page_counter, 'Final_Draft'] = text
+                    elif current_display == "Corrected_Text":
+                        self.main_df.loc[self.page_counter, 'Corrected_Text'] = text
+                    elif current_display == "Formatted_Text":
+                        self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
                     elif current_display == "Translation":
                         self.main_df.loc[self.page_counter, 'Translation'] = text
             
@@ -1751,10 +1754,10 @@ class App(TkinterDnD.Tk):
             # Save the text to the appropriate column based on CURRENT display type (not new one)
             if current_display == "Original_Text":
                 self.main_df.loc[index, 'Original_Text'] = text
-            elif current_display == "First_Draft":
-                self.main_df.loc[index, 'First_Draft'] = text
-            elif current_display == "Final_Draft":
-                self.main_df.loc[index, 'Final_Draft'] = text
+            elif current_display == "Corrected_Text":
+                self.main_df.loc[index, 'Corrected_Text'] = text
+            elif current_display == "Formatted_Text":
+                self.main_df.loc[index, 'Formatted_Text'] = text
             elif current_display == "Translation":
                 self.main_df.loc[index, 'Translation'] = text
             
@@ -1762,13 +1765,26 @@ class App(TkinterDnD.Tk):
         display_map = {
             "None": "None",
             "Original_Text": "Original_Text",
-            "First_Draft": "First_Draft",
-            "Final_Draft": "Final_Draft",
+            "Corrected_Text": "Corrected_Text",
+            "Formatted_Text": "Formatted_Text",
             "Translation": "Translation"
         }
         
         # Update the Text_Toggle in the DataFrame
         self.main_df.at[index, 'Text_Toggle'] = display_map[selected]
+        
+        # Clear error highlights if switching to a text version they don't apply to
+        if 'Errors_Source' in self.main_df.columns:
+            errors_source = self.main_df.loc[index, 'Errors_Source']
+            if errors_source and errors_source != selected:
+                # We're switching to a text version that doesn't match the errors
+                self.text_display.tag_remove("error_highlight", "1.0", tk.END)
+            elif errors_source == selected and self.highlight_errors_var.get():
+                # We're switching to the text version that matches the errors
+                # Make sure error highlighting is enabled if there are errors
+                errors = self.main_df.loc[index, 'Errors'] if 'Errors' in self.main_df.columns else ""
+                if pd.notna(errors) and errors.strip():
+                    self.highlight_errors_var.set(True)
         
         # Reload the text
         self.load_text()
@@ -1792,41 +1808,41 @@ class App(TkinterDnD.Tk):
             # Save the text to the appropriate column based on CURRENT display type
             if current_toggle == "Original_Text":
                 self.main_df.loc[index, 'Original_Text'] = text
-            elif current_toggle == "First_Draft":
-                self.main_df.loc[index, 'First_Draft'] = text
-            elif current_toggle == "Final_Draft":
-                self.main_df.loc[index, 'Final_Draft'] = text
+            elif current_toggle == "Corrected_Text":
+                self.main_df.loc[index, 'Corrected_Text'] = text
+            elif current_toggle == "Formatted_Text":
+                self.main_df.loc[index, 'Formatted_Text'] = text
             elif current_toggle == "Translation":
                 self.main_df.loc[index, 'Translation'] = text
             
         has_translation = pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip()
-        has_corrected = pd.notna(self.main_df.loc[index, 'First_Draft']) and self.main_df.loc[index, 'First_Draft'].strip()
-        has_final = pd.notna(self.main_df.loc[index, 'Final_Draft']) and self.main_df.loc[index, 'Final_Draft'].strip()
+        has_corrected = pd.notna(self.main_df.loc[index, 'Corrected_Text']) and self.main_df.loc[index, 'Corrected_Text'].strip()
+        has_final = pd.notna(self.main_df.loc[index, 'Formatted_Text']) and self.main_df.loc[index, 'Formatted_Text'].strip()
         has_original = pd.notna(self.main_df.loc[index, 'Original_Text']) and self.main_df.loc[index, 'Original_Text'].strip()
 
         # Prioritize Translation if it exists
         if current_toggle == "Translation":
             if has_final:
-                self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
+                self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
             elif has_corrected:
-                self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
+                self.main_df.loc[index, 'Text_Toggle'] = "Corrected_Text"
             elif has_original:
                 self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
         elif current_toggle == "Original_Text":
             if has_corrected:
-                self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
+                self.main_df.loc[index, 'Text_Toggle'] = "Corrected_Text"
             elif has_final:
-                self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
+                self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
             elif has_translation:
                 self.main_df.loc[index, 'Text_Toggle'] = "Translation"
-        elif current_toggle == "First_Draft":
+        elif current_toggle == "Corrected_Text":
             if has_final:
-                self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
+                self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
             elif has_translation:
                 self.main_df.loc[index, 'Text_Toggle'] = "Translation"
             else:
                 self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
-        elif current_toggle == "Final_Draft":
+        elif current_toggle == "Formatted_Text":
             if has_translation:
                 self.main_df.loc[index, 'Text_Toggle'] = "Translation"
             else:
@@ -2093,13 +2109,28 @@ class App(TkinterDnD.Tk):
             self.highlight_changes()
             
         if self.highlight_errors_var.get():
-            self.highlight_errors()
+            # Check if we're viewing the text version that the errors apply to
+            current_display = self.text_display_var.get()
+            index = self.page_counter
+            
+            if index < len(self.main_df) and 'Errors_Source' in self.main_df.columns:
+                errors_source = self.main_df.loc[index, 'Errors_Source']
+                
+                # Only apply error highlights if viewing the correct text version
+                # or if no specific source is recorded (for backward compatibility)
+                if not errors_source or errors_source == current_display:
+                    self.highlight_errors()
+                else:
+                    self.error_logging(f"Not highlighting errors because current display ({current_display}) doesn't match errors source ({errors_source})", level="DEBUG")
+            else:
+                # For backward compatibility or if Errors_Source column doesn't exist
+                self.highlight_errors()
 
     def highlight_changes(self):
         """
         Highlight differences between the current text level and the previous level:
-        - When viewing First_Draft, highlight changes from Original_Text
-        - When viewing Final_Draft, highlight changes from First_Draft
+        - When viewing Corrected_Text, highlight changes from Original_Text
+        - When viewing Formatted_Text, highlight changes from Corrected_Text
         """
         index = self.page_counter
         current_toggle = self.main_df.loc[index, 'Text_Toggle']
@@ -2109,21 +2140,21 @@ class App(TkinterDnD.Tk):
             return
             
         # Determine which texts to compare based on current level
-        if current_toggle == "First_Draft":
-            # Compare First_Draft with Original_Text
-            current_text = self.main_df.loc[index, 'First_Draft']
+        if current_toggle == "Corrected_Text":
+            # Compare Corrected_Text with Original_Text
+            current_text = self.main_df.loc[index, 'Corrected_Text']
             previous_text = self.main_df.loc[index, 'Original_Text']
             
             # Skip if either text is missing
             if pd.isna(current_text) or pd.isna(previous_text):
                 return
                 
-        elif current_toggle == "Final_Draft":
-            # Compare Final_Draft with First_Draft
-            current_text = self.main_df.loc[index, 'Final_Draft']
-            previous_text = self.main_df.loc[index, 'First_Draft']
+        elif current_toggle == "Formatted_Text":
+            # Compare Formatted_Text with Corrected_Text
+            current_text = self.main_df.loc[index, 'Formatted_Text']
+            previous_text = self.main_df.loc[index, 'Corrected_Text']
             
-            # If First_Draft is empty, compare with Original_Text instead
+            # If Corrected_Text is empty, compare with Original_Text instead
             if pd.isna(previous_text) or previous_text.strip() == '':
                 previous_text = self.main_df.loc[index, 'Original_Text']
                 
@@ -2153,12 +2184,21 @@ class App(TkinterDnD.Tk):
             selected = self.text_display_var.get()
             self.error_logging(f"Current text display mode: {selected}", level="DEBUG")
             
+            # Get the text version the errors apply to
+            errors_source = self.main_df.at[index, 'Errors_Source'] if 'Errors_Source' in self.main_df.columns else ""
+            self.error_logging(f"Errors source: {errors_source}", level="DEBUG")
+            
+            # Only highlight errors if we're viewing the text version they apply to
+            if errors_source and errors_source != selected:
+                self.error_logging(f"Not highlighting errors because current display ({selected}) doesn't match errors source ({errors_source})", level="DEBUG")
+                return
+            
             # Map display names to DataFrame columns - fixed to match actual values
             text_map = {
                 "None": None,
                 "Original_Text": "Original_Text",
-                "First_Draft": "First_Draft", 
-                "Final_Draft": "Final_Draft"
+                "Corrected_Text": "Corrected_Text", 
+                "Formatted_Text": "Formatted_Text"
             }
             
             # Get the current text column
@@ -2208,12 +2248,12 @@ class App(TkinterDnD.Tk):
         if selected == "Original_Text":
             self.main_df.loc[index, 'Original_Text'] = text
             self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
-        elif selected == "First_Draft":
-            self.main_df.loc[index, 'First_Draft'] = text
-            self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
-        elif selected == "Final_Draft":
-            self.main_df.loc[index, 'Final_Draft'] = text
-            self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
+        elif selected == "Corrected_Text":
+            self.main_df.loc[index, 'Corrected_Text'] = text
+            self.main_df.loc[index, 'Text_Toggle'] = "Corrected_Text"
+        elif selected == "Formatted_Text":
+            self.main_df.loc[index, 'Formatted_Text'] = text
+            self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
         elif selected == "Translation":
             self.main_df.loc[index, 'Translation'] = text
             self.main_df.loc[index, 'Text_Toggle'] = "Translation"
@@ -2232,8 +2272,8 @@ class App(TkinterDnD.Tk):
                 self.main_df.loc[index, 'Original_Text'] = response
                 self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
             elif ai_job == "Correct_Text":
-                self.main_df.loc[index, 'First_Draft'] = response
-                self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
+                self.main_df.loc[index, 'Corrected_Text'] = response
+                self.main_df.loc[index, 'Text_Toggle'] = "Corrected_Text"
                 # Enable changes highlighting when correction is run
                 self.highlight_changes_var.set(True)
             elif ai_job == "Get_Names_and_Places":
@@ -2325,15 +2365,15 @@ class App(TkinterDnD.Tk):
             elif ai_job == "Metadata":
                 self.extract_metadata_from_response(index, response)
             elif ai_job == "Chunk_Text":
-                # Always store the response in Final_Draft, regardless of source
-                self.main_df.loc[index, 'Final_Draft'] = response
-                self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
+                # Always store the response in Formatted_Text, regardless of source
+                self.main_df.loc[index, 'Formatted_Text'] = response
+                self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
                 
                 # Additional info about the source text if needed for debugging
                 source_text_type = getattr(self, 'chunk_text_source_var', tk.StringVar()).get()
                 if not source_text_type:
-                    source_text_type = "First_Draft"  # Default if not set
-                self.error_logging(f"Chunk_Text processed from {source_text_type} and saved to Final_Draft", level="DEBUG")
+                    source_text_type = "Corrected_Text"  # Default if not set
+                self.error_logging(f"Chunk_Text processed from {source_text_type} and saved to Formatted_Text", level="DEBUG")
             elif ai_job == "Chunk_Translation":
                 # Special job type for chunking translations
                 if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
@@ -2348,6 +2388,17 @@ class App(TkinterDnD.Tk):
                 errors = response.split('\n')[0].strip()
                 print(f"Extracted errors: {errors}")
                 self.main_df.loc[index, 'Errors'] = errors
+                
+                # Store which version of text the errors apply to
+                # Get the selected text source that was processed
+                selected_source = getattr(self, 'temp_selected_source', None)
+                if selected_source:
+                    self.main_df.loc[index, 'Errors_Source'] = selected_source
+                else:
+                    # If no explicit source was provided, use the current text display mode
+                    self.main_df.loc[index, 'Errors_Source'] = self.text_display_var.get()
+                
+                print(f"Errors apply to text version: {self.main_df.loc[index, 'Errors_Source']}")
                 
                 # If there are errors, highlight them in the text
                 if errors:
@@ -2433,29 +2484,29 @@ class App(TkinterDnD.Tk):
         
         if current_selection == "Translation":
             if messagebox.askyesno("Revert Text", 
-                                "Do you want to revert the Translation and return to the final draft version?"):
+                                "Do you want to revert the Translation and return to the Formatted_Text version?"):
                 self.main_df.loc[index, 'Translation'] = ""
-                if pd.notna(self.main_df.loc[index, 'Final_Draft']) and self.main_df.loc[index, 'Final_Draft'].strip():
-                    self.text_display_var.set("Final_Draft")
-                    self.main_df.loc[index, 'Text_Toggle'] = "Final_Draft"
-                elif pd.notna(self.main_df.loc[index, 'First_Draft']) and self.main_df.loc[index, 'First_Draft'].strip():
-                    self.text_display_var.set("First_Draft")
-                    self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
+                if pd.notna(self.main_df.loc[index, 'Formatted_Text']) and self.main_df.loc[index, 'Formatted_Text'].strip():
+                    self.text_display_var.set("Formatted_Text")
+                    self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
+                elif pd.notna(self.main_df.loc[index, 'Corrected_Text']) and self.main_df.loc[index, 'Corrected_Text'].strip():
+                    self.text_display_var.set("Corrected_Text")
+                    self.main_df.loc[index, 'Text_Toggle'] = "Corrected_Text"
                 else:
                     self.text_display_var.set("Original_Text")
                     self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
-        elif current_selection == "Final_Draft":
+        elif current_selection == "Formatted_Text":
             if messagebox.askyesno("Revert Text", 
                                 "Do you want to revert to the first draft version?"):
-                self.main_df.loc[index, 'Final_Draft'] = ""
-                self.text_display_var.set("First_Draft")
-                self.main_df.loc[index, 'Text_Toggle'] = "First_Draft"
+                self.main_df.loc[index, 'Formatted_Text'] = ""
+                self.text_display_var.set("Corrected_Text")
+                self.main_df.loc[index, 'Text_Toggle'] = "Corrected_Text"
                 
-        elif current_selection == "First_Draft":
+        elif current_selection == "Corrected_Text":
             if messagebox.askyesno("Revert Text", 
                                 "Do you want to revert to the Original_Text version?"):
-                self.main_df.loc[index, 'First_Draft'] = ""
-                self.main_df.loc[index, 'Final_Draft'] = ""
+                self.main_df.loc[index, 'Corrected_Text'] = ""
+                self.main_df.loc[index, 'Formatted_Text'] = ""
                 self.text_display_var.set("Original_Text")
                 self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
                 
@@ -2470,8 +2521,8 @@ class App(TkinterDnD.Tk):
         if messagebox.askyesno("Confirm Revert", 
                             "Are you sure you want to revert ALL pages to their Original_Text? "
                             "This will remove all corrections, translations, and cannot be undone."):
-            self.main_df['Final_Draft'] = ""
-            self.main_df['First_Draft'] = ""
+            self.main_df['Formatted_Text'] = ""
+            self.main_df['Corrected_Text'] = ""
             self.main_df['Translation'] = ""
             self.main_df['Text_Toggle'] = "Original_Text"
             self.text_display_var.set("Original_Text")
@@ -2642,11 +2693,16 @@ class App(TkinterDnD.Tk):
                     "Index": new_index,
                     "Page": f"{new_index+1:04d}_p{new_index+1:03d}",
                     "Original_Text": "",
-                    "First_Draft": "",
-                    "Final_Draft": "",
+                    "Corrected_Text": "",
+                    "Formatted_Text": "",
+                    "Translation": "",
                     "Image_Path": os.path.join("images", new_image_name),
                     "Text_Path": "",
-                    "Text_Toggle": "None"
+                    "Text_Toggle": "None",
+                    "People": "",
+                    "Places": "",
+                    "Errors": "",
+                    "Errors_Source": ""
                 }
                 new_rows.append(new_row)
             
@@ -2699,6 +2755,13 @@ class App(TkinterDnD.Tk):
 # AI Functions
 
     def ai_function(self, all_or_one_flag="All Pages", ai_job="HTR", batch_size=50):
+        # Check if we should show text source selection window
+        if ai_job in ["Correct_Text", "Translation", "Identify_Errors"]:
+            # If we already have a selected source from the window, don't show the window again
+            if not hasattr(self, 'temp_selected_source'):
+                self.create_text_source_window(all_or_one_flag, ai_job)
+                return  # Window will call back to process_ai_with_selected_source
+        
         # Get job parameters including batch_size
         job_params = self.setup_job_parameters(ai_job)
         batch_size = job_params.get('batch_size', 50)  # Use job-specific batch size
@@ -2713,7 +2776,7 @@ class App(TkinterDnD.Tk):
                 # Check if we have a text source selection
                 selected_text_source = getattr(self, 'chunk_text_source_var', tk.StringVar()).get()
                 if not selected_text_source:
-                    selected_text_source = "First_Draft"  # Default if not set
+                    selected_text_source = "Corrected_Text"  # Default if not set
                     
                 if all_or_one_flag == "Current Page":
                     row = self.page_counter
@@ -2721,8 +2784,8 @@ class App(TkinterDnD.Tk):
                     # Get text based on the selected source
                     if selected_text_source == "Original_Text" and pd.notna(self.main_df.loc[row, 'Original_Text']) and self.main_df.loc[row, 'Original_Text'].strip():
                         text_to_process = self.main_df.loc[row, 'Original_Text']
-                    elif selected_text_source == "First_Draft" and pd.notna(self.main_df.loc[row, 'First_Draft']) and self.main_df.loc[row, 'First_Draft'].strip():
-                        text_to_process = self.main_df.loc[row, 'First_Draft']
+                    elif selected_text_source == "Corrected_Text" and pd.notna(self.main_df.loc[row, 'Corrected_Text']) and self.main_df.loc[row, 'Corrected_Text'].strip():
+                        text_to_process = self.main_df.loc[row, 'Corrected_Text']
                     elif selected_text_source == "Translation" and pd.notna(self.main_df.loc[row, 'Translation']) and self.main_df.loc[row, 'Translation'].strip():
                         text_to_process = self.main_df.loc[row, 'Translation']
                     else:
@@ -2740,7 +2803,7 @@ class App(TkinterDnD.Tk):
                     def page_has_text(row):
                         if selected_text_source == "Original_Text" and pd.notna(row['Original_Text']) and row['Original_Text'].strip():
                             return True
-                        elif selected_text_source == "First_Draft" and pd.notna(row['First_Draft']) and row['First_Draft'].strip():
+                        elif selected_text_source == "Corrected_Text" and pd.notna(row['Corrected_Text']) and row['Corrected_Text'].strip():
                             return True
                         elif selected_text_source == "Translation" and pd.notna(row['Translation']) and row['Translation'].strip():
                             return True
@@ -2838,78 +2901,80 @@ class App(TkinterDnD.Tk):
                         # Process all pages with images regardless of content
                         batch_df = pages_with_images
             elif ai_job == "Correct_Text":
+                # Use the selected text source if provided from text source window
+                selected_source = getattr(self, 'temp_selected_source', "Original_Text")
+                
                 if all_or_one_flag == "Current Page":
                     # Logic for Current Page with Skip Completed option
                     row = self.page_counter
                     if skip_completed:
-                        # Only process if it has Original_Text but no First_Draft
-                        if pd.notna(self.main_df.loc[row, 'Original_Text']) and \
-                        (pd.isna(self.main_df.loc[row, 'First_Draft']) or self.main_df.loc[row, 'First_Draft'].strip() == ''):
+                        # Only process if it has the selected source but no Corrected_Text
+                        if pd.notna(self.main_df.loc[row, selected_source]) and self.main_df.loc[row, selected_source].strip() and \
+                        (pd.isna(self.main_df.loc[row, 'Corrected_Text']) or self.main_df.loc[row, 'Corrected_Text'].strip() == ''):
                             batch_df = self.main_df.loc[[row]]
                         else:
-                            messagebox.showinfo("Skip", "This page either lacks Original_Text or already has corrections.")
+                            messagebox.showinfo("Skip", f"This page either lacks {selected_source} or already has corrections.")
                             self.toggle_button_state()  # Re-enable buttons before return
                             return
                     else:
-                        # Process regardless of First_Draft status as long as Original_Text exists
-                        if pd.notna(self.main_df.loc[row, 'Original_Text']):
+                        # Process regardless of Corrected_Text status as long as selected source exists
+                        if pd.notna(self.main_df.loc[row, selected_source]) and self.main_df.loc[row, selected_source].strip():
                             batch_df = self.main_df.loc[[row]]
                         else:
-                            messagebox.showinfo("Skip", "This page lacks Original_Text.")
+                            messagebox.showinfo("Skip", f"This page lacks {selected_source}.")
                             self.toggle_button_state()  # Re-enable buttons before return
                             return
                 else:
                     # Logic for All Pages with Skip Completed option
                     if skip_completed:
-                        # Filter for pages with Original_Text but without First_Draft
+                        # Filter for pages with selected source but without Corrected_Text
                         batch_df = self.main_df[
-                            (self.main_df['Original_Text'].notna()) & 
-                            (self.main_df['Original_Text'] != '') & 
-                            ((self.main_df['First_Draft'].isna()) | (self.main_df['First_Draft'] == ''))
+                            (self.main_df[selected_source].notna()) & 
+                            (self.main_df[selected_source] != '') & 
+                            ((self.main_df['Corrected_Text'].isna()) | (self.main_df['Corrected_Text'] == ''))
                         ]
                     else:
-                        # Process all pages with Original_Text regardless of First_Draft status
+                        # Process all pages with selected source regardless of Corrected_Text status
                         batch_df = self.main_df[
-                            (self.main_df['Original_Text'].notna()) & 
-                            (self.main_df['Original_Text'] != '')
+                            (self.main_df[selected_source].notna()) & 
+                            (self.main_df[selected_source] != '')
                         ]
-            elif ai_job == "Create_Final_Draft":
+            elif ai_job == "Create_Formatted_Text":
                 if all_or_one_flag == "Current Page":
                     # Logic for Current Page with Skip Completed option
                     row = self.page_counter
                     if skip_completed:
-                        # Only process if it has First_Draft but no Final_Draft
-                        if pd.notna(self.main_df.loc[row, 'First_Draft']) and \
-                        (pd.isna(self.main_df.loc[row, 'Final_Draft']) or self.main_df.loc[row, 'Final_Draft'].strip() == ''):
+                        # Only process if it has Corrected_Text but no Formatted_Text
+                        if pd.notna(self.main_df.loc[row, 'Corrected_Text']) and \
+                        (pd.isna(self.main_df.loc[row, 'Formatted_Text']) or self.main_df.loc[row, 'Formatted_Text'].strip() == ''):
                             batch_df = self.main_df.loc[[row]]
                         else:
-                            messagebox.showinfo("Skip", "This page either lacks First_Draft or already has Final_Draft.")
+                            messagebox.showinfo("Skip", "This page either lacks Corrected_Text or already has Formatted_Text.")
                             self.toggle_button_state()  # Re-enable buttons before return
                             return
                     else:
-                        # Process regardless of Final_Draft status as long as First_Draft exists
-                        if pd.notna(self.main_df.loc[row, 'First_Draft']):
+                        # Process regardless of Formatted_Text status as long as Corrected_Text exists
+                        if pd.notna(self.main_df.loc[row, 'Corrected_Text']):
                             batch_df = self.main_df.loc[[row]]
                         else:
-                            messagebox.showinfo("Skip", "This page lacks First_Draft.")
+                            messagebox.showinfo("Skip", "This page lacks Corrected_Text.")
                             self.toggle_button_state()  # Re-enable buttons before return
                             return
                 else:
                     # Logic for All Pages with Skip Completed option
                     if skip_completed:
-                        # Filter for pages with First_Draft but without Final_Draft
+                        # Filter for pages with Corrected_Text but without Formatted_Text
                         batch_df = self.main_df[
-                            (self.main_df['First_Draft'].notna()) & 
-                            (self.main_df['First_Draft'] != '') & 
-                            ((self.main_df['Final_Draft'].isna()) | (self.main_df['Final_Draft'] == ''))
+                            (self.main_df['Corrected_Text'].notna()) & 
+                            (self.main_df['Corrected_Text'] != '') & 
+                            ((self.main_df['Formatted_Text'].isna()) | (self.main_df['Formatted_Text'] == ''))
                         ]
                     else:
-                        # Process all pages with First_Draft regardless of Final_Draft status
+                        # Process all pages with Corrected_Text regardless of Formatted_Text status
                         batch_df = self.main_df[
-                            (self.main_df['First_Draft'].notna()) & 
-                            (self.main_df['First_Draft'] != '')
+                            (self.main_df['Corrected_Text'].notna()) & 
+                            (self.main_df['Corrected_Text'] != '')
                         ]
-            # In the ai_function method, modify the batch_df setup section:
             elif ai_job == "Get_Names_and_Places":
                 if all_or_one_flag == "Current Page":
                     row = self.page_counter
@@ -2940,13 +3005,83 @@ class App(TkinterDnD.Tk):
                 # This is a special internal job type not directly called by users
                 pass
             elif ai_job == "Identify_Errors":
+                # Use the selected text source if provided from text source window
+                selected_source = getattr(self, 'temp_selected_source', None)
+                
                 if all_or_one_flag == "Current Page":
                     row = self.page_counter
-                    # Only process current page
-                    batch_df = self.main_df.loc[[row]]
+                    # Only process current page if it has the selected text source
+                    if selected_source and pd.notna(self.main_df.loc[row, selected_source]) and self.main_df.loc[row, selected_source].strip():
+                        batch_df = self.main_df.loc[[row]]
+                    else:
+                        # Fallback to using whatever text is currently displayed
+                        batch_df = self.main_df.loc[[row]]
                 else:
-                    # Process all pages that have text
-                    batch_df = self.main_df[self.main_df['Image_Path'].notna() & (self.main_df['Image_Path'] != '')]
+                    # Process all pages that have the selected text source
+                    if selected_source:
+                        batch_df = self.main_df[
+                            (self.main_df[selected_source].notna()) & 
+                            (self.main_df[selected_source] != '')
+                        ]
+                    else:
+                        # Fallback to all pages with images
+                        batch_df = self.main_df[
+                            (self.main_df['Image_Path'].notna()) & 
+                            (self.main_df['Image_Path'] != '')
+                        ]
+            elif ai_job == "Translation":
+                # Use the selected text source if provided from text source window
+                selected_source = getattr(self, 'temp_selected_source', None)
+                
+                if all_or_one_flag == "Current Page":
+                    row = self.page_counter
+                    # Only process current page if it has the selected text source
+                    if selected_source and pd.notna(self.main_df.loc[row, selected_source]) and self.main_df.loc[row, selected_source].strip():
+                        # Check if already has translation and skip_completed is enabled
+                        if skip_completed and pd.notna(self.main_df.loc[row, 'Translation']) and self.main_df.loc[row, 'Translation'].strip():
+                            messagebox.showinfo("Skip", "This page already has a translation.")
+                            self.toggle_button_state()  # Re-enable buttons before return
+                            return
+                        batch_df = self.main_df.loc[[row]]
+                    else:
+                        # Fallback to finding the right text
+                        text = self.find_right_text(row)
+                        if not text.strip():
+                            messagebox.showinfo("Skip", "This page has no text to translate.")
+                            self.toggle_button_state()  # Re-enable buttons before return
+                            return
+                        batch_df = self.main_df.loc[[row]]
+                else:
+                    # Process all pages that have the selected text source and need translation
+                    if selected_source:
+                        if skip_completed:
+                            batch_df = self.main_df[
+                                (self.main_df[selected_source].notna()) & 
+                                (self.main_df[selected_source] != '') &
+                                ((self.main_df['Translation'].isna()) | (self.main_df['Translation'] == ''))
+                            ]
+                        else:
+                            batch_df = self.main_df[
+                                (self.main_df[selected_source].notna()) & 
+                                (self.main_df[selected_source] != '')
+                            ]
+                    else:
+                        # Fallback to all pages with any text
+                        if skip_completed:
+                            # Process pages with any text but no translation
+                            batch_df = self.main_df[
+                                ((self.main_df['Original_Text'].notna() & (self.main_df['Original_Text'] != '')) |
+                                 (self.main_df['Corrected_Text'].notna() & (self.main_df['Corrected_Text'] != '')) |
+                                 (self.main_df['Formatted_Text'].notna() & (self.main_df['Formatted_Text'] != ''))) &
+                                ((self.main_df['Translation'].isna()) | (self.main_df['Translation'] == ''))
+                            ]
+                        else:
+                            # Process all pages with any text
+                            batch_df = self.main_df[
+                                (self.main_df['Original_Text'].notna() & (self.main_df['Original_Text'] != '')) |
+                                (self.main_df['Corrected_Text'].notna() & (self.main_df['Corrected_Text'] != '')) |
+                                (self.main_df['Formatted_Text'].notna() & (self.main_df['Formatted_Text'] != ''))
+                            ]
             elif ai_job == "Custom":
                 if all_or_one_flag == "Current Page":
                     row = self.page_counter
@@ -2962,7 +3097,7 @@ class App(TkinterDnD.Tk):
                 if ai_job == "HTR":
                     messagebox.showinfo("No Work Needed", "All pages already have recognized text.")
                 elif ai_job == "Correct_Text":
-                    messagebox.showinfo("No Work Needed", "All pages either lack Original_Text or already have corrections.")
+                    messagebox.showinfo("No Work Needed", "All pages either lack text to correct or already have corrections.")
                 elif ai_job == "Translation":
                     messagebox.showinfo("No Work Needed", "All pages either lack text to translate or already have translations.")
                 else:
@@ -2982,22 +3117,30 @@ class App(TkinterDnD.Tk):
                         # Get images based on the job type
                         images_data = self.get_images_for_job(ai_job, index, row_data, job_params)
 
-                        # Set text_to_process based on the job type
+                        # Set text_to_process based on the job type and selected source
+                        selected_source = getattr(self, 'temp_selected_source', None)
+                        
                         if ai_job == "HTR":
                             text_to_process = ''
+                        elif ai_job == "Correct_Text" and selected_source:
+                            text_to_process = row_data[selected_source]
                         elif ai_job == "Correct_Text": 
                             text_to_process = row_data['Original_Text']
-                        elif ai_job == "Create_Final_Draft":
-                            text_to_process = row_data['First_Draft']
+                        elif ai_job == "Create_Formatted_Text":
+                            text_to_process = row_data['Corrected_Text']
+                        elif ai_job == "Translation" and selected_source:
+                            text_to_process = row_data[selected_source]
                         elif ai_job == "Translation":
                             text_to_process = self.find_right_text(index)
+                        elif ai_job == "Identify_Errors" and selected_source:
+                            text_to_process = row_data[selected_source]
                         else:
                             if row_data['Text_Toggle'] == "Original_Text":
                                 text_to_process = row_data['Original_Text']
-                            elif row_data['Text_Toggle'] == "First_Draft":
-                                text_to_process = row_data['First_Draft']
-                            elif row_data['Text_Toggle'] == "Final_Draft":
-                                text_to_process = row_data['Final_Draft']
+                            elif row_data['Text_Toggle'] == "Corrected_Text":
+                                text_to_process = row_data['Corrected_Text']
+                            elif row_data['Text_Toggle'] == "Formatted_Text":
+                                text_to_process = row_data['Formatted_Text']
                             else:
                                 text_to_process = ''
                            
@@ -3423,7 +3566,7 @@ class App(TkinterDnD.Tk):
 
     def process_chunk_text(self, batch_df, all_or_one_flag, ai_job_type):
         """
-        Process text chunking for the standard text fields (First_Draft or Original_Text)
+        Process text chunking for the standard text fields (Corrected_Text or Original_Text)
         
         Args:
             batch_df: DataFrame containing rows to process
@@ -3438,7 +3581,7 @@ class App(TkinterDnD.Tk):
             # Get selected text source
             selected_text_source = getattr(self, 'chunk_text_source_var', tk.StringVar()).get()
             if not selected_text_source:
-                selected_text_source = "First_Draft"  # Default if not set
+                selected_text_source = "Corrected_Text"  # Default if not set
             
             # Show progress window
             progress_title = f"Applying {ai_job_type} to {'Current Page' if all_or_one_flag == 'Current Page' else 'All Pages'}..."
@@ -3458,8 +3601,8 @@ class App(TkinterDnD.Tk):
                     # Get text based on the selected source
                     if selected_text_source == "Original_Text" and pd.notna(row_data['Original_Text']) and row_data['Original_Text'].strip():
                         text_to_process = row_data['Original_Text']
-                    elif selected_text_source == "First_Draft" and pd.notna(row_data['First_Draft']) and row_data['First_Draft'].strip():
-                        text_to_process = row_data['First_Draft']
+                    elif selected_text_source == "Corrected_Text" and pd.notna(row_data['Corrected_Text']) and row_data['Corrected_Text'].strip():
+                        text_to_process = row_data['Corrected_Text']
                     elif selected_text_source == "Translation" and pd.notna(row_data['Translation']) and row_data['Translation'].strip():
                         text_to_process = row_data['Translation']
                     else:
@@ -3749,42 +3892,47 @@ class App(TkinterDnD.Tk):
         
         # Check for changes - needs at least two text versions
         has_changes = False
-        if current_toggle == "First_Draft":
+        if current_toggle == "Corrected_Text":
             original_text = self.main_df.loc[index, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
-            first_draft = self.main_df.loc[index, 'First_Draft'] if 'First_Draft' in self.main_df.columns else ""
+            Corrected_Text = self.main_df.loc[index, 'Corrected_Text'] if 'Corrected_Text' in self.main_df.columns else ""
             has_changes = (pd.notna(original_text) and original_text.strip() != "" and 
-                          pd.notna(first_draft) and first_draft.strip() != "")
-        elif current_toggle == "Final_Draft":
-            first_draft = self.main_df.loc[index, 'First_Draft'] if 'First_Draft' in self.main_df.columns else ""
-            final_draft = self.main_df.loc[index, 'Final_Draft'] if 'Final_Draft' in self.main_df.columns else ""
-            has_changes = (pd.notna(first_draft) and first_draft.strip() != "" and 
-                          pd.notna(final_draft) and final_draft.strip() != "")
+                          pd.notna(Corrected_Text) and Corrected_Text.strip() != "")
+        elif current_toggle == "Formatted_Text":
+            Corrected_Text = self.main_df.loc[index, 'Corrected_Text'] if 'Corrected_Text' in self.main_df.columns else ""
+            Formatted_Text = self.main_df.loc[index, 'Formatted_Text'] if 'Formatted_Text' in self.main_df.columns else ""
+            has_changes = (pd.notna(Corrected_Text) and Corrected_Text.strip() != "" and 
+                          pd.notna(Formatted_Text) and Formatted_Text.strip() != "")
             if not has_changes:
-                # Try with Original_Text if First_Draft is empty
+                # Try with Original_Text if Corrected_Text is empty
                 original_text = self.main_df.loc[index, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
                 has_changes = (pd.notna(original_text) and original_text.strip() != "" and 
-                              pd.notna(final_draft) and final_draft.strip() != "")
+                              pd.notna(Formatted_Text) and Formatted_Text.strip() != "")
         elif current_toggle == "Translation":
-            # Add check for Translation vs Original Text or First Draft
+            # Add check for Translation vs Original Text or Corrected_Text
             original_text = self.main_df.loc[index, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
-            first_draft = self.main_df.loc[index, 'First_Draft'] if 'First_Draft' in self.main_df.columns else ""
+            Corrected_Text = self.main_df.loc[index, 'Corrected_Text'] if 'Corrected_Text' in self.main_df.columns else ""
             translation = self.main_df.loc[index, 'Translation'] if 'Translation' in self.main_df.columns else ""
             
             has_changes = (pd.notna(translation) and translation.strip() != "") and (
                 (pd.notna(original_text) and original_text.strip() != "") or
-                (pd.notna(first_draft) and first_draft.strip() != "")
+                (pd.notna(Corrected_Text) and Corrected_Text.strip() != "")
             )
         
         # Only enable the menu item if there's data, never disable the toggle if already on
         self.document_menu.entryconfig("Highlight Changes", state="normal" if has_changes else "disabled")
         
-        # Check for errors data
+        # Check for errors data - must have data and be viewing the right text version
         has_errors = False
-        if 'Errors' in self.main_df.columns:
+        current_display = self.text_display_var.get()
+        if 'Errors' in self.main_df.columns and 'Errors_Source' in self.main_df.columns:
             errors = self.main_df.loc[index, 'Errors']
-            has_errors = pd.notna(errors) and errors.strip() != ""
+            errors_source = self.main_df.loc[index, 'Errors_Source']
+            
+            # Only count errors if they exist and apply to the current text version
+            has_errors = (pd.notna(errors) and errors.strip() != "" and
+                         (not errors_source or errors_source == current_display))
         
-        # Only enable the menu item if there's data, never disable the toggle if already on
+        # Only enable the menu item if there's applicable errors data
         self.document_menu.entryconfig("Highlight Errors", state="normal" if has_errors else "disabled")
 
     def extract_metadata_from_response(self, index, response):
@@ -4024,6 +4172,150 @@ class App(TkinterDnD.Tk):
     def update_separation_menu_state(self, state="normal"):
         """Update the state of the document separation menu items."""
         self.process_menu.entryconfig("Apply Separation", state=state)
+
+    def create_text_source_window(self, all_or_one_flag, ai_job):
+        """
+        Creates a window for selecting text source before running AI functions
+        """
+        # Create the window
+        source_window = tk.Toplevel(self)
+        source_window.title(f"Select Text Source for {ai_job.replace('_', ' ')}")
+        source_window.geometry("400x250")  
+        source_window.grab_set()  # Make window modal
+        
+        # Message explaining purpose
+        message_label = tk.Label(source_window, 
+            text=f"Select the text source to process:",
+            font=("Calibri", 12))
+        message_label.pack(pady=15)
+        
+        # Create the text source selection dropdown
+        dropdown_frame = tk.Frame(source_window)
+        dropdown_frame.pack(pady=10)
+        
+        source_label = tk.Label(dropdown_frame, text="Text Source:")
+        source_label.pack(side="left", padx=5)
+        
+        # Create a StringVar for the text source dropdown
+        self.text_source_var = tk.StringVar()
+        
+        # Create text source options based on available data
+        source_options = []
+        if not self.main_df.empty:
+            row = self.page_counter
+            if pd.notna(self.main_df.loc[row, 'Original_Text']) and self.main_df.loc[row, 'Original_Text'].strip():
+                source_options.append("Original_Text")
+            if pd.notna(self.main_df.loc[row, 'Corrected_Text']) and self.main_df.loc[row, 'Corrected_Text'].strip():
+                source_options.append("Corrected_Text")
+            if pd.notna(self.main_df.loc[row, 'Formatted_Text']) and self.main_df.loc[row, 'Formatted_Text'].strip():
+                source_options.append("Formatted_Text")
+            if pd.notna(self.main_df.loc[row, 'Translation']) and self.main_df.loc[row, 'Translation'].strip():
+                source_options.append("Translation")
+        
+        # If no options, add some defaults
+        if not source_options:
+            source_options = ["Original_Text", "Corrected_Text", "Formatted_Text"]
+        
+        # Create the text source dropdown
+        source_dropdown = ttk.Combobox(dropdown_frame,
+                                    textvariable=self.text_source_var,
+                                    values=source_options,
+                                    state="readonly",
+                                    width=20)
+        source_dropdown.pack(side="left", padx=5)
+        
+        # Set a sensible default based on the AI job
+        if "Correct_Text" == ai_job:
+            # For correction, prefer Original_Text
+            if "Original_Text" in source_options:
+                self.text_source_var.set("Original_Text")
+            else:
+                self.text_source_var.set(source_options[0])
+        elif "Translation" == ai_job:
+            # For translation, prefer Corrected_Text, then Formatted_Text, then Original_Text
+            if "Corrected_Text" in source_options:
+                self.text_source_var.set("Corrected_Text")
+            elif "Formatted_Text" in source_options:
+                self.text_source_var.set("Formatted_Text")
+            elif "Original_Text" in source_options:
+                self.text_source_var.set("Original_Text")
+            else:
+                self.text_source_var.set(source_options[0])
+        elif "Identify_Errors" == ai_job:
+            # For error identification, prefer Corrected_Text
+            if "Corrected_Text" in source_options:
+                self.text_source_var.set("Corrected_Text")
+            elif "Formatted_Text" in source_options:
+                self.text_source_var.set("Formatted_Text")
+            else:
+                self.text_source_var.set(source_options[0])
+        else:
+            # Default to first option
+            self.text_source_var.set(source_options[0])
+        
+        # Buttons frame
+        button_frame = tk.Frame(source_window)
+        button_frame.pack(pady=20)
+        
+        # Function to handle OK button
+        def on_ok():
+            # Close the window
+            source_window.destroy()
+            # Run the AI function with the selected parameters
+            self.process_ai_with_selected_source(all_or_one_flag, ai_job)
+        
+        # Function to handle Cancel button
+        def on_cancel():
+            source_window.destroy()
+        
+        # Create buttons
+        ok_button = tk.Button(button_frame, text="OK", command=on_ok, width=10)
+        ok_button.pack(side="left", padx=10)
+        
+        cancel_button = tk.Button(button_frame, text="Cancel", command=on_cancel, width=10)
+        cancel_button.pack(side="left", padx=10)
+        
+        # Center the window on the screen
+        source_window.update_idletasks()
+        width = source_window.winfo_width()
+        height = source_window.winfo_height()
+        x = (source_window.winfo_screenwidth() // 2) - (width // 2)
+        y = (source_window.winfo_screenheight() // 2) - (height // 2)
+        source_window.geometry(f'{width}x{height}+{x}+{y}')
+        
+        # Wait for the window to be closed
+        self.wait_window(source_window)
+
+    def process_ai_with_selected_source(self, all_or_one_flag, ai_job):
+        """
+        Process AI function with the text source selected by the user
+        
+        Args:
+            all_or_one_flag: "Current Page" or "All Pages" flag
+            ai_job: The AI job type to run
+        """
+        try:
+            # Make sure we have a selected text source
+            if not hasattr(self, 'text_source_var') or not self.text_source_var.get():
+                messagebox.showwarning("No Source Selected", "No text source was selected.")
+                return
+                
+            # Get the selected text source
+            selected_source = self.text_source_var.get()
+            
+            # Temporarily store the selected source so ai_function can use it
+            self.temp_selected_source = selected_source
+            
+            # Call the AI function with the stored text source
+            self.ai_function(all_or_one_flag=all_or_one_flag, ai_job=ai_job)
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {str(e)}")
+            self.error_logging(f"Error in process_ai_with_selected_source: {str(e)}")
+        finally:
+            # Clear the temporary text source even if there was an error
+            if hasattr(self, 'temp_selected_source'):
+                delattr(self, 'temp_selected_source')
 
 if __name__ == "__main__":
     try:
