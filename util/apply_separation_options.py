@@ -18,7 +18,7 @@ def create_separation_options_window(app):
     # Create the window
     options_window = tk.Toplevel(app)
     options_window.title("Document Separation Options")
-    options_window.geometry("450x300")  # Reduced height since we removed the dropdown
+    options_window.geometry("450x400")  # Increased height to show buttons
     options_window.grab_set()  # Make window modal
     
     # Header message
@@ -68,7 +68,7 @@ def create_separation_options_window(app):
     # Option 2: Crop Images
     option2 = tk.Radiobutton(
         options_frame,
-        text="Crop Images to Documents",
+        text="Crop Images to Documents (Experimental)",
         variable=option_var,
         value=1,
         font=("Calibri", 11)
@@ -86,7 +86,7 @@ def create_separation_options_window(app):
     # Option 3: Highlight Active Document
     option3 = tk.Radiobutton(
         options_frame,
-        text="Highlight Active Document",
+        text="Highlight Active Document (Experimental)",
         variable=option_var,
         value=2,
         font=("Calibri", 11)
@@ -103,7 +103,7 @@ def create_separation_options_window(app):
     
     # Buttons frame
     button_frame = tk.Frame(options_window)
-    button_frame.pack(side="bottom", pady=20)
+    button_frame.pack(fill="x", side="bottom", pady=20)
     
     # Function to handle the Apply button
     def on_apply():
@@ -266,9 +266,6 @@ def apply_document_separation(app):
         
         # Update progress
         app.progress_bar.update_progress(100, 100)
-        
-        # Disable document separation menu items
-        app.update_separation_menu_state("disabled")
         
         # Show success message
         messagebox.showinfo("Success", f"Documents have been separated into {len(app.main_df)} entries.")
@@ -477,9 +474,6 @@ def apply_document_separation_with_boxes(app):
         # Update the display
         app.refresh_display()
         app.counter_update()
-        
-        # Disable document separation menu items
-        app.update_separation_menu_state("disabled")
         
         # Update progress
         app.progress_bar.update_progress(100, 100)
@@ -710,9 +704,6 @@ def apply_document_separation_with_highlights(app):
         app.refresh_display()
         app.counter_update()
         
-        # Disable document separation menu items
-        app.update_separation_menu_state("disabled")
-        
         # Update progress
         app.progress_bar.update_progress(100, 100)
         
@@ -814,8 +805,8 @@ def _calculate_overlap(text1, text2):
 
 def apply_document_separation_with_boxes_by_row(app):
     """
-    Apply document separation based on ***** markers, replace main_df with compiled documents,
-    and create separate images for each row based on bounding boxes.
+    Apply document separation with bounding boxes, processing by row.
+    This variant separates documents based on ***** markers and creates separate images for each section.
     """
     
     if app.main_df.empty:
@@ -990,9 +981,6 @@ def apply_document_separation_with_boxes_by_row(app):
         app.refresh_display()
         app.counter_update()
         
-        # Disable document separation menu items
-        app.update_separation_menu_state("disabled")
-        
         # Update progress
         app.progress_bar.update_progress(100, 100)
         
@@ -1010,8 +998,8 @@ def apply_document_separation_with_boxes_by_row(app):
 
 def apply_document_separation_with_highlights_by_row(app):
     """
-    Apply document separation based on ***** markers, replace main_df with compiled documents,
-    and create highlighted images showing the boundaries of each row.
+    Apply document separation with highlights, processing by row.
+    This variant separates documents based on ***** markers and creates highlighted images for each section.
     """
     
     if app.main_df.empty:
@@ -1184,9 +1172,6 @@ def apply_document_separation_with_highlights_by_row(app):
         # Update the display
         app.refresh_display()
         app.counter_update()
-        
-        # Disable document separation menu items
-        app.update_separation_menu_state("disabled")
         
         # Update progress
         app.progress_bar.update_progress(100, 100)

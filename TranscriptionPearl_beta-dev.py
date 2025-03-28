@@ -4164,6 +4164,27 @@ class App(TkinterDnD.Tk):
     def open_document_separation_options(self):
         """Opens a window with document separation options."""
         try:
+            # First check if any separators exist in the document
+            has_separators = False
+            for index, row in self.main_df.iterrows():
+                # Check Original_Text, Corrected_Text, and Formatted_Text columns
+                for col in ['Original_Text', 'Corrected_Text', 'Formatted_Text']:
+                    if col in row and pd.notna(row[col]) and "*****" in row[col]:
+                        has_separators = True
+                        break
+                if has_separators:
+                    break
+            
+            # If no separators found, warn the user and don't open the window
+            if not has_separators:
+                messagebox.showwarning(
+                    "No Separators Found", 
+                    "No document separators ('*****') were found in any text column. "
+                    "Please add separators before applying document separation."
+                )
+                return
+                
+            # If separators exist, proceed with opening the window
             from util.apply_separation_options import create_separation_options_window
             
             # Fix for the By Page / By Row dropdown issue
@@ -4196,7 +4217,8 @@ class App(TkinterDnD.Tk):
 
     def update_separation_menu_state(self, state="normal"):
         """Update the state of the document separation menu items."""
-        self.process_menu.entryconfig("Apply Separation", state=state)
+        # Always keep the Apply Separation menu item enabled
+        self.process_menu.entryconfig("Apply Separation", state="normal")
 
     def create_text_source_window(self, all_or_one_flag, ai_job):
         """
