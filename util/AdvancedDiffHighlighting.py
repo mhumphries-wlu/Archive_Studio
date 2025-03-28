@@ -102,12 +102,21 @@ class AdvancedDiffHighlighter:
     def _highlight_word_differences(self, prev_line, curr_line, line_num):
         """
         Highlight specific word or character differences within a line.
+        Ignores whitespace-only changes.
         
         Args:
             prev_line: Previous version of the line
             curr_line: Current version of the line
             line_num: Line number in the text widget
         """
+        # Normalize whitespace for comparison (preserve words but standardize spaces)
+        prev_line_normalized = re.sub(r'\s+', ' ', prev_line.strip())
+        curr_line_normalized = re.sub(r'\s+', ' ', curr_line.strip())
+        
+        # If the lines are identical after normalizing whitespace, don't highlight anything
+        if prev_line_normalized == curr_line_normalized:
+            return
+            
         # Split lines into words
         prev_words = self._tokenize_line(prev_line)
         curr_words = self._tokenize_line(curr_line)
@@ -125,8 +134,40 @@ class AdvancedDiffHighlighter:
                     char_pos += len(word)
             
             elif op in ('replace', 'insert'):
-                # Words were replaced or inserted, highlight them
+                # Words were replaced or inserted
                 for word in curr_words[j1:j2]:
+                    # Skip highlighting for whitespace-only changes
+                    if word.strip() == '':
+                        char_pos += len(word)
+                        continue
+                        
+                    # Check if this is a whitespace-only change
+                    if op == 'replace' and i2-i1 == j2-j1:
+                        # If same number of tokens, check if they're just whitespace variants
+                        whitespace_only_change = True
+                        for k in range(j2-j1):
+                            prev_idx = i1 + k
+                            curr_idx = j1 + k
+                            
+                            # If both are within bounds
+                            if prev_idx < len(prev_words) and curr_idx < len(curr_words):
+                                prev_token = prev_words[prev_idx]
+                                curr_token = curr_words[curr_idx]
+                                
+                                # If both are whitespace or both are non-whitespace with same normalized form
+                                is_whitespace_change = (prev_token.strip() == '' and curr_token.strip() == '') or \
+                                                      (prev_token.strip() != '' and curr_token.strip() != '' and 
+                                                       prev_token.strip() == curr_token.strip())
+                                
+                                if not is_whitespace_change:
+                                    whitespace_only_change = False
+                                    break
+                        
+                        if whitespace_only_change:
+                            char_pos += len(word)
+                            continue
+                    
+                    # Highlight the word if it's not just a whitespace change
                     start = f"{line_num}.{char_pos}"
                     end = f"{line_num}.{char_pos + len(word)}"
                     self.text_widget.tag_add("word_change_highlight", start, end)
