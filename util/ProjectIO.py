@@ -66,7 +66,7 @@ class ProjectIO:
             self.app.main_df = pd.read_csv(project_file, encoding='utf-8')
             
             # Ensure required text columns exist...
-            for col in ["Original_Text", "Corrected_Text", "Formatted_Text", "Text_Toggle"]:
+            for col in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Text_Toggle"]:
                 if col not in self.app.main_df.columns:
                     self.app.main_df[col] = ""
                 else:
@@ -76,9 +76,19 @@ class ProjectIO:
             self.app.project_directory = project_directory
             self.app.images_directory = images_directory
             
-            # The paths in the DataFrame are already relative to the project directory,
-            # so we don't need to convert them again. The get_full_path method
-            # will handle proper resolution when images and texts are loaded.
+            # Update Text_Toggle for each row to show the highest level of populated text
+            for idx, row in self.app.main_df.iterrows():
+                # Check text columns in order of priority (highest to lowest)
+                if pd.notna(row['Translation']) and row['Translation'].strip():
+                    self.app.main_df.at[idx, 'Text_Toggle'] = "Translation"
+                elif pd.notna(row['Formatted_Text']) and row['Formatted_Text'].strip():
+                    self.app.main_df.at[idx, 'Text_Toggle'] = "Formatted_Text"
+                elif pd.notna(row['Corrected_Text']) and row['Corrected_Text'].strip():
+                    self.app.main_df.at[idx, 'Text_Toggle'] = "Corrected_Text"
+                elif pd.notna(row['Original_Text']) and row['Original_Text'].strip():
+                    self.app.main_df.at[idx, 'Text_Toggle'] = "Original_Text"
+                else:
+                    self.app.main_df.at[idx, 'Text_Toggle'] = "None"
 
             # Initialize highlight toggles based on data presence
             self.initialize_highlight_toggles()
@@ -90,6 +100,12 @@ class ProjectIO:
                 image_path = self.app.main_df.loc[0, 'Image_Path']
                 self.app.current_image_path = self.app.get_full_path(image_path)
                 self.app.image_handler.load_image(self.app.current_image_path)
+                
+                # Set text_display_var to match the Text_Toggle for the first page
+                if 0 in self.app.main_df.index:
+                    current_toggle = self.app.main_df.loc[0, 'Text_Toggle']
+                    self.app.text_display_var.set(current_toggle)
+                
                 self.app.load_text()
             self.app.counter_update()
 
