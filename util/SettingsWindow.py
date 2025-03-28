@@ -83,6 +83,7 @@ class SettingsWindow:
                 "",
                 "Processing Functions",
                 "Metadata",
+                "Format Presets",
                 "Seperate Documents Presets",
                 "",
                 "Load Settings",
@@ -120,7 +121,7 @@ class SettingsWindow:
             widget.destroy()
             
         # Handle settings display based on mode
-        if self.mode == "DB_VIEWER" and option in ["Processing Functions", "Seperate Documents Presets"]:
+        if self.mode == "DB_VIEWER" and option in ["Processing Functions", "Seperate Documents Presets", "Format Presets"]:
             return  # Don't show these options in DB_VIEWER mode
             
         if option == "APIs and Login Settings":
@@ -133,6 +134,8 @@ class SettingsWindow:
             self.show_metadata_settings()
         elif option == "Custom Functions":
             self.show_analysis_presets_settings()
+        elif option == "Format Presets" and self.mode == "T_PEARL":
+            self.show_format_presets_settings()
         elif option == "Seperate Documents Presets" and self.mode == "T_PEARL":
             self.show_chunk_text_presets_settings()
         elif option == "Load Settings":
@@ -745,6 +748,339 @@ class SettingsWindow:
         self.function_val_entry = tk.Entry(instructions_frame, width=90)
         self.function_val_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
         self.bind_entry_update(self.function_val_entry, self.settings.function_presets, self.selected_function_preset_var, 'val_text')
+
+    def show_format_presets_settings(self):
+        for widget in self.right_frame.winfo_children():
+            widget.destroy()
+
+        # Main settings frame
+        main_settings_frame = ttk.Frame(self.right_frame)
+        main_settings_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
+        
+        # Initialize variables
+        self.format_model_var = tk.StringVar()
+        self.selected_format_preset_var = tk.StringVar()
+        self.use_images_var = tk.BooleanVar()
+        self.current_image_var = tk.StringVar(value="Yes")
+
+        # Preset selection row
+        tk.Label(main_settings_frame, text="Select Format Preset:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        preset_names = [p['name'] for p in self.settings.format_presets]
+        self.format_preset_dropdown = ttk.Combobox(main_settings_frame, 
+                                                textvariable=self.selected_format_preset_var,
+                                                values=preset_names, 
+                                                state="readonly", 
+                                                width=30)
+        self.format_preset_dropdown.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
+        # Create, Modify and delete buttons
+        create_button = tk.Button(main_settings_frame, text="Create New", 
+                               command=self.create_new_format_preset_window)
+        create_button.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+
+        modify_button = tk.Button(main_settings_frame, text="Modify", 
+                                command=self.modify_format_preset)
+        modify_button.grid(row=0, column=3, padx=5, pady=5, sticky="w")
+
+        delete_button = tk.Button(main_settings_frame, text="Delete", 
+                                command=self.delete_format_preset)
+        delete_button.grid(row=0, column=4, padx=5, pady=5, sticky="w")
+
+        # Model selection
+        tk.Label(main_settings_frame, text="Model:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        model_dropdown = ttk.Combobox(main_settings_frame, 
+                                    textvariable=self.format_model_var,
+                                    values=self.settings.model_list, 
+                                    state="readonly", 
+                                    width=30)
+        model_dropdown.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+        model_dropdown.bind("<<ComboboxSelected>>",
+                        lambda e: self.update_current_generic_preset(
+                            self.settings.format_presets, 
+                            self.selected_format_preset_var, 
+                            'model', 
+                            self.format_model_var.get()))
+        # Temperature
+        tk.Label(main_settings_frame, text="Temperature:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        self.format_temp_entry = tk.Entry(main_settings_frame, width=10)
+        self.format_temp_entry.grid(row=2, column=1, padx=5, pady=5, sticky="w")
+        self.bind_entry_update(self.format_temp_entry, self.settings.format_presets, self.selected_format_preset_var, 'temperature')
+        
+        # Add Image Controls Frame
+        image_control_frame = ttk.Frame(self.right_frame)
+        image_control_frame.grid(row=3, column=0, padx=10, pady=5, sticky="ew")
+        
+        use_images_check = ttk.Checkbutton(image_control_frame, text="Use Images",
+                                        variable=self.use_images_var,
+                                        command=self.toggle_image_controls)
+        use_images_check.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.add_var_trace(self.use_images_var, self.settings.format_presets, 
+                        self.selected_format_preset_var, 'use_images')
+
+        # Image Settings Frame
+        self.image_settings_frame = ttk.LabelFrame(image_control_frame, text="Image Settings")
+        self.image_settings_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+        
+        tk.Label(self.image_settings_frame, text="Current Image:").grid(row=0, column=0, padx=5, pady=5)
+        self.current_image_dropdown = ttk.Combobox(self.image_settings_frame,
+                                                textvariable=self.current_image_var,
+                                                values=["Yes", "No"], 
+                                                state="readonly", 
+                                                width=5)
+        self.current_image_dropdown.grid(row=0, column=1, padx=5, pady=5)
+        self.add_var_trace(self.current_image_var, self.settings.format_presets, 
+                        self.selected_format_preset_var, 'current_image')
+
+        tk.Label(self.image_settings_frame, text="# Previous Images:").grid(row=1, column=0, padx=5, pady=5)
+        self.format_prev_images_entry = ttk.Spinbox(self.image_settings_frame, from_=0, to=3, width=5)
+        self.format_prev_images_entry.grid(row=1, column=1, padx=5, pady=5)
+        self.bind_entry_update(self.format_prev_images_entry, self.settings.format_presets, 
+                            self.selected_format_preset_var, 'num_prev_images')
+
+        tk.Label(self.image_settings_frame, text="# After Images:").grid(row=1, column=2, padx=5, pady=5)
+        self.format_after_images_entry = ttk.Spinbox(self.image_settings_frame, from_=0, to=3, width=5)
+        self.format_after_images_entry.grid(row=1, column=3, padx=5, pady=5)
+        self.bind_entry_update(self.format_after_images_entry, self.settings.format_presets, 
+                            self.selected_format_preset_var, 'num_after_images')
+        
+        # Instructions and Validation Frame
+        instructions_frame = ttk.LabelFrame(self.right_frame, text="Instructions")
+        instructions_frame.grid(row=4, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
+
+        # General Instructions
+        tk.Label(instructions_frame, text="General Instructions:").grid(row=0, column=0, padx=10, pady=5, sticky="nw")
+        general_frame = ttk.Frame(instructions_frame)
+        general_frame.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+        self.format_general_text = tk.Text(general_frame, height=10, width=90, wrap=tk.WORD)
+        self.format_general_text.grid(row=0, column=0, sticky="nsew")
+        self.bind_text_update(self.format_general_text, self.settings.format_presets, self.selected_format_preset_var, 'general_instructions')
+        general_scrollbar = ttk.Scrollbar(general_frame, orient="vertical", command=self.format_general_text.yview)
+        self.format_general_text.configure(yscrollcommand=general_scrollbar.set)
+        general_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Specific Instructions
+        tk.Label(instructions_frame, text="Specific Instructions:").grid(row=1, column=0, padx=10, pady=5, sticky="nw")
+        specific_frame = ttk.Frame(instructions_frame)
+        specific_frame.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+        self.format_specific_text = tk.Text(specific_frame, height=15, width=90, wrap=tk.WORD)
+        self.format_specific_text.grid(row=0, column=0, sticky="nsew")
+        self.bind_text_update(self.format_specific_text, self.settings.format_presets, self.selected_format_preset_var, 'specific_instructions')
+        specific_scrollbar = ttk.Scrollbar(specific_frame, orient="vertical", command=self.format_specific_text.yview)
+        self.format_specific_text.configure(yscrollcommand=specific_scrollbar.set)
+        specific_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Load initial preset if available
+        if preset_names:
+            self.selected_format_preset_var.set(preset_names[0])
+            self.load_selected_format_preset()
+
+        # Bind dropdown change to load the selected preset
+        self.format_preset_dropdown.bind("<<ComboboxSelected>>", self.load_selected_format_preset)
+        
+    def load_selected_format_preset(self, event=None):
+        selected_name = self.selected_format_preset_var.get()
+        preset = self.get_preset_by_name(self.settings.format_presets, selected_name)
+        if preset:
+            # Model
+            if 'model' in preset and preset['model'] in self.settings.model_list:
+                self.format_model_var.set(preset['model'])
+            self.set_entry_text(self.format_temp_entry, preset.get('temperature', "0.2"))
+            
+            # Image settings
+            self.use_images_var.set(preset.get('use_images', False))
+            self.current_image_var.set(preset.get('current_image', "No"))
+            self.set_entry_text(self.format_prev_images_entry, preset.get('num_prev_images', "0"))
+            self.set_entry_text(self.format_after_images_entry, preset.get('num_after_images', "0"))
+            
+            # Instructions
+            self.set_text_widget(self.format_general_text, preset.get('general_instructions', ""))
+            self.set_text_widget(self.format_specific_text, preset.get('specific_instructions', ""))
+            
+            # Toggle image controls based on use_images setting
+            self.toggle_image_controls()
+
+    def create_new_format_preset_window(self):
+        new_win = tk.Toplevel(self.settings_window)
+        new_win.title("Create New Format Preset")
+
+        new_win.transient(self.settings_window)
+        new_win.grab_set()
+        new_win.attributes('-topmost', True)
+
+        window_width = 300
+        window_height = 120
+        screen_width = new_win.winfo_screenwidth()
+        screen_height = new_win.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        new_win.geometry(f'{window_width}x{window_height}+{x}+{y}')
+
+        new_win.grid_columnconfigure(1, weight=1)
+
+        tk.Label(new_win, text="Preset Name:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        name_entry = tk.Entry(new_win, width=30)
+        name_entry.grid(row=0, column=1, columnspan=2, padx=10, pady=5, sticky="ew")
+
+        button_frame = tk.Frame(new_win)
+        button_frame.grid(row=1, column=0, columnspan=3, pady=20)
+
+        def save_new_format_preset():
+            name = name_entry.get().strip()
+            if not name:
+                messagebox.showwarning("Invalid Name", "Please enter a preset name.", parent=new_win)
+                return
+
+            if any(preset['name'] == name for preset in self.settings.format_presets):
+                messagebox.showwarning("Duplicate Name",
+                                       "A preset with this name already exists. Please choose a different name.",
+                                       parent=new_win)
+                return
+
+            new_preset = {
+                'name': name,
+                'model': self.settings.model_list[0] if self.settings.model_list else "gemini-2.0-flash",
+                'temperature': "0.2",
+                'general_instructions': '''You re-format historical documents to make them easier to read while retaining the original text. Remove all page numbers, headers, footers, archival stamps/references, etc. In your response, write "Formatted Text:" followed by a formatted version of the document.''',
+                'specific_instructions': '''Text to format:\n\n{text_to_process}''',
+                'use_images': False,
+                'current_image': "No",
+                'num_prev_images': "0",
+                'num_after_images': "0"
+            }
+
+            self.settings.format_presets.append(new_preset)
+            # Update dropdown for format presets
+            preset_names = [p['name'] for p in self.settings.format_presets]
+            self.format_preset_dropdown['values'] = preset_names
+            if preset_names:
+                self.selected_format_preset_var.set(preset_names[-1])
+                self.load_selected_format_preset()
+            self.settings.save_settings()
+            new_win.destroy()
+
+        tk.Button(button_frame, text="Save", command=save_new_format_preset, width=10).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Cancel", command=new_win.destroy, width=10).pack(side=tk.LEFT, padx=5)
+        name_entry.bind('<Return>', lambda e: save_new_format_preset())
+        name_entry.focus_set()
+        
+    def modify_format_preset(self):
+        selected_name = self.selected_format_preset_var.get()
+        if not selected_name:
+            messagebox.showwarning("No Selection", 
+                                "No format preset selected to modify.", 
+                                parent=self.settings_window)
+            return
+
+        preset = self.get_preset_by_name(self.settings.format_presets, selected_name)
+        if not preset:
+            messagebox.showwarning("Error", "Selected preset not found.", 
+                                parent=self.settings_window)
+            return
+
+        # Create modification window
+        new_win = tk.Toplevel(self.settings_window)
+        new_win.title("Modify Format Preset Name")
+        new_win.transient(self.settings_window)
+        new_win.grab_set()
+        new_win.attributes('-topmost', True)
+
+        window_width = 300
+        window_height = 120
+        screen_width = new_win.winfo_screenwidth()
+        screen_height = new_win.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        new_win.geometry(f'{window_width}x{window_height}+{x}+{y}')
+        new_win.grid_columnconfigure(1, weight=1)
+
+        tk.Label(new_win, text="New Preset Name:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        name_entry = tk.Entry(new_win, width=30)
+        name_entry.grid(row=0, column=1, columnspan=2, padx=10, pady=5, sticky="ew")
+        name_entry.insert(0, selected_name)
+
+        def save_modified_preset():
+            new_name = name_entry.get().strip()
+            if not new_name:
+                messagebox.showwarning("Invalid Name", "Please enter a preset name.", 
+                                    parent=new_win)
+                return
+
+            if new_name != selected_name and any(p['name'] == new_name 
+                                            for p in self.settings.format_presets):
+                messagebox.showwarning("Duplicate Name",
+                                    "A preset with this name already exists. Please choose a different name.",
+                                    parent=new_win)
+                return
+
+            preset['name'] = new_name
+            self.settings.save_settings()
+            self.update_format_preset_dropdown()
+            self.selected_format_preset_var.set(new_name)
+            new_win.destroy()
+
+        button_frame = tk.Frame(new_win)
+        button_frame.grid(row=1, column=0, columnspan=3, pady=20)
+        tk.Button(button_frame, text="Save", command=save_modified_preset, 
+                width=10).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Cancel", command=new_win.destroy, 
+                width=10).pack(side=tk.LEFT, padx=5)
+
+        name_entry.bind('<Return>', lambda e: save_modified_preset())
+        name_entry.focus_set()
+        
+    def delete_format_preset(self):
+        selected_name = self.selected_format_preset_var.get()
+        if not selected_name:
+            messagebox.showwarning("No Selection", 
+                                "No format preset selected to delete.", 
+                                parent=self.settings_window)
+            return
+        
+        confirm = messagebox.askyesno("Confirm Deletion",
+                                    f"Are you sure you want to delete the format preset '{selected_name}'?",
+                                    parent=self.settings_window)
+        if not confirm:
+            return
+
+        # Remove the preset from the list and update settings
+        self.settings.format_presets = [p for p in self.settings.format_presets 
+                                        if p['name'] != selected_name]
+        self.settings.save_settings()
+        self.update_format_preset_dropdown()
+        
+    def update_format_preset_dropdown(self):
+        """Update format preset dropdown if it exists."""
+        try:
+            if hasattr(self, 'format_preset_dropdown') and self.format_preset_dropdown.winfo_exists():
+                preset_names = [p['name'] for p in self.settings.format_presets]
+                self.format_preset_dropdown['values'] = preset_names
+                if preset_names and self.selected_format_preset_var.get() not in preset_names:
+                    self.selected_format_preset_var.set(preset_names[0])
+                    self.load_selected_format_preset()
+        except tk.TclError:
+            pass
+            
+    def update_all_dropdowns(self):
+        """Update all dropdown menus with new model list if they exist."""
+        # Check if dropdowns exist and are valid before updating
+        try:
+            if hasattr(self, 'preset_dropdown') and self.preset_dropdown.winfo_exists():
+                self.update_preset_dropdown()
+            
+            if hasattr(self, 'function_preset_dropdown') and self.function_preset_dropdown.winfo_exists():
+                self.update_function_preset_dropdown()
+            
+            if hasattr(self, 'chunk_preset_dropdown') and self.chunk_preset_dropdown.winfo_exists():
+                self.update_chunk_preset_dropdown()
+                
+            if hasattr(self, 'metadata_preset_dropdown') and self.metadata_preset_dropdown.winfo_exists():
+                self.update_metadata_preset_dropdown()
+                
+            if hasattr(self, 'format_preset_dropdown') and self.format_preset_dropdown.winfo_exists():
+                self.update_format_preset_dropdown()
+        except tk.TclError:
+            # Handle case where widgets are being destroyed
+            pass
 
 # Load Preset Functions
 
@@ -1653,25 +1989,6 @@ If you don't have information for a heading or don't know, leave it blank.''',
     def update_check_orientation(self):
             self.settings.check_orientation = self.check_orientation_var.get()
             self.settings.save_settings()
-
-    def update_all_dropdowns(self):
-        """Update all dropdown menus with new model list if they exist."""
-        # Check if dropdowns exist and are valid before updating
-        try:
-            if hasattr(self, 'preset_dropdown') and self.preset_dropdown.winfo_exists():
-                self.update_preset_dropdown()
-            
-            if hasattr(self, 'function_preset_dropdown') and self.function_preset_dropdown.winfo_exists():
-                self.update_function_preset_dropdown()
-            
-            if hasattr(self, 'chunk_preset_dropdown') and self.chunk_preset_dropdown.winfo_exists():
-                self.update_chunk_preset_dropdown()
-                
-            if hasattr(self, 'metadata_preset_dropdown') and self.metadata_preset_dropdown.winfo_exists():
-                self.update_metadata_preset_dropdown()
-        except tk.TclError:
-            # Handle case where widgets are being destroyed
-            pass
 
     def update_function_preset_dropdown(self):
         """Update function preset dropdown if it exists."""

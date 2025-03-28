@@ -82,19 +82,14 @@ class App(TkinterDnD.Tk):
         self.text_display_dropdown = ttk.Combobox(
             left_group, 
             textvariable=self.text_display_var,
-            values=["None", "Original_Text", "Corrected_Text", "Formatted_Text", "Translation"],
+            values=["None", "Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"],
             width=15,
             state="readonly"
         )
         self.text_display_dropdown.pack(side="left", padx=2)
         self.text_display_dropdown.bind('<<ComboboxSelected>>', self.on_text_display_change)
         
-        # --- New: Chunking Strategy Dropdown in Middle Group ---
         self.chunking_strategy_var = tk.StringVar()
-        # For now, initialize with an empty list; it will be updated after self.settings is set.
-        
-        # Remove the dropdown and label from the middle group
-        # Keep only the variable for use in other functions
         
         # Right group elements (navigation)
         self.button1 = tk.Button(right_group, text="<<", command=lambda: self.navigate_images(-2))
@@ -570,7 +565,7 @@ class App(TkinterDnD.Tk):
         # Create the text source dropdown (populate with available options)
         text_source_dropdown = ttk.Combobox(text_source_frame,
                                          textvariable=self.chunk_text_source_var,
-                                         values=["Original_Text", "Corrected_Text", "Translation"],
+                                         values=["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"],
                                          state="readonly",
                                          width=20)
         text_source_dropdown.pack(side="left", padx=5)
@@ -734,6 +729,7 @@ class App(TkinterDnD.Tk):
             "Corrected_Text", 
             "Formatted_Text",
             "Translation",
+            "Separated_Text",
             "Image_Path", 
             "Text_Path", 
             "Text_Toggle",
@@ -747,7 +743,7 @@ class App(TkinterDnD.Tk):
         
         # Initialize all text columns as empty strings instead of NaN
         text_columns = [
-            "Original_Text", "Corrected_Text", "Formatted_Text", "Translation",
+            "Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text",
             "People", "Places", "Errors", "Errors_Source"
         ]
         for col in text_columns:
@@ -788,6 +784,8 @@ class App(TkinterDnD.Tk):
                 self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
             elif current_display == "Translation":
                 self.main_df.loc[self.page_counter, 'Translation'] = text
+            elif current_display == "Separated_Text":
+                self.main_df.loc[self.page_counter, 'Separated_Text'] = text
             
         # Store the current display type to maintain it across pages
         selected_display = self.text_display_var.get()
@@ -1069,6 +1067,8 @@ class App(TkinterDnD.Tk):
                     self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
                 elif current_display == "Translation":
                     self.main_df.loc[self.page_counter, 'Translation'] = text
+                elif current_display == "Separated_Text":
+                    self.main_df.loc[self.page_counter, 'Separated_Text'] = text
         
         self.project_io.save_project()
 
@@ -1089,6 +1089,8 @@ class App(TkinterDnD.Tk):
                     self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
                 elif current_display == "Translation":
                     self.main_df.loc[self.page_counter, 'Translation'] = text
+                elif current_display == "Separated_Text":
+                    self.main_df.loc[self.page_counter, 'Separated_Text'] = text
         
         self.project_io.open_project()
 
@@ -1109,6 +1111,8 @@ class App(TkinterDnD.Tk):
                     self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
                 elif current_display == "Translation":
                     self.main_df.loc[self.page_counter, 'Translation'] = text
+                elif current_display == "Separated_Text":
+                    self.main_df.loc[self.page_counter, 'Separated_Text'] = text
         
         self.project_io.save_project_as()
 
@@ -1307,7 +1311,8 @@ class App(TkinterDnD.Tk):
             "Original_Text": "Original_Text",
             "Corrected_Text": "Corrected_Text",
             "Formatted_Text": "Formatted_Text",
-            "Translation": "Translation"
+            "Translation": "Translation",
+            "Separated_Text": "Separated_Text"
         }
         self.text_display_var.set(display_map.get(current_toggle, "None"))
 
@@ -1322,6 +1327,8 @@ class App(TkinterDnD.Tk):
             text = self.main_df.loc[index, 'Formatted_Text'] if pd.notna(self.main_df.loc[index, 'Formatted_Text']) else ""
         elif self.text_display_var.get() == "Translation":
             text = self.main_df.loc[index, 'Translation'] if pd.notna(self.main_df.loc[index, 'Translation']) else ""
+        elif self.text_display_var.get() == "Separated_Text":
+            text = self.main_df.loc[index, 'Separated_Text'] if pd.notna(self.main_df.loc[index, 'Separated_Text']) else ""
         else:
             text = ""
 
@@ -1339,6 +1346,8 @@ class App(TkinterDnD.Tk):
             available_options.append("Formatted_Text")
         if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
             available_options.append("Translation")
+        if pd.notna(self.main_df.loc[index, 'Separated_Text']) and self.main_df.loc[index, 'Separated_Text'].strip():
+            available_options.append("Separated_Text")
         self.text_display_dropdown['values'] = available_options
 
         # Re-highlight find/replace matches if that window is active
@@ -1401,9 +1410,13 @@ class App(TkinterDnD.Tk):
         Corrected_Text = self.main_df.loc[index_no, 'Corrected_Text'] if 'Corrected_Text' in self.main_df.columns else ""
         Formatted_Text = self.main_df.loc[index_no, 'Formatted_Text'] if 'Formatted_Text' in self.main_df.columns else ""
         translation = self.main_df.loc[index_no, 'Translation'] if 'Translation' in self.main_df.columns else ""
+        separated_text = self.main_df.loc[index_no, 'Separated_Text'] if 'Separated_Text' in self.main_df.columns else ""
 
-        # First check if there's a translation and if the current toggle is set to Translation
-        if pd.notna(translation) and translation.strip() and self.main_df.loc[index_no, 'Text_Toggle'] == "Translation":
+        # First check if there's a separated text and if the current toggle is set to Separated_Text
+        if pd.notna(separated_text) and separated_text.strip() and self.main_df.loc[index_no, 'Text_Toggle'] == "Separated_Text":
+            text = separated_text
+        # Then check for translation
+        elif pd.notna(translation) and translation.strip() and self.main_df.loc[index_no, 'Text_Toggle'] == "Translation":
             text = translation
         # Then check for Formatted_Text
         elif pd.notna(Formatted_Text) and Formatted_Text.strip() and self.main_df.loc[index_no, 'Text_Toggle'] == "Formatted_Text":
@@ -1720,6 +1733,8 @@ class App(TkinterDnD.Tk):
                         self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
                     elif current_display == "Translation":
                         self.main_df.loc[self.page_counter, 'Translation'] = text
+                    elif current_display == "Separated_Text":
+                        self.main_df.loc[self.page_counter, 'Separated_Text'] = text
             
             self.quit()
 
@@ -1798,6 +1813,8 @@ class App(TkinterDnD.Tk):
                 self.main_df.loc[index, 'Formatted_Text'] = text
             elif current_display == "Translation":
                 self.main_df.loc[index, 'Translation'] = text
+            elif current_display == "Separated_Text":
+                self.main_df.loc[index, 'Separated_Text'] = text
             
         # Map display names to DataFrame values
         display_map = {
@@ -1805,7 +1822,8 @@ class App(TkinterDnD.Tk):
             "Original_Text": "Original_Text",
             "Corrected_Text": "Corrected_Text",
             "Formatted_Text": "Formatted_Text",
-            "Translation": "Translation"
+            "Translation": "Translation",
+            "Separated_Text": "Separated_Text"
         }
         
         # Update the Text_Toggle in the DataFrame
@@ -1852,20 +1870,35 @@ class App(TkinterDnD.Tk):
                 self.main_df.loc[index, 'Formatted_Text'] = text
             elif current_toggle == "Translation":
                 self.main_df.loc[index, 'Translation'] = text
+            elif current_toggle == "Separated_Text":
+                self.main_df.loc[index, 'Separated_Text'] = text
             
+        has_separated = pd.notna(self.main_df.loc[index, 'Separated_Text']) and self.main_df.loc[index, 'Separated_Text'].strip()
         has_translation = pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip()
         has_corrected = pd.notna(self.main_df.loc[index, 'Corrected_Text']) and self.main_df.loc[index, 'Corrected_Text'].strip()
         has_final = pd.notna(self.main_df.loc[index, 'Formatted_Text']) and self.main_df.loc[index, 'Formatted_Text'].strip()
         has_original = pd.notna(self.main_df.loc[index, 'Original_Text']) and self.main_df.loc[index, 'Original_Text'].strip()
 
-        # Prioritize Translation if it exists
-        if current_toggle == "Translation":
+        # Prioritize Separated_Text if it exists
+        if current_toggle == "Separated_Text":
+            if has_translation:
+                self.main_df.loc[index, 'Text_Toggle'] = "Translation"
+            elif has_final:
+                self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
+            elif has_corrected:
+                self.main_df.loc[index, 'Text_Toggle'] = "Corrected_Text"
+            elif has_original:
+                self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
+        # Then prioritize Translation if it exists
+        elif current_toggle == "Translation":
             if has_final:
                 self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
             elif has_corrected:
                 self.main_df.loc[index, 'Text_Toggle'] = "Corrected_Text"
             elif has_original:
                 self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
+            elif has_separated:
+                self.main_df.loc[index, 'Text_Toggle'] = "Separated_Text"
         elif current_toggle == "Original_Text":
             if has_corrected:
                 self.main_df.loc[index, 'Text_Toggle'] = "Corrected_Text"
@@ -1873,16 +1906,22 @@ class App(TkinterDnD.Tk):
                 self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
             elif has_translation:
                 self.main_df.loc[index, 'Text_Toggle'] = "Translation"
+            elif has_separated:
+                self.main_df.loc[index, 'Text_Toggle'] = "Separated_Text"
         elif current_toggle == "Corrected_Text":
             if has_final:
                 self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
             elif has_translation:
                 self.main_df.loc[index, 'Text_Toggle'] = "Translation"
+            elif has_separated:
+                self.main_df.loc[index, 'Text_Toggle'] = "Separated_Text"
             else:
                 self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
         elif current_toggle == "Formatted_Text":
             if has_translation:
                 self.main_df.loc[index, 'Text_Toggle'] = "Translation"
+            elif has_separated:
+                self.main_df.loc[index, 'Text_Toggle'] = "Separated_Text"
             else:
                 self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
 
@@ -2295,6 +2334,9 @@ class App(TkinterDnD.Tk):
         elif selected == "Translation":
             self.main_df.loc[index, 'Translation'] = text
             self.main_df.loc[index, 'Text_Toggle'] = "Translation"
+        elif selected == "Separated_Text":
+            self.main_df.loc[index, 'Separated_Text'] = text
+            self.main_df.loc[index, 'Text_Toggle'] = "Separated_Text"
 
     def update_df_with_ai_job_response(self, ai_job, index, response):
         """Update the DataFrame with the AI job response"""
@@ -2409,18 +2451,18 @@ class App(TkinterDnD.Tk):
             elif ai_job == "Metadata":
                 self.extract_metadata_from_response(index, response)
             elif ai_job == "Chunk_Text":
-                # Always store the response in Formatted_Text, regardless of source
-                self.main_df.loc[index, 'Formatted_Text'] = response
-                self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
+                # Always store the response in Separated_Text, regardless of source
+                self.main_df.loc[index, 'Separated_Text'] = response
+                self.main_df.loc[index, 'Text_Toggle'] = "Separated_Text"
                 # Update display dropdown if this is the current page
                 if index == self.page_counter:
-                    self.text_display_var.set("Formatted_Text")
+                    self.text_display_var.set("Separated_Text")
                 
                 # Additional info about the source text if needed for debugging
                 source_text_type = getattr(self, 'chunk_text_source_var', tk.StringVar()).get()
                 if not source_text_type:
                     source_text_type = "Corrected_Text"  # Default if not set
-                self.error_logging(f"Chunk_Text processed from {source_text_type} and saved to Formatted_Text", level="DEBUG")
+                self.error_logging(f"Chunk_Text processed from {source_text_type} and saved to Separated_Text", level="DEBUG")
             elif ai_job == "Chunk_Translation":
                 # Special job type for chunking translations
                 if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
@@ -2535,7 +2577,23 @@ class App(TkinterDnD.Tk):
         index = self.page_counter
         current_selection = self.text_display_var.get()
         
-        if current_selection == "Translation":
+        if current_selection == "Separated_Text":
+            if messagebox.askyesno("Revert Text", 
+                                "Do you want to revert the Separated_Text and return to the Translation version?"):
+                self.main_df.loc[index, 'Separated_Text'] = ""
+                if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
+                    self.text_display_var.set("Translation")
+                    self.main_df.loc[index, 'Text_Toggle'] = "Translation"
+                elif pd.notna(self.main_df.loc[index, 'Formatted_Text']) and self.main_df.loc[index, 'Formatted_Text'].strip():
+                    self.text_display_var.set("Formatted_Text")
+                    self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
+                elif pd.notna(self.main_df.loc[index, 'Corrected_Text']) and self.main_df.loc[index, 'Corrected_Text'].strip():
+                    self.text_display_var.set("Corrected_Text")
+                    self.main_df.loc[index, 'Text_Toggle'] = "Corrected_Text"
+                else:
+                    self.text_display_var.set("Original_Text")
+                    self.main_df.loc[index, 'Text_Toggle'] = "Original_Text"
+        elif current_selection == "Translation":
             if messagebox.askyesno("Revert Text", 
                                 "Do you want to revert the Translation and return to the Formatted_Text version?"):
                 self.main_df.loc[index, 'Translation'] = ""
@@ -2577,6 +2635,7 @@ class App(TkinterDnD.Tk):
             self.main_df['Formatted_Text'] = ""
             self.main_df['Corrected_Text'] = ""
             self.main_df['Translation'] = ""
+            self.main_df['Separated_Text'] = ""
             self.main_df['Text_Toggle'] = "Original_Text"
             self.text_display_var.set("Original_Text")
             
@@ -2839,8 +2898,12 @@ class App(TkinterDnD.Tk):
                         text_to_process = self.main_df.loc[row, 'Original_Text']
                     elif selected_text_source == "Corrected_Text" and pd.notna(self.main_df.loc[row, 'Corrected_Text']) and self.main_df.loc[row, 'Corrected_Text'].strip():
                         text_to_process = self.main_df.loc[row, 'Corrected_Text']
+                    elif selected_text_source == "Formatted_Text" and pd.notna(self.main_df.loc[row, 'Formatted_Text']) and self.main_df.loc[row, 'Formatted_Text'].strip():
+                        text_to_process = self.main_df.loc[row, 'Formatted_Text']
                     elif selected_text_source == "Translation" and pd.notna(self.main_df.loc[row, 'Translation']) and self.main_df.loc[row, 'Translation'].strip():
                         text_to_process = self.main_df.loc[row, 'Translation']
+                    elif selected_text_source == "Separated_Text" and pd.notna(self.main_df.loc[row, 'Separated_Text']) and self.main_df.loc[row, 'Separated_Text'].strip():
+                        text_to_process = self.main_df.loc[row, 'Separated_Text']
                     else:
                         # Fallback if selected source has no text
                         text_to_process, _ = self.find_chunk_text(row)
@@ -2858,7 +2921,11 @@ class App(TkinterDnD.Tk):
                             return True
                         elif selected_text_source == "Corrected_Text" and pd.notna(row['Corrected_Text']) and row['Corrected_Text'].strip():
                             return True
+                        elif selected_text_source == "Formatted_Text" and pd.notna(row['Formatted_Text']) and row['Formatted_Text'].strip():
+                            return True
                         elif selected_text_source == "Translation" and pd.notna(row['Translation']) and row['Translation'].strip():
+                            return True
+                        elif selected_text_source == "Separated_Text" and pd.notna(row['Separated_Text']) and row['Separated_Text'].strip():
                             return True
                         else:
                             # Fallback to checking if any text exists
@@ -3194,6 +3261,10 @@ class App(TkinterDnD.Tk):
                                 text_to_process = row_data['Corrected_Text']
                             elif row_data['Text_Toggle'] == "Formatted_Text":
                                 text_to_process = row_data['Formatted_Text']
+                            elif row_data['Text_Toggle'] == "Translation":
+                                text_to_process = row_data['Translation']
+                            elif row_data['Text_Toggle'] == "Separated_Text":
+                                text_to_process = row_data['Separated_Text']
                             else:
                                 text_to_process = ''
                            
@@ -3656,8 +3727,12 @@ class App(TkinterDnD.Tk):
                         text_to_process = row_data['Original_Text']
                     elif selected_text_source == "Corrected_Text" and pd.notna(row_data['Corrected_Text']) and row_data['Corrected_Text'].strip():
                         text_to_process = row_data['Corrected_Text']
+                    elif selected_text_source == "Formatted_Text" and pd.notna(row_data['Formatted_Text']) and row_data['Formatted_Text'].strip():
+                        text_to_process = row_data['Formatted_Text']
                     elif selected_text_source == "Translation" and pd.notna(row_data['Translation']) and row_data['Translation'].strip():
                         text_to_process = row_data['Translation']
+                    elif selected_text_source == "Separated_Text" and pd.notna(row_data['Separated_Text']) and row_data['Separated_Text'].strip():
+                        text_to_process = row_data['Separated_Text']
                     else:
                         # Fallback if selected source has no text
                         text_to_process, _ = self.find_chunk_text(index)
@@ -4286,10 +4361,12 @@ class App(TkinterDnD.Tk):
                 source_options.append("Formatted_Text")
             if pd.notna(self.main_df.loc[row, 'Translation']) and self.main_df.loc[row, 'Translation'].strip():
                 source_options.append("Translation")
+            if pd.notna(self.main_df.loc[row, 'Separated_Text']) and self.main_df.loc[row, 'Separated_Text'].strip():
+                source_options.append("Separated_Text")
         
         # If no options, add some defaults
         if not source_options:
-            source_options = ["Original_Text", "Corrected_Text", "Formatted_Text"]
+            source_options = ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]
         
         # Create the text source dropdown
         source_dropdown = ttk.Combobox(dropdown_frame,
