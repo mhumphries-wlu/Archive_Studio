@@ -3412,6 +3412,22 @@ class App(TkinterDnD.Tk):
                 preset = next((p for p in self.settings.metadata_presets if p['name'] == preset_name), None)
                 
                 if preset:
+                    # Log the selected preset information
+                    self.error_logging(f"Using metadata preset: {preset_name}")
+                    headers = []
+                    
+                    # Get metadata_headers from the preset if available
+                    if 'metadata_headers' in preset:
+                        headers = [h.strip() for h in preset['metadata_headers'].split(';') if h.strip()]
+                        self.error_logging(f"Using headers from preset {preset_name}: {headers}")
+                    else:
+                        self.error_logging(f"No metadata_headers found in preset {preset_name}")
+                        
+                    # If headers are empty, try fallback headers
+                    if not headers and hasattr(self.settings, 'metadata_headers'):
+                        headers = [h.strip() for h in self.settings.metadata_headers.split(';') if h.strip()]
+                        self.error_logging(f"Using headers from legacy settings: {headers}")
+                        
                     return {
                         "temp": float(preset.get('temperature', 0.3)),
                         "val_text": preset.get('val_text', 'Metadata:'),
@@ -3420,11 +3436,16 @@ class App(TkinterDnD.Tk):
                         "system_prompt": preset.get('general_instructions', ''),
                         "batch_size": self.settings.batch_size,
                         "use_images": False,  # Metadata doesn't use images by default
-                        "headers": preset.get('metadata_headers', '').split(';') if preset.get('metadata_headers', '') else []
+                        "headers": headers
                     }
                 else:
                     # If selected preset not found, fall back to legacy settings
                     self.error_logging(f"Selected metadata preset '{preset_name}' not found, using legacy settings")
+                    headers = []
+                    if hasattr(self.settings, 'metadata_headers'):
+                        headers = [h.strip() for h in self.settings.metadata_headers.split(';') if h.strip()]
+                        self.error_logging(f"Using headers from legacy settings: {headers}")
+                        
                     return {
                         "temp": float(self.settings.metadata_temp),
                         "val_text": self.settings.metadata_val_text,
@@ -3433,11 +3454,13 @@ class App(TkinterDnD.Tk):
                         "system_prompt": self.settings.metadata_system_prompt,
                         "batch_size": self.settings.batch_size,
                         "use_images": False,  # Metadata doesn't use images by default
-                        "headers": self.settings.metadata_headers.split(';') if hasattr(self.settings, 'metadata_headers') else []
+                        "headers": headers
                     }
             except Exception as e:
                 self.error_logging(f"Error setting up metadata parameters: {str(e)}")
                 # If there's an error, use sensible defaults
+                default_headers = ["Document Type", "Author", "Correspondent", "Correspondent Place", "Date", "Place of Creation", "People", "Places", "Summary"]
+                self.error_logging(f"Using default headers due to error: {default_headers}")
                 return {
                     "temp": 0.3,
                     "val_text": "Metadata:",
@@ -3446,7 +3469,7 @@ class App(TkinterDnD.Tk):
                     "system_prompt": "You analyze historical documents to extract information.",
                     "batch_size": self.settings.batch_size,
                     "use_images": False,
-                    "headers": ["Document Type", "Author", "Correspondent", "Correspondent Place", "Date", "Place of Creation", "People", "Places", "Summary"]
+                    "headers": default_headers
                 }
         elif ai_job == "Format_Text":
             # Get the selected format preset if available
@@ -4147,6 +4170,9 @@ class App(TkinterDnD.Tk):
             val_text = job_params.get('val_text', "Metadata:")
             headers = job_params.get('headers', [])
             
+            # Log headers from job parameters
+            self.error_logging(f"Metadata headers from job parameters: {headers}")
+            
             # First, ensure all required metadata columns exist in the DataFrame
             # Map from header names to column names (convert spaces to underscores)
             header_to_column = {}
@@ -4161,7 +4187,10 @@ class App(TkinterDnD.Tk):
                 if column_name not in self.main_df.columns:
                     self.main_df[column_name] = ""
                     self.error_logging(f"Added new metadata column: {column_name}")
-                    
+            
+            # Log the header to column mapping
+            self.error_logging(f"Header to column mapping: {header_to_column}")
+            
             # Try to find metadata even if the specific marker is not present
             metadata_text = ""
             
@@ -4188,6 +4217,21 @@ class App(TkinterDnD.Tk):
             metadata = {}
             field_values = {}
             
+            # Create format variants of headers to look for (exact header, header + colon)
+            header_variants = {}
+            for header in headers:
+                header_clean = header.strip()
+                if not header_clean:
+                    continue
+                header_variants[header_clean] = [
+                    header_clean,                 # Exact match
+                    f"{header_clean}:",           # With colon
+                    f"{header_clean.title()}",    # Title case
+                    f"{header_clean.title()}:"    # Title case with colon
+                ]
+            
+            self.error_logging(f"Looking for header variants: {header_variants}")
+            
             for line in lines:
                 line = line.strip()
                 if not line:
@@ -4199,11 +4243,24 @@ class App(TkinterDnD.Tk):
                     field_name = parts[0].strip()
                     value = parts[1].strip() if len(parts) > 1 else ""
                     
-                    # Store field and value
-                    field_values[field_name] = value
+                    # Try to match the field name to a known header
+                    matched_header = None
+                    for header, variants in header_variants.items():
+                        if field_name in variants or field_name.lower() in [v.lower() for v in variants]:
+                            matched_header = header
+                            break
+                    
+                    if matched_header:
+                        # Use the standardized header name
+                        field_values[matched_header] = value
+                        self.error_logging(f"Matched field '{field_name}' to header '{matched_header}' with value: {value}")
+                    else:
+                        # Still store under original name for fallback
+                        field_values[field_name] = value
+                        self.error_logging(f"Unmatched field: {field_name}: {value}")
                     
                     # Start collecting multi-line fields
-                    if field_name == "Summary":
+                    if field_name == "Summary" or matched_header == "Summary":
                         current_field = 'Summary'
                         metadata[current_field] = value
                     else:
@@ -4227,6 +4284,7 @@ class App(TkinterDnD.Tk):
                 # First try direct match with header
                 if field_name in header_to_column:
                     column_name = header_to_column[field_name]
+                    self.error_logging(f"Found direct match for field '{field_name}' -> column '{column_name}'")
                 
                 # Try alternate mappings for backward compatibility
                 if column_name is None:
@@ -4243,6 +4301,7 @@ class App(TkinterDnD.Tk):
                     }
                     if field_name in alt_mappings:
                         column_name = alt_mappings[field_name]
+                        self.error_logging(f"Using alt mapping for field '{field_name}' -> column '{column_name}'")
                 
                 # Update the column if we found a match
                 if column_name and column_name in self.main_df.columns:
@@ -4251,6 +4310,14 @@ class App(TkinterDnD.Tk):
                         self.main_df.at[index, column_name] = value
                         fields_updated += 1
                         self.error_logging(f"Updated {column_name} with value: {value}")
+                else:
+                    self.error_logging(f"Could not find matching column for field '{field_name}'")
+            
+            # Log a summary of field values found
+            self.error_logging(f"Field values found: {field_values}")
+            
+            # Log current dataframe columns after update
+            self.error_logging(f"Current dataframe columns: {self.main_df.columns.tolist()}")
             
             # Preserve existing People and Places if they exist and weren't updated
             for special_field in ["People", "Places"]:
