@@ -342,7 +342,7 @@ class ExportManager:
             self.app.error_logging("Mapped Place_of_Creation to Creation_Place for consistency")
         return df
 
-    def export_as_csv(self, use_custom_separation=False, generate_metadata=None, single_author=None, citation=None, analyze_dates=None, text_source=None):
+    def export_as_csv(self, use_custom_separation=False, generate_metadata=None, single_author=None, citation=None, analyze_dates=None, text_source=None, sequential_preset=None):
         """Export metadata for each document as a CSV file."""
         if self.app.main_df.empty:
             messagebox.showwarning("No Data", "No documents to export.")
@@ -379,31 +379,34 @@ class ExportManager:
             compiled_df = self._ensure_required_columns(compiled_df)
             
             # Use the specified text source to populate the Text column
+            # We will handle the renaming to 'Original_Text' later in _prepare_export_dataframe
+            actual_text_source_column = 'Text' # Default
             if text_source and text_source != "Text":
-                self.app.error_logging(f"Using {text_source} to populate Text column")
+                self.app.error_logging(f"Using {text_source} as the source for text data")
                 
-                # Create a function to get the appropriate text for each row
-                def get_text_from_source(index):
-                    try:
-                        if text_source == "Current Display":
-                            # Use current text display setting
-                            return self.app.find_right_text(index)
-                        elif text_source in self.app.main_df.columns:
-                            # Use the specified column directly
-                            source_text = self.app.main_df.at[index, text_source]
-                            return source_text if pd.notna(source_text) else ""
+                # Determine the actual column name or method to get the text
+                if text_source == "Current Display":
+                    # We'll apply this later row by row if needed
+                    actual_text_source_column = 'Current Display'
+                elif text_source in self.app.main_df.columns:
+                    actual_text_source_column = text_source
+                    # Ensure this column exists in compiled_df if needed
+                    if actual_text_source_column not in compiled_df.columns and actual_text_source_column in self.app.main_df.columns:
+                         # Simple page-by-page copy if pagination was basic
+                        if not use_custom_separation:
+                             compiled_df[actual_text_source_column] = self.app.main_df[actual_text_source_column]
                         else:
-                            # Fallback to find_right_text
-                            return self.app.find_right_text(index)
-                    except Exception as e:
-                        self.app.error_logging(f"Error getting text for row {index}: {str(e)}")
-                        return ""
-                
-                # Apply the function to each row
-                for idx in compiled_df.index:
-                    compiled_df.at[idx, 'Text'] = get_text_from_source(idx)
-                
-                self.app.error_logging(f"Updated Text column with {text_source} content")
+                             # This case is more complex if custom separation was used;
+                             # For now, we'll rely on the 'Text' column populated during compile_documents
+                             self.app.error_logging(f"Warning: Cannot directly map {text_source} with custom separation. Using compiled 'Text'.")
+                             actual_text_source_column = 'Text'
+
+                else:
+                    # Fallback if the specified source doesn't exist
+                    self.app.error_logging(f"Warning: Text source '{text_source}' not found. Falling back to 'Text'.")
+                    actual_text_source_column = 'Text'
+
+                self.app.error_logging(f"Actual text source column identified as: {actual_text_source_column}")
             
             # Ask for metadata generation if not specified
             if generate_metadata is None:
@@ -412,23 +415,18 @@ class ExportManager:
                     "Do you want to generate metadata for each document? This may take some time depending on the number of documents."
                 )
             
-            # Set single author if provided
-            if single_author:
-                compiled_df['Author'] = single_author
-                self.app.error_logging(f"Setting single author: {single_author} for all documents")
-            
-            # Set citation if provided
-            if citation:
-                compiled_df['Citation'] = citation
-                self.app.error_logging(f"Setting citation: {citation} for all documents")
-            
             # Generate metadata if requested
             if generate_metadata:
                 compiled_df = self._generate_metadata(compiled_df)
-                
-                # Reapply single author if it was set
-                if single_author:
-                    compiled_df['Author'] = single_author
+            
+            # Reapply single author AFTER metadata generation if it was set
+            # The override logic is handled later in _prepare_export_dataframe
+            if single_author:
+                 self.app.error_logging(f"Single author specified: {single_author}")
+
+            # Set citation if provided - actual inclusion handled later
+            if citation:
+                self.app.error_logging(f"Citation specified: {citation}")
             
             # Analyze dates if requested
             if analyze_dates is None:
@@ -437,14 +435,32 @@ class ExportManager:
                     "Do you want to analyze dates sequentially based on document context? This may take some time."
                 )
             
+            sequential_preset_headers = [] # Initialize
             if analyze_dates:
-                compiled_df = self._analyze_dates_sequentially(compiled_df)
-            
-            # Standardize place column names
+                # Perform sequential analysis (this updates compiled_df in place)
+                compiled_df = self._analyze_dates_sequentially(compiled_df, sequential_preset)
+                # Get the headers used by the sequential preset
+                sequential_preset_details = next((p for p in self.app.settings.sequential_metadata_presets
+                                                 if p.get('name') == (sequential_preset or "Sequence_Dates")), None)
+                if sequential_preset_details and 'required_headers' in sequential_preset_details:
+                    header_value = sequential_preset_details['required_headers']
+                    if isinstance(header_value, str):
+                        sequential_preset_headers = [h.strip() for h in header_value.split(';') if h.strip()]
+                    elif isinstance(header_value, list):
+                        sequential_preset_headers = header_value # Keep as list if already list
+                    self.app.error_logging(f"Sequential preset headers: {sequential_preset_headers}")
+
+            # Standardize place column names before final preparation
             compiled_df = self._standardize_place_column_names(compiled_df)
             
-            # Prepare final dataframe for export
-            export_df = self._prepare_export_dataframe(compiled_df, use_custom_separation, documents_separated, citation)
+            # Prepare final dataframe for export, passing necessary info
+            export_df = self._prepare_export_dataframe(
+                compiled_df,
+                single_author=single_author,
+                citation=citation,
+                text_source_column=actual_text_source_column,
+                sequential_preset_headers=sequential_preset_headers
+            )
             
             # Save to CSV
             export_df.to_csv(file_path, index=False, encoding='utf-8')
@@ -456,7 +472,7 @@ class ExportManager:
             
         except Exception as e:
             messagebox.showerror("Error", f"Failed to export CSV: {str(e)}")
-            self.app.error_logging(f"CSV export error: {str(e)}")
+            self.app.error_logging(f"CSV export error: {str(e)}\n{traceback.format_exc()}") # Add traceback
             
             # Restore original dataframe if needed
             if hasattr(self, '_original_df'):
@@ -735,7 +751,7 @@ class ExportManager:
             
         return target_df
         
-    def _analyze_dates_sequentially(self, compiled_df):
+    def _analyze_dates_sequentially(self, compiled_df, preset_name=None):
         """Analyze dates sequentially based on document context."""
         try:
             # Use the existing progress bar
@@ -752,7 +768,10 @@ class ExportManager:
             from util.APIHandler import APIHandler
             
             # Log the start of date analysis
-            self.app.error_logging("Starting date and place analysis sequence")
+            self.app.error_logging(f"Starting date and place analysis sequence using preset: {preset_name if preset_name else 'default'}")
+            
+            # Save the preset name for later use
+            self._sequential_preset_used = preset_name
             
             # Create date analysis dataframe
             date_df = self._prepare_date_df(compiled_df)
@@ -769,7 +788,7 @@ class ExportManager:
             self.app.update_idletasks()
             
             # Run date analysis
-            result_df = self._run_date_analysis(api_handler, date_df)
+            result_df = self._run_date_analysis(api_handler, date_df, preset_name)
             
             # Log the result dataframe structure and first few rows
             if result_df is not None:
@@ -787,10 +806,16 @@ class ExportManager:
             if result_df is not None:
                 compiled_df = self._copy_date_results(compiled_df, result_df)
             
+            # Clear the preset name after use
+            self._sequential_preset_used = None
+            
             # Close progress window
             self.app.progress_bar.close_progress_window()
             
         except Exception as e:
+            # Clear the preset name if there was an error
+            self._sequential_preset_used = None
+            
             # Close progress window if open
             try:
                 self.app.progress_bar.close_progress_window()
@@ -804,9 +829,32 @@ class ExportManager:
         
     def _prepare_date_df(self, compiled_df):
         """Prepare dataframe for date analysis."""
-        # Clear the Date column in compiled_df to ensure fresh date analysis
-        self.app.error_logging("Clearing existing dates for fresh date analysis")
-        compiled_df['Date'] = ""
+        # Get required headers from sequential metadata preset
+        required_headers = []
+        if hasattr(self, '_sequential_preset_used') and self._sequential_preset_used:
+            # Try to find the specified preset
+            sequence_preset = next((p for p in self.app.settings.sequential_metadata_presets 
+                                   if p.get('name') == self._sequential_preset_used), None)
+            if sequence_preset and 'required_headers' in sequence_preset:
+                # Handle both string and list formats for backward compatibility
+                header_value = sequence_preset['required_headers']
+                if isinstance(header_value, str):
+                    # Split semicolon-delimited string
+                    required_headers = [h.strip() for h in header_value.split(';') if h.strip()]
+                elif isinstance(header_value, list):
+                    # Already a list
+                    required_headers = header_value
+                self.app.error_logging(f"Using required headers from sequential preset: {required_headers}")
+        
+        # Default required headers if none found in preset
+        if not required_headers:
+            required_headers = ["Date", "Creation_Place"]
+        
+        # Clear the required columns in compiled_df to ensure fresh analysis
+        self.app.error_logging("Clearing existing values for fresh date analysis")
+        for header in required_headers:
+            if header in compiled_df.columns:
+                compiled_df[header] = ""
         
         # Create a date analysis dataframe from the compiled_df
         date_df = pd.DataFrame()
@@ -815,49 +863,124 @@ class ExportManager:
         # Get text for each row
         text_values = []
         for idx in compiled_df.index:
+            row_text = "" # Default to empty
             try:
-                # Use compiled_df's text directly or find it in main_df if needed
-                if 'Text' in compiled_df.columns and not pd.isna(compiled_df.at[idx, 'Text']):
-                    text_values.append(compiled_df.at[idx, 'Text'])
-                else:
+                # Try getting text from compiled_df first
+                if 'Text' in compiled_df.columns:
+                    compiled_text = compiled_df.at[idx, 'Text']
+                    # Check if it's a non-empty, non-whitespace string
+                    if pd.notna(compiled_text) and isinstance(compiled_text, str) and compiled_text.strip():
+                        row_text = compiled_text
+                        # self.app.error_logging(f"Idx {idx}: Using text from compiled_df: '{row_text[:50]}...'") # Optional debug log
+                
+                # If text from compiled_df wasn't usable, fall back to find_right_text
+                if not row_text:
                     # Fallback to find_right_text with the corresponding main_df index
-                    main_idx = idx if idx < len(self.app.main_df) else len(self.app.main_df) - 1
-                    text_values.append(self.app.find_right_text(main_idx))
+                    # Ensure index mapping is safe, especially after custom separation
+                    main_idx = -1
+                    if 'Document_Page' in compiled_df.columns:
+                        # If custom separation was used, Document_Page might hold the original starting page index
+                        try:
+                            main_idx = int(compiled_df.at[idx, 'Document_Page']) -1 # Adjust to 0-based
+                        except (ValueError, TypeError):
+                            main_idx = idx # Fallback if Document_Page is not a number
+                    else:
+                        # If basic pagination, index should align
+                        main_idx = idx
+
+                    if 0 <= main_idx < len(self.app.main_df):
+                        fallback_text = self.app.find_right_text(main_idx)
+                        if fallback_text and fallback_text.strip():
+                            row_text = fallback_text
+                            # self.app.error_logging(f"Idx {idx}: Using fallback text from main_df[{main_idx}]: '{row_text[:50]}...'") # Optional debug log
+                        # else:
+                            # self.app.error_logging(f"Idx {idx}: Fallback text from main_df[{main_idx}] was empty.") # Optional debug log
+                    # else:
+                        # self.app.error_logging(f"Idx {idx}: Invalid main_idx ({main_idx}) for fallback.") # Optional debug log
+
+                text_values.append(row_text)
+
             except Exception as text_err:
-                self.app.error_logging(f"Error getting text for idx {idx}: {str(text_err)}")
-                text_values.append("")
-        
+                self.app.error_logging(f"Error getting text for date analysis at idx {idx}: {str(text_err)}")
+                text_values.append("") # Append empty string on error
+
         date_df['Text'] = text_values
         
-        # Get existing dates from compiled_df if any
-        date_df['Date'] = compiled_df['Date'].apply(lambda x: str(x) if not pd.isna(x) else "")
+        # Add columns for all required headers
+        for header in required_headers:
+            # Initialize the column in date_df
+            date_df[header] = ""
+            
+            # If header exists in compiled_df, copy any existing values
+            if header in compiled_df.columns:
+                date_df[header] = compiled_df[header].apply(lambda x: str(x) if not pd.isna(x) else "")
+                self.app.error_logging(f"Copied existing {header} values from compiled_df to date_df")
         
-        # Ensure Creation_Place column exists and populate it
-        if 'Creation_Place' not in compiled_df.columns:
-            compiled_df['Creation_Place'] = ""
-            self.app.error_logging("Added missing Creation_Place column to compiled_df")
-        
-        # Get existing Creation_Place from compiled_df
-        date_df['Creation_Place'] = compiled_df['Creation_Place'].apply(lambda x: str(x) if not pd.isna(x) else "")
+        # Ensure legacy Creation_Place column exists
+        if 'Creation_Place' not in date_df.columns and 'Creation_Place' not in required_headers:
+            date_df['Creation_Place'] = ""
+            if 'Creation_Place' in compiled_df.columns:
+                date_df['Creation_Place'] = compiled_df['Creation_Place'].apply(lambda x: str(x) if not pd.isna(x) else "")
+            self.app.error_logging("Added legacy Creation_Place column to date_df")
         
         # Log dataframe creation
-        print(f"Created date analysis dataframe with {len(date_df)} rows")
+        self.app.error_logging(f"Created date analysis dataframe with {len(date_df)} rows and columns: {date_df.columns.tolist()}")
         
         return date_df
         
-    def _run_date_analysis(self, api_handler, date_df):
+    def _run_date_analysis(self, api_handler, date_df, preset_name=None):
         """Run date analysis using asyncio."""
         try:
             print("Setting up asyncio event loop for date analysis")
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             
+            # Check for required headers in sequential metadata presets
+            required_headers = []
+            
+            # Find the specified preset if provided
+            if preset_name:
+                sequence_dates_preset = next((p for p in self.app.settings.sequential_metadata_presets if p.get('name') == preset_name), None)
+                if sequence_dates_preset:
+                    self.app.error_logging(f"Using specified sequential preset: {preset_name}")
+                else:
+                    self.app.error_logging(f"Specified preset '{preset_name}' not found, falling back to default")
+            else:
+                # Default to Sequence_Dates preset
+                sequence_dates_preset = next((p for p in self.app.settings.sequential_metadata_presets if p.get('name') == "Sequence_Dates"), None)
+                
+            if sequence_dates_preset and 'required_headers' in sequence_dates_preset:
+                # Handle both string and list formats for backward compatibility
+                header_value = sequence_dates_preset['required_headers']
+                if isinstance(header_value, str):
+                    # Split semicolon-delimited string
+                    required_headers = [h.strip() for h in header_value.split(';') if h.strip()]
+                elif isinstance(header_value, list):
+                    # Already a list
+                    required_headers = header_value
+                self.app.error_logging(f"Found required headers in sequence preset: {required_headers}")
+                
+                # Ensure all required columns exist in the dataframe
+                for header in required_headers:
+                    if header not in date_df.columns:
+                        date_df[header] = ""
+                        self.app.error_logging(f"Added missing required column {header} to date analysis dataframe")
+            
             # Process rows and update progress bar
             async def process_with_progress():
-                from util.AnalyzeDate import DateAnalyzer
+                from util.AnalyzeDate import DateAnalyzer, analyze_dates
+                
+                # Set up the analyzer for progress reporting
                 analyzer = DateAnalyzer(api_handler, self.app.settings)
                 analyzer.set_progress_callback(lambda current, total: 
                     self.app.progress_bar.update_progress(current, total))
+                
+                # Set the active preset if specified
+                if preset_name:
+                    self.app.error_logging(f"Setting active sequential preset to: {preset_name}")
+                    analyzer.active_preset_name = preset_name
+                
+                # Process the dataframe using the analyzer directly
                 return await analyzer.process_dataframe(date_df)
             
             result = loop.run_until_complete(process_with_progress())
@@ -876,190 +999,275 @@ class ExportManager:
                 date_count = sum(result['Date'].notna() & (result['Date'] != ""))
                 self.app.error_logging(f"Date analysis found {date_count} dates")
                 
-                # Log places found
-                if 'Creation_Place' in result.columns:
-                    place_count = sum(result['Creation_Place'].notna() & (result['Creation_Place'] != ""))
-                    self.app.error_logging(f"Date analysis found {place_count} creation places")
-                else:
-                    self.app.error_logging("Warning: Creation_Place column not found in date analysis results")
+                # Check each required header and log count of non-empty values
+                if sequence_dates_preset and 'required_headers' in sequence_dates_preset:
+                    for header in required_headers:
+                        if header in result.columns:
+                            value_count = sum(result[header].notna() & (result[header] != ""))
+                            self.app.error_logging(f"Date analysis found {value_count} {header} values")
                 
                 # Sample first few rows
                 if len(result) > 0:
                     sample_size = min(3, len(result))
                     for i in range(sample_size):
-                        row_data = {
-                            'Page': result.iloc[i].get('Page', 'N/A'),
-                            'Date': result.iloc[i].get('Date', 'N/A'),
-                            'Creation_Place': result.iloc[i].get('Creation_Place', 'N/A')
-                        }
-                        self.app.error_logging(f"Sample row {i}: {row_data}")
+                        # Create sample with all columns that have data
+                        sample_data = {}
+                        for col in result.columns:
+                            if pd.notna(result.iloc[i].get(col)) and result.iloc[i].get(col) != "":
+                                sample_data[col] = result.iloc[i].get(col)
+                        self.app.error_logging(f"Sample row {i}: {sample_data}")
             else:
                 self.app.error_logging("Date analysis returned None result")
             
             return result
-        except Exception as loop_err:
-            self.app.error_logging(f"Error in asyncio loop: {str(loop_err)}")
+        except Exception as e:
+            self.app.error_logging(f"Error in asyncio loop: {str(e)}")
             traceback_str = traceback.format_exc()
             self.app.error_logging(f"Traceback: {traceback_str}")
             return None
             
     def _copy_date_results(self, compiled_df, result_df):
         """Copy date analysis results back to the compiled dataframe."""
-        update_count = 0
-        place_update_count = 0
+        # Check for required headers in sequential metadata presets
+        required_headers = []
         
-        # Ensure Creation_Place column exists in target dataframe
-        if 'Creation_Place' not in compiled_df.columns:
+        # First try to find the preset that was used for the analysis
+        preset_name = None
+        if hasattr(self, '_sequential_preset_used') and self._sequential_preset_used:
+            preset_name = self._sequential_preset_used
+            self.app.error_logging(f"Using specified sequential preset for copying results: {preset_name}")
+        
+        # Find the appropriate preset
+        sequence_dates_preset = None
+        if preset_name:
+            # Try to find the specified preset
+            sequence_dates_preset = next((p for p in self.app.settings.sequential_metadata_presets if p.get('name') == preset_name), None)
+            if not sequence_dates_preset:
+                self.app.error_logging(f"Specified preset '{preset_name}' not found, falling back to Sequence_Dates")
+        
+        # Fall back to Sequence_Dates if no preset was specified or found
+        if not sequence_dates_preset:
+            sequence_dates_preset = next((p for p in self.app.settings.sequential_metadata_presets if p.get('name') == "Sequence_Dates"), None)
+            
+        # Get required headers from the preset
+        if sequence_dates_preset and 'required_headers' in sequence_dates_preset:
+            # Handle both string and list formats for backward compatibility
+            header_value = sequence_dates_preset['required_headers']
+            if isinstance(header_value, str):
+                # Split semicolon-delimited string
+                required_headers = [h.strip() for h in header_value.split(';') if h.strip()]
+            elif isinstance(header_value, list):
+                # Already a list
+                required_headers = header_value
+            self.app.error_logging(f"Copying required headers from sequence preset: {required_headers}")
+        else:
+            # Default to basic headers if no preset found
+            required_headers = ["Date", "Creation_Place"]
+            self.app.error_logging(f"Using default required headers: {required_headers}")
+        
+        # Ensure all required columns exist in target dataframe
+        for header in required_headers:
+            if header not in compiled_df.columns:
+                compiled_df[header] = ""
+                self.app.error_logging(f"Added missing {header} column to compiled_df before copying results")
+        
+        # Ensure legacy Creation_Place column exists in target dataframe if not in required headers
+        if 'Creation_Place' not in compiled_df.columns and 'Creation_Place' not in required_headers:
             compiled_df['Creation_Place'] = ""
             self.app.error_logging("Added missing Creation_Place column to compiled_df before copying results")
+        
+        # Create mappings between column variations
+        column_mappings = {
+            'Place': ['Creation_Place', 'Place_of_Creation'],
+            'Creation_Place': ['Place', 'Place_of_Creation'],
+            'Place_of_Creation': ['Place', 'Creation_Place']
+        }
+        
+        # Track updates for each field
+        update_counts = {header: 0 for header in required_headers}
+        legacy_counts = {'Place_of_Creation': 0, 'Creation_Place': 0}
         
         for idx in result_df.index:
             try:
                 if idx < len(compiled_df):
-                    # Update Date field
-                    if 'Date' in result_df.columns and result_df.at[idx, 'Date']:
-                        compiled_df.at[idx, 'Date'] = result_df.at[idx, 'Date']
-                        update_count += 1
-                    
-                    # Update Creation_Place field
-                    if 'Creation_Place' in result_df.columns and result_df.at[idx, 'Creation_Place']:
-                        compiled_df.at[idx, 'Creation_Place'] = result_df.at[idx, 'Creation_Place']
-                        place_update_count += 1
+                    # Process each required field from the preset
+                    for header in required_headers:
+                        # Check if the header exists directly in result_df
+                        if header in result_df.columns and pd.notna(result_df.at[idx, header]) and result_df.at[idx, header]:
+                            # Copy the value directly
+                            compiled_df.at[idx, header] = result_df.at[idx, header]
+                            update_counts[header] += 1
+                            
+                            # Also update any mapped columns
+                            if header in column_mappings:
+                                for alt_col in column_mappings[header]:
+                                    if alt_col in compiled_df.columns:
+                                        compiled_df.at[idx, alt_col] = result_df.at[idx, header]
+                                        legacy_counts[alt_col] = legacy_counts.get(alt_col, 0) + 1
+                        else:
+                            # Try alternate column names
+                            found = False
+                            if header in column_mappings:
+                                for alt_col in column_mappings[header]:
+                                    if alt_col in result_df.columns and pd.notna(result_df.at[idx, alt_col]) and result_df.at[idx, alt_col]:
+                                        compiled_df.at[idx, header] = result_df.at[idx, alt_col]
+                                        update_counts[header] += 1
+                                        found = True
+                                        break
+                            
+                            # If there are other columns in the result_df that aren't in required_headers, copy them too
+                            if not found:
+                                for col in result_df.columns:
+                                    if col not in required_headers and col not in column_mappings.get(header, []):
+                                        if pd.notna(result_df.at[idx, col]) and result_df.at[idx, col] and col not in ['Text', 'Page', 'Document_Page']:
+                                            # Only copy if the column exists in target and has value
+                                            if col in compiled_df.columns:
+                                                compiled_df.at[idx, col] = result_df.at[idx, col]
+                                                update_counts[col] = update_counts.get(col, 0) + 1
             except Exception as update_err:
-                self.app.error_logging(f"Error updating date/place at idx {idx}: {str(update_err)}")
+                self.app.error_logging(f"Error updating fields at idx {idx}: {str(update_err)}")
                 continue
         
-        print(f"Updated {update_count} dates and {place_update_count} places in the compiled dataframe")
+        # Log update counts
+        successful_updates = []
+        for field, count in update_counts.items():
+            if count > 0:
+                successful_updates.append(f"{count} {field}")
+                
+        for field, count in legacy_counts.items():
+            if count > 0 and field not in update_counts:
+                successful_updates.append(f"{count} {field}")
+        
+        if successful_updates:
+            summary_str = ", ".join(successful_updates)
+            self.app.error_logging(f"Updated fields in the compiled dataframe: {summary_str}")
+        else:
+            self.app.error_logging("No fields were updated in the compiled dataframe")
+        
         return compiled_df
         
-    def _prepare_export_dataframe(self, compiled_df, use_custom_separation, documents_separated, citation):
-        """Prepare the final dataframe for export."""
-        # Create a copy with only the desired columns
+    def _prepare_export_dataframe(self, compiled_df, single_author=None, citation=None, text_source_column='Text', sequential_preset_headers=None):
+        """Prepare the final dataframe for export according to specific requirements."""
+        self.app.error_logging(f"Preparing export dataframe. Text source: {text_source_column}")
         export_df = compiled_df.copy()
-        
-        # Always ensure Page is populated with row number starting at 1
+
+        # 1. Ensure 'Page' exists and is populated
         export_df['Page'] = export_df.index + 1
-        
-        # Initialize potential columns list - always include Text
-        potential_columns = ['Text']
-        
-        # Get metadata fields from settings
-        metadata_fields = []
-        if hasattr(self.app.settings, 'metadata_headers'):
-            header_str = self.app.settings.metadata_headers
-            metadata_fields = [h.strip().replace(" ", "_") for h in header_str.split(';') if h.strip()]
-            potential_columns.extend(metadata_fields)
-        
-        # Add special columns to potential list - ensure Creation_Place and Date are included
-        potential_columns.extend(['People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date', 'Place_of_Creation'])
-        
-        # Add Citation column if a value was provided
-        if citation and citation.strip():
-            export_df['Citation'] = citation
-            potential_columns.append('Citation')
-        
-        # Log available columns for debugging
-        self.app.error_logging(f"Available columns in export_df: {export_df.columns.tolist()}")
-        self.app.error_logging(f"Potential columns for export: {potential_columns}")
-        
-        # Filter columns to only include those with data
-        populated_columns = ['Page', 'Text']  # Always include Page and Text
-        
-        for col in potential_columns:
-            if col == 'Text' or col == 'Page':
-                continue  # Already added to populated_columns
+
+        # 2. Handle Text Source and Rename to 'Original_Text'
+        if text_source_column == 'Current Display':
+            self.app.error_logging("Using 'Current Display' for text - applying find_right_text")
+            # Apply find_right_text row by row - ensure index alignment
+            original_indices = export_df.index
+            text_values = []
+            for idx in original_indices:
+                try:
+                    # Use the original index from main_df if possible
+                    main_idx = idx if idx < len(self.app.main_df) else -1
+                    if main_idx != -1:
+                         text_values.append(self.app.find_right_text(main_idx))
+                    else:
+                         # Fallback if index mapping is unclear (e.g., custom separation)
+                         text_values.append(export_df.at[idx, 'Text'] if 'Text' in export_df.columns else "")
+                except Exception as e:
+                    self.app.error_logging(f"Error getting 'Current Display' text for index {idx}: {e}")
+                    text_values.append("")
+            export_df['Original_Text'] = text_values
+        elif text_source_column in export_df.columns:
+            self.app.error_logging(f"Using column '{text_source_column}' for text")
+            export_df['Original_Text'] = export_df[text_source_column]
+        else:
+            self.app.error_logging(f"Text source '{text_source_column}' not found, defaulting to 'Text' column")
+            export_df['Original_Text'] = export_df['Text'] if 'Text' in export_df.columns else ""
             
-            if col in export_df.columns:
-                # Check if column has any non-empty values
-                has_data = export_df[col].notna().any() and export_df[col].astype(str).str.strip().str.len().gt(0).any()
-                if has_data:
-                    populated_columns.append(col)
-                    self.app.error_logging(f"Including column with data: {col}")
-                    print(f"Including column with data: {col}")
+        # Remove the original source text column if it wasn't 'Text' and exists
+        if text_source_column != 'Text' and text_source_column in export_df.columns:
+             try:
+                 export_df = export_df.drop(columns=[text_source_column])
+                 self.app.error_logging(f"Dropped original text source column: {text_source_column}")
+             except KeyError:
+                 self.app.error_logging(f"Could not drop original text source column: {text_source_column}")
+
+        # 3. Define the column order
+        final_columns = ['Page']
+
+        # 4. Add 'Author' - handle single_author override here
+        if 'Author' in export_df.columns:
+            if single_author:
+                self.app.error_logging(f"Overriding 'Author' column with single author: {single_author}")
+                export_df['Author'] = single_author
+            final_columns.append('Author')
+        elif single_author: # Add Author column if only single_author is provided
+             self.app.error_logging(f"Adding 'Author' column with single author: {single_author}")
+             export_df['Author'] = single_author
+             final_columns.append('Author')
+
+        # 5. Add Metadata Headers (from the currently selected preset)
+        metadata_headers = []
+        if hasattr(self.app.settings, 'metadata_preset'):
+            preset_name = self.app.settings.metadata_preset
+            selected_preset = next((p for p in self.app.settings.metadata_presets if p.get('name') == preset_name), None)
+            if selected_preset and 'metadata_headers' in selected_preset:
+                header_str = selected_preset['metadata_headers']
+                metadata_headers = [h.strip().replace(" ", "_") for h in header_str.split(';') if h.strip()]
+                self.app.error_logging(f"Metadata headers from preset '{preset_name}': {metadata_headers}")
+            else:
+                 self.app.error_logging(f"Metadata preset '{preset_name}' not found or has no headers.")
+        
+        # Add metadata headers to final list, excluding Page and Author (already handled)
+        for header in metadata_headers:
+            if header not in final_columns and header in export_df.columns:
+                final_columns.append(header)
+            elif header not in export_df.columns:
+                 self.app.error_logging(f"Metadata header '{header}' not found in compiled data.")
+
+        # 6. Add Sequential Metadata Headers (overwriting if necessary)
+        if sequential_preset_headers:
+            self.app.error_logging(f"Adding/overwriting with sequential headers: {sequential_preset_headers}")
+            for header in sequential_preset_headers:
+                if header == 'Author' and single_author:
+                    # Skip Author if single_author override is active
+                    continue
+                if header in export_df.columns:
+                    if header not in final_columns:
+                        final_columns.append(header)
+                    # Overwrite logic is implicitly handled by sequential analysis results already in compiled_df
+                    # and the Author override above.
                 else:
-                    self.app.error_logging(f"Excluding empty column: {col}")
-                    print(f"Excluding empty column: {col}")
+                     self.app.error_logging(f"Sequential header '{header}' not found in compiled data.")
+
+        # 7. Add 'Original_Text' column (already created and populated)
+        if 'Original_Text' in export_df.columns:
+            if 'Original_Text' not in final_columns:
+                final_columns.append('Original_Text')
+        else:
+            self.app.error_logging("'Original_Text' column is missing before final ordering.")
+
+        # 8. Add 'Citation' if provided
+        if citation:
+            export_df['Citation'] = citation
+            if 'Citation' not in final_columns:
+                 final_columns.append('Citation')
+                 self.app.error_logging("Adding 'Citation' column.")
+
+        # Ensure all columns in final_columns actually exist in the DataFrame
+        existing_final_columns = [col for col in final_columns if col in export_df.columns]
+
+        # Check for missing essential columns and log
+        if 'Page' not in existing_final_columns: self.app.error_logging("CRITICAL: 'Page' column missing in final export list!")
+        if 'Original_Text' not in existing_final_columns: self.app.error_logging("CRITICAL: 'Original_Text' column missing in final export list!")
         
-        # Always include Creation_Place, Date even if empty
-        mandatory_columns = ['Creation_Place', 'Date']
-        for col in mandatory_columns:
-            if col in export_df.columns and col not in populated_columns:
-                populated_columns.append(col)
-                self.app.error_logging(f"Including mandatory column even if empty: {col}")
-                print(f"Including mandatory column even if empty: {col}")
+        self.app.error_logging(f"Final ordered columns for export: {existing_final_columns}")
         
-        # Ensure Place of Creation column is included if it has another name
-        if 'Creation_Place' not in populated_columns and 'Place_of_Creation' in export_df.columns:
-            place_col = 'Place_of_Creation'
-            populated_columns.append(place_col)
-            self.app.error_logging(f"Including place column with alternate name: {place_col}")
-            print(f"Including place column with alternate name: {place_col}")
-        
-        # Clear correspondent fields for non-letter document types
-        for idx in export_df.index:
-            if 'Document_Type' in export_df.columns and 'Correspondent' in export_df.columns:
-                doc_type = str(export_df.at[idx, 'Document_Type']).lower()
-                if doc_type != 'letter' and doc_type != '':
-                    if 'Correspondent' in export_df.columns and 'Correspondent' in populated_columns:
-                        export_df.at[idx, 'Correspondent'] = ""
-                    if 'Correspondent_Place' in export_df.columns and 'Correspondent_Place' in populated_columns:
-                        export_df.at[idx, 'Correspondent_Place'] = ""
-        
-        # Order the columns
-        ordered_columns = self._order_columns(populated_columns)
-        
-        # Create final filtered dataframe
-        export_df = export_df[ordered_columns]
-        
-        return export_df
-        
+        # Return the DataFrame with only the selected and ordered columns
+        return export_df[existing_final_columns]
+
     def _order_columns(self, columns_to_include):
-        """Order columns in the export dataframe."""
-        try:
-            # Define preferred column order - only used if columns exist in the input list
-            preferred_order = [
-                'Page', 
-                'Document_Type', 
-                'Author', 
-                'Correspondent', 
-                'Correspondent_Place',
-                'Creation_Place', 
-                'Place_of_Creation',
-                'Date', 
-                'People', 
-                'Places', 
-                'Summary',
-                'Text',          # Position Text after metadata but before other text variations
-                'Translation',
-                'Separated_Text',
-                'Citation'
-            ]
-            
-            # Ensure Page and Text are always included, even if they're not in the input list
-            essential_columns = []
-            for col in ['Page', 'Text']:
-                if col not in columns_to_include:
-                    essential_columns.append(col)
-            
-            # Filter preferred order to only include columns in the input list
-            final_order = [col for col in preferred_order if col in columns_to_include or col in essential_columns]
-            
-            # Add any remaining columns not specified in preferred_order
-            for col in columns_to_include:
-                if col not in final_order:
-                    final_order.append(col)
-                
-            # Log the final column order
-            self.app.error_logging(f"Final column order for export: {', '.join(final_order)}")
-            
-            return final_order
-            
-        except Exception as e:
-            self.app.error_logging(f"Error ordering columns: {str(e)}")
-            print(f"Error ordering columns: {str(e)}")
-            # Return original columns list if there was an error
-            return columns_to_include
-        
+        # This function is now effectively replaced by the logic in _prepare_export_dataframe
+        # Keep it for potential future use or remove if confirmed obsolete.
+        self.app.error_logging("Warning: _order_columns is likely obsolete due to changes in _prepare_export_dataframe.")
+        return columns_to_include # Pass through for now
+
     def _log_export_summary(self, export_df):
         """Log summary information about the exported data."""
         print(f"Exported CSV with {len(export_df)} rows and {len(export_df.columns)} columns")
@@ -1094,7 +1302,7 @@ class ExportManager:
         # Create the CSV options window
         csv_window = tk.Toplevel(self.app)
         csv_window.title("CSV Export Options")
-        csv_window.geometry("450x500")  # Made taller to accommodate text source dropdown
+        csv_window.geometry("450x550")  # Made taller to accommodate sequential preset dropdown
         csv_window.transient(self.app)  # Make window modal
         csv_window.grab_set()  # Make window modal
 
@@ -1243,9 +1451,37 @@ class ExportManager:
         sequential_dating_cb = ttk.Checkbutton(
             metadata_frame,
             text="Document has sequential dating (i.e., a diary)",
-            variable=sequential_dating_var
+            variable=sequential_dating_var,
+            command=lambda: toggle_sequential_options()
         )
         sequential_dating_cb.grid(row=3, column=0, columnspan=2, sticky="w", pady=5)
+
+        # Create a frame for sequential metadata options (hidden initially)
+        sequential_frame = ttk.Frame(metadata_frame)
+        sequential_frame.grid(row=4, column=0, columnspan=2, padx=20, pady=5, sticky="ew")
+        sequential_frame.grid_columnconfigure(1, weight=1)
+
+        # Sequential metadata preset dropdown
+        ttk.Label(sequential_frame, text="Sequential Preset:").grid(row=0, column=0, sticky="w", pady=5)
+        sequential_preset_var = tk.StringVar()
+        
+        # Get preset names from settings
+        sequential_preset_names = []
+        if hasattr(self.app.settings, 'sequential_metadata_presets'):
+            sequential_preset_names = [p['name'] for p in self.app.settings.sequential_metadata_presets]
+        
+        # Set initial value if presets exist
+        if sequential_preset_names:
+            sequential_preset_var.set(sequential_preset_names[0])
+        
+        sequential_preset_dropdown = ttk.Combobox(
+            sequential_frame,
+            textvariable=sequential_preset_var,
+            values=sequential_preset_names,
+            state="readonly",
+            width=25
+        )
+        sequential_preset_dropdown.grid(row=0, column=1, sticky="w", pady=5, padx=5)
 
         # Function to toggle author entry based on checkbox
         def toggle_author_entry():
@@ -1260,6 +1496,13 @@ class ExportManager:
                 metadata_frame.grid()
             else:
                 metadata_frame.grid_remove()
+                
+        # Function to toggle sequential options based on checkbox
+        def toggle_sequential_options():
+            if sequential_dating_var.get():
+                sequential_frame.grid()
+            else:
+                sequential_frame.grid_remove()
 
         # Connect functions to checkboxes
         single_author_var.trace_add("write", lambda *args: toggle_author_entry())
@@ -1279,6 +1522,11 @@ class ExportManager:
             citation = citation_var.get() if generate_metadata else None
             analyze_dates = sequential_dating_var.get() if generate_metadata else False
             text_source = text_source_var.get()
+            
+            # Get sequential preset selection
+            selected_sequential_preset = None
+            if analyze_dates and sequential_preset_var.get():
+                selected_sequential_preset = sequential_preset_var.get()
 
             # Update the selected metadata preset in settings if needed
             if selected_metadata_preset and hasattr(self.app.settings, 'metadata_preset'):
@@ -1293,7 +1541,8 @@ class ExportManager:
                 single_author=single_author,
                 citation=citation,
                 analyze_dates=analyze_dates,
-                text_source=text_source
+                text_source=text_source,
+                sequential_preset=selected_sequential_preset
             )
 
         # Add buttons
@@ -1310,4 +1559,5 @@ class ExportManager:
         ).grid(row=0, column=1, padx=5)
 
         # Initialize the UI state
-        toggle_metadata_options() 
+        toggle_metadata_options()
+        toggle_sequential_options()  # Initialize sequential options 

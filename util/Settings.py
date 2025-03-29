@@ -216,36 +216,6 @@ If you don't have information for a heading or don't know, leave it blank.''',
             },
 
             {
-                'name': "Sequence_Dates",
-                'model': "gemini-2.0-flash-lite",
-                'temperature': "0.2",
-#                 'general_instructions': '''You analyze a historical document in a sequence of documents (like a diary or letterbook) to identify the date it was written. You will be provided with a current document to analyze as well as the date and text of the previous document in the sequence.
-
-# Read the document. If you can establish the complete date (year, month, and day) from the information contained in the current document to analzye, use only this information to generate your response. If you can only find a partial date such as a day of the week, day of the month, etc in the current document to analyze, use the additional context provided by the date and text of the previous entry to fill in the missing information.
-
-# In your response, write "Date:" followed by the date of the current entry in the format YYYY/MM/DD. If you are less than 75% sure about the correctness of your answer, write "CHECK" on the next line and a human will verify your response.''',
-
-                'general_instructions': '''You analyze a historical document in a sequence of documents (like a diary or letterbook) to identify the date it was written and where it was written. You will be provided with a current document to analyze as well as the date, place it was written, and text of the previous document in the sequence.
-
-Read the document. If you can establish the complete date (year, month, and day) and the place it was writtenfrom the information contained in the current document, use only this information to generate your response. For the place a document was written, in letters this is often written at the top. For diaries, it is often the place where the diarist was located at the end of the day of the entry. If the location does not explicity change from the previous entry, you can use the same location as the previous entry.
-
-If you can only find a partial date such as a day of the week, day of the month, etc in the current document, use the additional context provided by the date and text of the previous entry to fill in the missing information.
-
-In your response, write "Date:" followed by the date of the current entry in the format YYYY/MM/DD. Then write "Place:" followed by the place where the document was written. If you are less than 90 percent sure about the correctness of either answer, write "CHECK" on the next line and a human will verify your response.''',
-                'specific_instructions': '''{previous_date}
-{previous_place} 
-
-{previous_data}
-
-Current Document to Analyze: {text_to_process}''',
-                'use_images': False,
-                'current_image': "No",  
-                'num_prev_images': "0",
-                'num_after_images': "0",
-                'val_text': "None"
-            },
-
-            {
                 'name': "Auto_Rotate",
                 'model': "gemini-1.5-pro",
                 'temperature': "0.0",
@@ -388,21 +358,71 @@ If you don't have information for a heading or don't know, leave it blank.''',
             }
         ]
         
+        self.sequential_metadata_presets = [
+            {
+                'name': "Sequence_Dates",
+                'model': "gemini-2.0-flash-lite",
+                'temperature': "0.2",
+                'general_instructions': '''You analyze a historical document in a sequence of documents (like a diary or letterbook) to identify the date it was written and where it was written. You will be provided with a current document to analyze as well as the date, place it was written, and text of the previous document in the sequence.
+
+Read the document. If you can establish the complete date (year, month, and day) and the place it was writtenfrom the information contained in the current document, use only this information to generate your response. For the place a document was written, in letters this is often written at the top. For diaries, it is often the place where the diarist was located at the end of the day of the entry. If the location does not explicity change from the previous entry, you can use the same location as the previous entry.
+
+If you can only find a partial date such as a day of the week, day of the month, etc in the current document, use the additional context provided by the date and text of the previous entry to fill in the missing information.
+
+In your response, write "Date:" followed by the date of the current entry in the format YYYY/MM/DD. Then write "Place:" followed by the place where the document was written. If you are less than 90 percent sure about the correctness of either answer, write "CHECK" on the next line and a human will verify your response.''',
+                'specific_instructions': '''{previous_headers}
+
+Current Document to Analyze: {text_to_process}''',
+                'use_images': False,
+                'current_image': "No",  
+                'num_prev_images': "0",
+                'num_after_images': "0",
+                'val_text': "None",
+                'required_headers': "Date;Place"
+            },
+            {
+                'name': "Sequence_Diary",
+                'model': "gemini-2.0-flash-lite",
+                'temperature': "0.2",
+                'general_instructions': '''You analyze a historical diary entry in a sequence of diary entries to identify the date it was written, the place it was written, and who the author was. You will be provided with the current diary entry to analyze as well as information from the previous entry including its date, place, author, and text.
+
+Read the current entry. If you can establish the complete date (year, month, and day), place, and author directly from information in the current entry, use only this information. For the place, it is often the location where the diarist was at the end of the day. If the location does not explicitly change from the previous entry, use the same location. Similarly, if the author is not explicitly mentioned, assume it's the same as the previous entry.
+
+If you can only find partial information such as a day of the week or day of the month in the current entry, use the additional context provided by the previous entry to fill in the missing information.
+
+In your response, provide the following information:
+"Date:" followed by the date of the current entry in the format YYYY/MM/DD. 
+"Place:" followed by the place where the diary entry was written.
+"Author:" followed by the name of the diarist.
+
+If you are less than 90 percent sure about the correctness of any answer, write "CHECK" on the next line and a human will verify your response.''',
+                'specific_instructions': '''{previous_headers}
+
+Current Diary Entry to Analyze: {text_to_process}''',
+                'use_images': False,
+                'current_image': "No",  
+                'num_prev_images': "0",
+                'num_after_images': "0",
+                'val_text': "None",
+                'required_headers': "Date;Place;Author"
+            }
+        ]
+
         self.batch_size = 50
         self.check_orientation = False
         
         self.model_list = [
             "gpt-4o",
-            "gpt-4o-mini",
+            
             "gpt-4.5-preview"
             "o1",
             "claude-3-5-sonnet-20241022",
             "claude-3-5-sonnet-20240620",
             "claude-3-7-sonnet-20250219",
-            "claude-3-opus-20240229",
-            "gemini-2.0-pro-exp-02-05",
+            
+            
             "gemini-2.0-flash",
-            "gemini-2.0-flash-thinking-exp-01-21"
+            "gemini-2.5-pro-exp-03-25"
 
         ]
 
@@ -452,6 +472,7 @@ If you don't have information for a heading or don't know, leave it blank.'''
             'function_presets': self.function_presets,
             'chunk_text_presets': self.chunk_text_presets,
             'metadata_presets': self.metadata_presets,                                  # Add metadata presets
+            'sequential_metadata_presets': self.sequential_metadata_presets,            # Add sequential metadata presets
             # Add individual metadata settings for backward compatibility
             'metadata_model': self.metadata_model,
             'metadata_temp': self.metadata_temp,

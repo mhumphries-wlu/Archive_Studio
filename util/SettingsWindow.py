@@ -76,16 +76,19 @@ class SettingsWindow:
 
     def create_menu_options(self):
         # Define menu options based on mode
+        menu_options = []
         if self.mode == "T_PEARL":
             menu_options = [
-                "APIs and Login Settings",
-                "Models and Import Settings",
-                "",
-                "Processing Functions",
-                "Metadata",
+                "API Settings",
+                "Model Settings",
+                "",  # Separator
+                "Metadata Presets",
+                "Sequential Metadata Presets",
+                "Analysis Presets",
+                "Document Separation Presets", 
+                "Function Presets",
                 "Format Presets",
-                "Seperate Documents Presets",
-                "",
+                "",  # Separator
                 "Load Settings",
                 "Save Settings",
                 "Export Settings",
@@ -93,51 +96,58 @@ class SettingsWindow:
                 "Restore Defaults",
                 "Done"
             ]
-        elif self.mode == "DB_VIEWER":
+        elif self.mode == "SIMPLE":
             menu_options = [
-                "APIs and Login Settings",
-                "Models and Import Settings",
-                "",
-                "Custom Functions",  # Only show Custom Functions for DB_VIEWER
-                "",
+                "API Settings",
+                "Model Settings",
+                "",  # Separator
                 "Load Settings",
                 "Save Settings",
-                "Export Settings",
-                "Import Settings",
                 "Restore Defaults",
                 "Done"
             ]
             
-        # Create a vertical row of buttons for each option
-        for i, option in enumerate(menu_options):
+        # Clear any existing menu buttons
+        for widget in self.left_frame.winfo_children():
+            widget.destroy()
+            
+        # Create menu buttons
+        for idx, option in enumerate(menu_options):
             if option:  # Skip empty strings which act as spacers
-                button = tk.Button(self.left_frame, text=option, width=30,
-                                command=lambda opt=option: self.show_settings(opt))
-                button.grid(row=i, column=0, padx=10, pady=5, sticky="w")
+                btn = tk.Button(self.left_frame, text=option, width=24, anchor='w',
+                              command=lambda opt=option: self.show_settings(opt))
+                btn.grid(row=idx, column=0, padx=5, pady=5, sticky="ew")
+            else:
+                # Create a separator (a horizontal line)
+                separator = ttk.Separator(self.left_frame, orient="horizontal")
+                separator.grid(row=idx, column=0, sticky="ew", padx=5, pady=10)
+            
+        # Show first option by default
+        if menu_options and menu_options[0]:
+            self.show_settings(menu_options[0])
 
     def show_settings(self, option):
         # Clear right frame
         for widget in self.right_frame.winfo_children():
             widget.destroy()
             
-        # Handle settings display based on mode
-        if self.mode == "DB_VIEWER" and option in ["Processing Functions", "Seperate Documents Presets", "Format Presets"]:
-            return  # Don't show these options in DB_VIEWER mode
-            
-        if option == "APIs and Login Settings":
+        # Show the appropriate settings
+        if option == "API Settings":
             self.show_api_settings()
-        elif option == "Models and Import Settings":
+        elif option == "Model Settings":
             self.show_models_and_import_settings()
-        elif option == "Processing Functions" and self.mode == "T_PEARL":
-            self.show_preset_functions_settings()
-        elif option == "Metadata" and self.mode == "T_PEARL":
+        elif option == "Metadata Presets":
             self.show_metadata_settings()
-        elif option == "Custom Functions":
+        elif option == "Sequential Metadata Presets":
+            self.show_sequential_metadata_settings()
+        elif option == "Analysis Presets":
             self.show_analysis_presets_settings()
-        elif option == "Format Presets" and self.mode == "T_PEARL":
-            self.show_format_presets_settings()
-        elif option == "Seperate Documents Presets" and self.mode == "T_PEARL":
+        elif option == "Document Separation Presets":
             self.show_chunk_text_presets_settings()
+        elif option == "Function Presets":
+            self.show_preset_functions_settings()
+        elif option == "Format Presets":
+            self.show_format_presets_settings()
         elif option == "Load Settings":
             self.load_settings()
         elif option == "Save Settings":
@@ -1061,26 +1071,14 @@ class SettingsWindow:
             pass
             
     def update_all_dropdowns(self):
-        """Update all dropdown menus with new model list if they exist."""
-        # Check if dropdowns exist and are valid before updating
-        try:
-            if hasattr(self, 'preset_dropdown') and self.preset_dropdown.winfo_exists():
-                self.update_preset_dropdown()
-            
-            if hasattr(self, 'function_preset_dropdown') and self.function_preset_dropdown.winfo_exists():
-                self.update_function_preset_dropdown()
-            
-            if hasattr(self, 'chunk_preset_dropdown') and self.chunk_preset_dropdown.winfo_exists():
-                self.update_chunk_preset_dropdown()
-                
-            if hasattr(self, 'metadata_preset_dropdown') and self.metadata_preset_dropdown.winfo_exists():
-                self.update_metadata_preset_dropdown()
-                
-            if hasattr(self, 'format_preset_dropdown') and self.format_preset_dropdown.winfo_exists():
-                self.update_format_preset_dropdown()
-        except tk.TclError:
-            # Handle case where widgets are being destroyed
-            pass
+        """Update all dropdown menus with current values"""
+        self.update_model_dropdowns()
+        self.update_function_preset_dropdown()
+        self.update_preset_dropdown()
+        self.update_chunk_preset_dropdown()
+        self.update_metadata_preset_dropdown()
+        self.update_seq_metadata_preset_dropdown()
+        self.update_format_preset_dropdown()
 
 # Load Preset Functions
 
@@ -1189,6 +1187,145 @@ class SettingsWindow:
             self.settings.metadata_user_prompt = preset.get('specific_instructions', "")
             self.settings.metadata_val_text = preset.get('val_text', "Metadata:")
             self.settings.metadata_headers = preset.get('metadata_headers', "")
+
+    def show_sequential_metadata_settings(self):
+        for widget in self.right_frame.winfo_children():
+            widget.destroy()
+
+        # Main settings frame
+        main_settings_frame = ttk.Frame(self.right_frame)
+        main_settings_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
+
+        # Initialize variables
+        self.seq_metadata_model_var = tk.StringVar()
+        self.selected_seq_metadata_preset_var = tk.StringVar()
+
+        # Preset selection row
+        tk.Label(main_settings_frame, text="Select Sequential Metadata Preset:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        preset_names = [p['name'] for p in self.settings.sequential_metadata_presets]
+        self.seq_metadata_preset_dropdown = ttk.Combobox(main_settings_frame, 
+                                                textvariable=self.selected_seq_metadata_preset_var,
+                                                values=preset_names, 
+                                                state="readonly", 
+                                                width=30)
+        self.seq_metadata_preset_dropdown.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
+        # Create, Modify and delete buttons
+        create_button = tk.Button(main_settings_frame, text="Create New", 
+                               command=self.create_new_seq_metadata_preset_window)
+        create_button.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+
+        modify_button = tk.Button(main_settings_frame, text="Modify", 
+                                command=self.modify_seq_metadata_preset)
+        modify_button.grid(row=0, column=3, padx=5, pady=5, sticky="w")
+
+        delete_button = tk.Button(main_settings_frame, text="Delete", 
+                                command=self.delete_seq_metadata_preset)
+        delete_button.grid(row=0, column=4, padx=5, pady=5, sticky="w")
+
+        # Model selection
+        tk.Label(main_settings_frame, text="Model:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        model_dropdown = ttk.Combobox(main_settings_frame, 
+                                    textvariable=self.seq_metadata_model_var,
+                                    values=self.settings.model_list, 
+                                    state="readonly", 
+                                    width=30)
+        model_dropdown.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+        model_dropdown.bind("<<ComboboxSelected>>",
+                        lambda e: self.update_current_generic_preset(
+                            self.settings.sequential_metadata_presets, 
+                            self.selected_seq_metadata_preset_var, 
+                            'model', 
+                            self.seq_metadata_model_var.get()))
+
+        # Temperature
+        tk.Label(main_settings_frame, text="Temperature:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        self.seq_metadata_temp_entry = tk.Entry(main_settings_frame, width=10)
+        self.seq_metadata_temp_entry.grid(row=2, column=1, padx=5, pady=5, sticky="w")
+        self.bind_entry_update(self.seq_metadata_temp_entry, self.settings.sequential_metadata_presets, 
+                           self.selected_seq_metadata_preset_var, 'temperature')
+
+        # Instructions Frame
+        instructions_frame = ttk.LabelFrame(self.right_frame, text="Instructions")
+        instructions_frame.grid(row=2, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
+
+        # General Instructions
+        tk.Label(instructions_frame, text="General Instructions:").grid(row=0, column=0, padx=10, pady=5, sticky="nw")
+        general_frame = ttk.Frame(instructions_frame)
+        general_frame.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+        self.seq_metadata_general_text = tk.Text(general_frame, height=10, width=90, wrap=tk.WORD)
+        self.seq_metadata_general_text.grid(row=0, column=0, sticky="nsew")
+        self.bind_text_update(self.seq_metadata_general_text, self.settings.sequential_metadata_presets, 
+                          self.selected_seq_metadata_preset_var, 'general_instructions')
+        general_scrollbar = ttk.Scrollbar(general_frame, orient="vertical", command=self.seq_metadata_general_text.yview)
+        self.seq_metadata_general_text.configure(yscrollcommand=general_scrollbar.set)
+        general_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Specific Instructions
+        tk.Label(instructions_frame, text="Specific Instructions:").grid(row=1, column=0, padx=10, pady=5, sticky="nw")
+        specific_frame = ttk.Frame(instructions_frame)
+        specific_frame.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+        self.seq_metadata_specific_text = tk.Text(specific_frame, height=10, width=90, wrap=tk.WORD)
+        self.seq_metadata_specific_text.grid(row=0, column=0, sticky="nsew")
+        self.bind_text_update(self.seq_metadata_specific_text, self.settings.sequential_metadata_presets, 
+                           self.selected_seq_metadata_preset_var, 'specific_instructions')
+        specific_scrollbar = ttk.Scrollbar(specific_frame, orient="vertical", command=self.seq_metadata_specific_text.yview)
+        self.seq_metadata_specific_text.configure(yscrollcommand=specific_scrollbar.set)
+        specific_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Required Headers
+        tk.Label(instructions_frame, text="Required Headers:").grid(row=2, column=0, padx=10, pady=5, sticky="nw")
+        headers_frame = ttk.Frame(instructions_frame)
+        headers_frame.grid(row=2, column=1, padx=10, pady=5, sticky="w")
+        self.seq_metadata_headers_text = tk.Text(headers_frame, height=5, width=90, wrap=tk.WORD)
+        self.seq_metadata_headers_text.grid(row=0, column=0, sticky="nsew")
+        self.bind_text_update(self.seq_metadata_headers_text, self.settings.sequential_metadata_presets, 
+                           self.selected_seq_metadata_preset_var, 'required_headers')
+        headers_scrollbar = ttk.Scrollbar(headers_frame, orient="vertical", command=self.seq_metadata_headers_text.yview)
+        self.seq_metadata_headers_text.configure(yscrollcommand=headers_scrollbar.set)
+        headers_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Validation Text
+        tk.Label(instructions_frame, text="Validation Text:").grid(row=3, column=0, padx=10, pady=5, sticky="w")
+        self.seq_metadata_val_entry = tk.Entry(instructions_frame, width=90)
+        self.seq_metadata_val_entry.grid(row=3, column=1, padx=10, pady=5, sticky="w")
+        self.bind_entry_update(self.seq_metadata_val_entry, self.settings.sequential_metadata_presets, 
+                            self.selected_seq_metadata_preset_var, 'val_text')
+
+        # Load initial preset if available
+        if preset_names:
+            self.selected_seq_metadata_preset_var.set(preset_names[0])
+            self.load_selected_seq_metadata_preset()
+
+        # Bind dropdown change to load the selected preset
+        self.seq_metadata_preset_dropdown.bind("<<ComboboxSelected>>", self.load_selected_seq_metadata_preset)
+
+    def load_selected_seq_metadata_preset(self, event=None):
+        selected_name = self.selected_seq_metadata_preset_var.get()
+        preset = self.get_preset_by_name(self.settings.sequential_metadata_presets, selected_name)
+        if preset:
+            # Model
+            if 'model' in preset and preset['model'] in self.settings.model_list:
+                self.seq_metadata_model_var.set(preset['model'])
+            # Temperature
+            self.set_entry_text(self.seq_metadata_temp_entry, preset.get('temperature', "0.3"))
+            # Instructions
+            self.set_text_widget(self.seq_metadata_general_text, preset.get('general_instructions', ""))
+            self.set_text_widget(self.seq_metadata_specific_text, preset.get('specific_instructions', ""))
+            
+            # Required Headers - convert to display format based on type
+            required_headers = preset.get('required_headers', "Date;Place")
+            
+            # Handle both list and string formats for backward compatibility
+            if isinstance(required_headers, list):
+                required_headers_str = ";".join(required_headers)
+            else:
+                required_headers_str = required_headers
+                
+            self.set_text_widget(self.seq_metadata_headers_text, required_headers_str)
+            
+            # Validation Text
+            self.set_entry_text(self.seq_metadata_val_entry, preset.get('val_text', "None"))
 
 # Preset Creation Functions
 
@@ -1431,6 +1568,67 @@ If you don't have information for a heading or don't know, leave it blank.''',
         name_entry.bind('<Return>', lambda e: save_new_metadata_preset())
         name_entry.focus_set()
 
+    def create_new_seq_metadata_preset_window(self):
+        new_win = tk.Toplevel(self.settings_window)
+        new_win.title("Create New Sequential Metadata Preset")
+
+        new_win.transient(self.settings_window)
+        new_win.grab_set()
+        new_win.attributes('-topmost', True)
+
+        window_width = 300
+        window_height = 120
+        screen_width = new_win.winfo_screenwidth()
+        screen_height = new_win.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        new_win.geometry(f'{window_width}x{window_height}+{x}+{y}')
+
+        new_win.grid_columnconfigure(1, weight=1)
+
+        tk.Label(new_win, text="Preset Name:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        name_entry = tk.Entry(new_win, width=30)
+        name_entry.grid(row=0, column=1, columnspan=2, padx=10, pady=5, sticky="ew")
+
+        button_frame = tk.Frame(new_win)
+        button_frame.grid(row=1, column=0, columnspan=3, pady=20)
+
+        def save_new_seq_metadata_preset():
+            name = name_entry.get().strip()
+            if not name:
+                messagebox.showwarning("Invalid Name", "Please enter a preset name.", parent=new_win)
+                return
+
+            if any(preset['name'] == name for preset in self.settings.sequential_metadata_presets):
+                messagebox.showwarning("Duplicate Name",
+                                       "A preset with this name already exists. Please choose a different name.",
+                                       parent=new_win)
+                return
+
+            new_preset = {
+                'name': name,
+                'model': self.settings.model_list[0] if self.settings.model_list else "",
+                'temperature': "0.3",
+                'general_instructions': "",
+                'specific_instructions': "{previous_headers}\n\nCurrent Document to Analyze: {text_to_process}",
+                'val_text': "None",
+                'use_images': False,
+                'current_image': "No",
+                'num_prev_images': "0",
+                'num_after_images': "0",
+                'required_headers': "Date;Place"
+            }
+
+            self.settings.sequential_metadata_presets.append(new_preset)
+            self.update_seq_metadata_preset_dropdown()
+            self.settings.save_settings()
+            new_win.destroy()
+
+        tk.Button(button_frame, text="Save", command=save_new_seq_metadata_preset, width=10).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Cancel", command=new_win.destroy, width=10).pack(side=tk.LEFT, padx=5)
+        name_entry.bind('<Return>', lambda e: save_new_seq_metadata_preset())
+        name_entry.focus_set()
+
 # Delete Preset Functions
 
     def delete_function_preset(self):
@@ -1514,6 +1712,26 @@ If you don't have information for a heading or don't know, leave it blank.''',
                                         if p['name'] != selected_name]
         self.settings.save_settings()
         self.update_metadata_preset_dropdown()
+
+    def delete_seq_metadata_preset(self):
+        selected_preset = self.selected_seq_metadata_preset_var.get()
+        if not selected_preset:
+            messagebox.showwarning("No Preset Selected", "Please select a preset to delete.")
+            return
+
+        # Confirm deletion
+        if messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete the preset '{selected_preset}'?"):
+            # Find and remove the preset
+            self.settings.sequential_metadata_presets = [p for p in self.settings.sequential_metadata_presets if p['name'] != selected_preset]
+            
+            # Save settings and update UI
+            self.settings.save_settings()
+            self.update_seq_metadata_preset_dropdown()
+            
+            # Select first preset if available
+            if self.settings.sequential_metadata_presets:
+                self.selected_seq_metadata_preset_var.set(self.settings.sequential_metadata_presets[0]['name'])
+                self.load_selected_seq_metadata_preset()
 
 # Modify Preset Functions
 
@@ -1772,6 +1990,79 @@ If you don't have information for a heading or don't know, leave it blank.''',
         name_entry.bind('<Return>', lambda e: save_modified_preset())
         name_entry.focus_set()
 
+    def modify_seq_metadata_preset(self):
+        selected_preset = self.selected_seq_metadata_preset_var.get()
+        if not selected_preset:
+            messagebox.showwarning("No Preset Selected", "Please select a preset to modify.")
+            return
+
+        preset = self.get_preset_by_name(self.settings.sequential_metadata_presets, selected_preset)
+        if not preset:
+            messagebox.showwarning("Preset Not Found", "The selected preset could not be found.")
+            return
+
+        # Create modification window
+        modify_win = tk.Toplevel(self.settings_window)
+        modify_win.title(f"Modify Sequential Metadata Preset: {selected_preset}")
+        modify_win.transient(self.settings_window)
+        modify_win.grab_set()
+        modify_win.attributes('-topmost', True)
+
+        # Center the window
+        window_width = 300
+        window_height = 120
+        screen_width = modify_win.winfo_screenwidth()
+        screen_height = modify_win.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        modify_win.geometry(f'{window_width}x{window_height}+{x}+{y}')
+
+        # Configure grid
+        modify_win.grid_columnconfigure(1, weight=1)
+
+        # Name entry
+        tk.Label(modify_win, text="Preset Name:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        name_entry = tk.Entry(modify_win, width=30)
+        name_entry.insert(0, selected_preset)
+        name_entry.grid(row=0, column=1, columnspan=2, padx=10, pady=5, sticky="ew")
+
+        # Button frame
+        button_frame = tk.Frame(modify_win)
+        button_frame.grid(row=1, column=0, columnspan=3, pady=20)
+
+        def save_modified_preset():
+            new_name = name_entry.get().strip()
+            if not new_name:
+                messagebox.showwarning("Invalid Name", "Please enter a preset name.", parent=modify_win)
+                return
+
+            # Check if new name exists and is different from current name
+            if new_name != selected_preset and any(p['name'] == new_name for p in self.settings.sequential_metadata_presets):
+                messagebox.showwarning("Duplicate Name",
+                                       "A preset with this name already exists. Please choose a different name.",
+                                       parent=modify_win)
+                return
+
+            # Update the preset name
+            preset['name'] = new_name
+
+            # Save settings and update UI
+            self.settings.save_settings()
+            self.update_seq_metadata_preset_dropdown()
+            # Set selection to modified preset
+            self.selected_seq_metadata_preset_var.set(new_name)
+            modify_win.destroy()
+
+        # Save and Cancel buttons
+        tk.Button(button_frame, text="Save", command=save_modified_preset, width=10).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Cancel", command=modify_win.destroy, width=10).pack(side=tk.LEFT, padx=5)
+
+        # Bind Enter key to save
+        name_entry.bind('<Return>', lambda e: save_modified_preset())
+
+        # Set focus to entry
+        name_entry.focus_set()
+
 # Save and Load Functions
 
     def save_settings(self):
@@ -1787,9 +2078,13 @@ If you don't have information for a heading or don't know, leave it blank.''',
         try:
             self.settings.load_settings()
             self.parent.update_api_handler()
-            self.show_settings("APIs and Login Settings")
-            self.show_settings("Models")
-            self.update_model_dropdowns()  # Add this line
+            
+            # Update all dropdowns with the new settings
+            self.update_all_dropdowns()
+            
+            # Show API Settings as the initial view
+            self.show_settings("API Settings")
+            
             messagebox.showinfo("Success", "Settings loaded successfully!", parent=self.settings_window)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load settings: {e}", parent=self.settings_window)
@@ -1797,8 +2092,13 @@ If you don't have information for a heading or don't know, leave it blank.''',
     def restore_defaults(self):
         try:
             self.settings.restore_defaults()
-            self.show_settings("APIs and Login Settings")
-            self.show_settings("Models")
+            
+            # Update all dropdowns with the new settings
+            self.update_all_dropdowns()
+            
+            # Show API Settings as the initial view
+            self.show_settings("API Settings")
+            
             messagebox.showinfo("Success", "Settings restored to defaults!", parent=self.settings_window)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to restore defaults: {e}", parent=self.settings_window)
@@ -1864,7 +2164,8 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'ghost_val_text': self.settings.ghost_val_text,
                 'ghost_model': self.settings.ghost_model,
                 'ghost_temp': self.settings.ghost_temp,
-                'metadata_presets': self.settings.metadata_presets
+                'metadata_presets': self.settings.metadata_presets,
+                'sequential_metadata_presets': self.settings.sequential_metadata_presets
             }
             
             with open(file_path, 'w') as f:
@@ -1923,9 +2224,12 @@ If you don't have information for a heading or don't know, leave it blank.''',
             
             # Update UI
             self.parent.update_api_handler()
-            self.show_settings("APIs and Login Settings")
-            self.show_settings("Models and Import Settings")
-            self.update_model_dropdowns()
+            
+            # Update all dropdowns with the new settings
+            self.update_all_dropdowns()
+            
+            # Show API Settings as the initial view
+            self.show_settings("API Settings")
             
             # Ensure success message appears on top
             self.settings_window.lift()
@@ -1954,7 +2258,8 @@ If you don't have information for a heading or don't know, leave it blank.''',
             dropdown_vars = {
                 'analysis_model_var': None,
                 'function_model_var': None,
-                'chunk_model_var': None
+                'chunk_model_var': None,
+                'seq_metadata_model_var': None
             }
 
             # Find all Comboboxes in the window
@@ -2039,6 +2344,17 @@ If you don't have information for a heading or don't know, leave it blank.''',
                     self.load_selected_metadata_preset()
         except tk.TclError:
             pass
+
+    def update_seq_metadata_preset_dropdown(self):
+        """Update the sequential metadata preset dropdown with current presets"""
+        preset_names = [p['name'] for p in self.settings.sequential_metadata_presets]
+        if hasattr(self, 'seq_metadata_preset_dropdown'):
+            self.seq_metadata_preset_dropdown['values'] = preset_names
+            
+            # If there are presets, select the first one
+            if preset_names and not self.selected_seq_metadata_preset_var.get() in preset_names:
+                self.selected_seq_metadata_preset_var.set(preset_names[0])
+                self.load_selected_seq_metadata_preset()
 
     def toggle_csv_columns(self):
         if not self.csv_var.get():
@@ -2131,14 +2447,32 @@ If you don't have information for a heading or don't know, leave it blank.''',
         entry_widget.bind("<KeyRelease>", callback)
 
     def bind_text_update(self, text_widget, presets, selected_var, field):
-        """
-        Binds a Text widget so that on each key release its content is saved to the preset.
-        """
+        """Bind text widget changes to update presets."""
         def callback(event):
-            value = text_widget.get("1.0", "end-1c")
-            preset = self.get_preset_by_name(presets, selected_var.get())
-            if preset is None:
-                return
-            preset[field] = value
+            selected_name = selected_var.get()
+            preset = self.get_preset_by_name(presets, selected_name)
+            
+            # Handle special case for required_headers field, converting from text to list
+            if field == 'required_headers':
+                text_content = text_widget.get("1.0", "end-1c")
+                # Convert text to semicolon-delimited string for consistency with metadata_headers
+                # First split by newlines or semicolons (allowing either format in UI)
+                headers = []
+                for line in text_content.split('\n'):
+                    # Further split each line by semicolons
+                    headers.extend([h.strip() for h in line.split(';') if h.strip()])
+                # Join all headers with semicolons
+                headers_str = ";".join(headers)
+                if preset:
+                    preset[field] = headers_str
+            else:
+                # Normal text field update
+                if preset:
+                    preset[field] = text_widget.get("1.0", "end-1c")
+            
+            # Save changes
             self.settings.save_settings()
+            
+        text_widget.bind("<FocusOut>", callback)
+        # Also bind to KeyRelease to ensure frequent updates
         text_widget.bind("<KeyRelease>", callback)
