@@ -320,6 +320,12 @@ class App(TkinterDnD.Tk):
         self.process_menu.add_command(label="Find Errors", 
                                      command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Identify_Errors"))
         
+        # Add Format_Text option to the Process menu after Correct_Text
+        self.process_menu.add_command(label="Format Text", 
+                                     command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Format_Text"))
+        
+        self.process_menu.add_separator()
+        
         # Document Menu
 
         self.document_menu = tk.Menu(self.menubar, tearoff=0)
@@ -400,6 +406,10 @@ class App(TkinterDnD.Tk):
         self.bind("<Control-Shift-2>", lambda event: self.ai_function(all_or_one_flag="All Pages", ai_job="Correct_Text"))
         self.bind("<Control-t>", lambda event: self.ai_function(all_or_one_flag="Current Page", ai_job="Translation"))
         self.bind("<Control-Shift-t>", lambda event: self.ai_function(all_or_one_flag="All Pages", ai_job="Translation"))
+        
+        # Add key binding for Format_Text
+        self.bind("<Control-5>", lambda event: self.ai_function(all_or_one_flag="Current Page", ai_job="Format_Text"))
+        self.bind("<Control-Shift-5>", lambda event: self.ai_function(all_or_one_flag="All Pages", ai_job="Format_Text"))
         
         # Add key bindings for Chunk_Text
         self.bind("<Control-3>", lambda event: self.create_chunk_text_window("Current Page"))
@@ -2520,6 +2530,14 @@ class App(TkinterDnD.Tk):
                     self.text_display_var.set("Translation")
                 # Enable changes highlighting for translation
                 self.highlight_changes_var.set(True)
+            elif ai_job == "Format_Text":
+                self.main_df.loc[index, 'Formatted_Text'] = response
+                self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
+                # Enable changes highlighting when formatting is run
+                self.highlight_changes_var.set(True)
+                # Update display dropdown if this is the current page
+                if index == self.page_counter:
+                    self.text_display_var.set("Formatted_Text")
             
             # Load the updated text
             self.load_text()
@@ -2868,7 +2886,7 @@ class App(TkinterDnD.Tk):
 
     def ai_function(self, all_or_one_flag="All Pages", ai_job="HTR", batch_size=50):
         # Check if we should show text source selection window
-        if ai_job in ["Correct_Text", "Translation", "Identify_Errors"]:
+        if ai_job in ["Correct_Text", "Translation", "Identify_Errors", "Format_Text"]:
             # If we already have a selected source from the window, don't show the window again
             if not hasattr(self, 'temp_selected_source'):
                 self.create_text_source_window(all_or_one_flag, ai_job)
@@ -3220,6 +3238,8 @@ class App(TkinterDnD.Tk):
                     messagebox.showinfo("No Work Needed", "All pages either lack text to correct or already have corrections.")
                 elif ai_job == "Translation":
                     messagebox.showinfo("No Work Needed", "All pages either lack text to translate or already have translations.")
+                elif ai_job == "Format_Text":
+                    messagebox.showinfo("No Work Needed", "All pages either lack text to format or already have formatted text.")
                 else:
                     messagebox.showwarning("No Images", "No images are available for processing.")
                 self.toggle_button_state()  # Re-enable buttons before return
@@ -3254,6 +3274,14 @@ class App(TkinterDnD.Tk):
                             text_to_process = self.find_right_text(index)
                         elif ai_job == "Identify_Errors" and selected_source:
                             text_to_process = row_data[selected_source]
+                        elif ai_job == "Format_Text" and selected_source:
+                            # Find the best text to process
+                            if pd.notna(row_data['Corrected_Text']) and row_data['Corrected_Text'].strip():
+                                text_to_process = row_data['Corrected_Text']
+                            elif pd.notna(row_data['Original_Text']) and row_data['Original_Text'].strip():
+                                text_to_process = row_data['Original_Text']
+                            else:
+                                text_to_process = self.find_right_text(index)
                         else:
                             if row_data['Text_Toggle'] == "Original_Text":
                                 text_to_process = row_data['Original_Text']
@@ -3384,6 +3412,22 @@ class App(TkinterDnD.Tk):
                 preset = next((p for p in self.settings.metadata_presets if p['name'] == preset_name), None)
                 
                 if preset:
+                    # Log the selected preset information
+                    self.error_logging(f"Using metadata preset: {preset_name}")
+                    headers = []
+                    
+                    # Get metadata_headers from the preset if available
+                    if 'metadata_headers' in preset:
+                        headers = [h.strip() for h in preset['metadata_headers'].split(';') if h.strip()]
+                        self.error_logging(f"Using headers from preset {preset_name}: {headers}")
+                    else:
+                        self.error_logging(f"No metadata_headers found in preset {preset_name}")
+                        
+                    # If headers are empty, try fallback headers
+                    if not headers and hasattr(self.settings, 'metadata_headers'):
+                        headers = [h.strip() for h in self.settings.metadata_headers.split(';') if h.strip()]
+                        self.error_logging(f"Using headers from legacy settings: {headers}")
+                        
                     return {
                         "temp": float(preset.get('temperature', 0.3)),
                         "val_text": preset.get('val_text', 'Metadata:'),
@@ -3392,11 +3436,16 @@ class App(TkinterDnD.Tk):
                         "system_prompt": preset.get('general_instructions', ''),
                         "batch_size": self.settings.batch_size,
                         "use_images": False,  # Metadata doesn't use images by default
-                        "headers": preset.get('metadata_headers', '').split(';') if preset.get('metadata_headers', '') else []
+                        "headers": headers
                     }
                 else:
                     # If selected preset not found, fall back to legacy settings
                     self.error_logging(f"Selected metadata preset '{preset_name}' not found, using legacy settings")
+                    headers = []
+                    if hasattr(self.settings, 'metadata_headers'):
+                        headers = [h.strip() for h in self.settings.metadata_headers.split(';') if h.strip()]
+                        self.error_logging(f"Using headers from legacy settings: {headers}")
+                        
                     return {
                         "temp": float(self.settings.metadata_temp),
                         "val_text": self.settings.metadata_val_text,
@@ -3405,11 +3454,13 @@ class App(TkinterDnD.Tk):
                         "system_prompt": self.settings.metadata_system_prompt,
                         "batch_size": self.settings.batch_size,
                         "use_images": False,  # Metadata doesn't use images by default
-                        "headers": self.settings.metadata_headers.split(';') if hasattr(self.settings, 'metadata_headers') else []
+                        "headers": headers
                     }
             except Exception as e:
                 self.error_logging(f"Error setting up metadata parameters: {str(e)}")
                 # If there's an error, use sensible defaults
+                default_headers = ["Document Type", "Author", "Correspondent", "Correspondent Place", "Date", "Place of Creation", "People", "Places", "Summary"]
+                self.error_logging(f"Using default headers due to error: {default_headers}")
                 return {
                     "temp": 0.3,
                     "val_text": "Metadata:",
@@ -3418,7 +3469,38 @@ class App(TkinterDnD.Tk):
                     "system_prompt": "You analyze historical documents to extract information.",
                     "batch_size": self.settings.batch_size,
                     "use_images": False,
-                    "headers": ["Document Type", "Author", "Correspondent", "Correspondent Place", "Date", "Place of Creation", "People", "Places", "Summary"]
+                    "headers": default_headers
+                }
+        elif ai_job == "Format_Text":
+            # Get the selected format preset if available
+            format_preset_name = getattr(self, 'temp_format_preset', None)
+            if not format_preset_name:
+                # Use first preset as default if none selected
+                if self.settings.format_presets:
+                    format_preset_name = self.settings.format_presets[0].get('name', '')
+            
+            preset = next((p for p in self.settings.format_presets if p.get('name', '') == format_preset_name), None)
+            if preset:
+                return {
+                    "temp": float(preset.get('temperature', 0.2)),
+                    "val_text": "Formatted Text:",
+                    "engine": preset.get('model', self.settings.model_list[0]),
+                    "user_prompt": preset.get('specific_instructions', 'Text to format:\n\n{text_to_process}'),
+                    "system_prompt": preset.get('general_instructions', ''),
+                    "batch_size": self.settings.batch_size,
+                    "use_images": preset.get('use_images', False)
+                }
+            else:
+                self.error_logging(f"Format preset not found: {format_preset_name}")
+                # Return default values
+                return {
+                    "temp": 0.2,
+                    "val_text": "Formatted Text:",
+                    "engine": self.settings.model_list[0],
+                    "user_prompt": "Text to format:\n\n{text_to_process}",
+                    "system_prompt": "You format historical documents to make them easier to read.",
+                    "batch_size": self.settings.batch_size,
+                    "use_images": False
                 }
         else:
             # Existing logic for function-based AI jobs
@@ -4088,6 +4170,9 @@ class App(TkinterDnD.Tk):
             val_text = job_params.get('val_text', "Metadata:")
             headers = job_params.get('headers', [])
             
+            # Log headers from job parameters
+            self.error_logging(f"Metadata headers from job parameters: {headers}")
+            
             # First, ensure all required metadata columns exist in the DataFrame
             # Map from header names to column names (convert spaces to underscores)
             header_to_column = {}
@@ -4102,7 +4187,10 @@ class App(TkinterDnD.Tk):
                 if column_name not in self.main_df.columns:
                     self.main_df[column_name] = ""
                     self.error_logging(f"Added new metadata column: {column_name}")
-                    
+            
+            # Log the header to column mapping
+            self.error_logging(f"Header to column mapping: {header_to_column}")
+            
             # Try to find metadata even if the specific marker is not present
             metadata_text = ""
             
@@ -4129,6 +4217,21 @@ class App(TkinterDnD.Tk):
             metadata = {}
             field_values = {}
             
+            # Create format variants of headers to look for (exact header, header + colon)
+            header_variants = {}
+            for header in headers:
+                header_clean = header.strip()
+                if not header_clean:
+                    continue
+                header_variants[header_clean] = [
+                    header_clean,                 # Exact match
+                    f"{header_clean}:",           # With colon
+                    f"{header_clean.title()}",    # Title case
+                    f"{header_clean.title()}:"    # Title case with colon
+                ]
+            
+            self.error_logging(f"Looking for header variants: {header_variants}")
+            
             for line in lines:
                 line = line.strip()
                 if not line:
@@ -4140,11 +4243,24 @@ class App(TkinterDnD.Tk):
                     field_name = parts[0].strip()
                     value = parts[1].strip() if len(parts) > 1 else ""
                     
-                    # Store field and value
-                    field_values[field_name] = value
+                    # Try to match the field name to a known header
+                    matched_header = None
+                    for header, variants in header_variants.items():
+                        if field_name in variants or field_name.lower() in [v.lower() for v in variants]:
+                            matched_header = header
+                            break
+                    
+                    if matched_header:
+                        # Use the standardized header name
+                        field_values[matched_header] = value
+                        self.error_logging(f"Matched field '{field_name}' to header '{matched_header}' with value: {value}")
+                    else:
+                        # Still store under original name for fallback
+                        field_values[field_name] = value
+                        self.error_logging(f"Unmatched field: {field_name}: {value}")
                     
                     # Start collecting multi-line fields
-                    if field_name == "Summary":
+                    if field_name == "Summary" or matched_header == "Summary":
                         current_field = 'Summary'
                         metadata[current_field] = value
                     else:
@@ -4168,6 +4284,7 @@ class App(TkinterDnD.Tk):
                 # First try direct match with header
                 if field_name in header_to_column:
                     column_name = header_to_column[field_name]
+                    self.error_logging(f"Found direct match for field '{field_name}' -> column '{column_name}'")
                 
                 # Try alternate mappings for backward compatibility
                 if column_name is None:
@@ -4184,6 +4301,7 @@ class App(TkinterDnD.Tk):
                     }
                     if field_name in alt_mappings:
                         column_name = alt_mappings[field_name]
+                        self.error_logging(f"Using alt mapping for field '{field_name}' -> column '{column_name}'")
                 
                 # Update the column if we found a match
                 if column_name and column_name in self.main_df.columns:
@@ -4192,6 +4310,14 @@ class App(TkinterDnD.Tk):
                         self.main_df.at[index, column_name] = value
                         fields_updated += 1
                         self.error_logging(f"Updated {column_name} with value: {value}")
+                else:
+                    self.error_logging(f"Could not find matching column for field '{field_name}'")
+            
+            # Log a summary of field values found
+            self.error_logging(f"Field values found: {field_values}")
+            
+            # Log current dataframe columns after update
+            self.error_logging(f"Current dataframe columns: {self.main_df.columns.tolist()}")
             
             # Preserve existing People and Places if they exist and weren't updated
             for special_field in ["People", "Places"]:
@@ -4270,11 +4396,13 @@ class App(TkinterDnD.Tk):
             # First check if any separators exist in the document
             has_separators = False
             for index, row in self.main_df.iterrows():
-                # Check Original_Text, Corrected_Text, and Formatted_Text columns
-                for col in ['Original_Text', 'Corrected_Text', 'Formatted_Text']:
-                    if col in row and pd.notna(row[col]) and "*****" in row[col]:
-                        has_separators = True
-                        break
+                # Check all text columns
+                for col in ['Original_Text', 'Corrected_Text', 'Formatted_Text', 'Translation', 'Separated_Text']:
+                    if col in self.main_df.columns and pd.notna(row.get(col)) and isinstance(row.get(col), str):
+                        # Use regex to look for 5 or more consecutive asterisks (allowing for whitespace)
+                        if re.search(r'\*{5,}', row.get(col)):
+                            has_separators = True
+                            break
                 if has_separators:
                     break
             
@@ -4329,15 +4457,42 @@ class App(TkinterDnD.Tk):
         """
         # Create the window
         source_window = tk.Toplevel(self)
-        source_window.title(f"Select Text Source for {ai_job.replace('_', ' ')}")
-        source_window.geometry("400x250")  
+        source_window.title(f"Select {'Format Preset and ' if ai_job == 'Format_Text' else ''}Text Source for {ai_job.replace('_', ' ')}")
+        source_window.geometry("400x300" if ai_job == "Format_Text" else "400x250")  
         source_window.grab_set()  # Make window modal
         
         # Message explaining purpose
         message_label = tk.Label(source_window, 
-            text=f"Select the text source to process:",
+            text=f"Select {'the format preset and ' if ai_job == 'Format_Text' else ''}the text source to process:",
             font=("Calibri", 12))
         message_label.pack(pady=15)
+        
+        # Add format preset selection for Format_Text
+        format_frame = None
+        if ai_job == "Format_Text":
+            format_frame = tk.Frame(source_window)
+            format_frame.pack(pady=10)
+            
+            format_label = tk.Label(format_frame, text="Format Preset:")
+            format_label.pack(side="left", padx=5)
+            
+            # Create a StringVar for the format preset dropdown
+            self.format_preset_var = tk.StringVar()
+            
+            # Get available format presets
+            format_options = [preset.get('name', f"Preset {i+1}") for i, preset in enumerate(self.settings.format_presets)]
+            
+            # Create the format preset dropdown
+            format_dropdown = ttk.Combobox(format_frame,
+                                         textvariable=self.format_preset_var,
+                                         values=format_options,
+                                         state="readonly",
+                                         width=20)
+            format_dropdown.pack(side="left", padx=5)
+            
+            # Set default to first format preset
+            if format_options:
+                self.format_preset_var.set(format_options[0])
         
         # Create the text source selection dropdown
         dropdown_frame = tk.Frame(source_window)
@@ -4401,6 +4556,14 @@ class App(TkinterDnD.Tk):
                 self.text_source_var.set("Formatted_Text")
             else:
                 self.text_source_var.set(source_options[0])
+        elif "Format_Text" == ai_job:
+            # For formatting, prefer Corrected_Text, then Original_Text
+            if "Corrected_Text" in source_options:
+                self.text_source_var.set("Corrected_Text")
+            elif "Original_Text" in source_options:
+                self.text_source_var.set("Original_Text")
+            else:
+                self.text_source_var.set(source_options[0])
         else:
             # Default to first option
             self.text_source_var.set(source_options[0])
@@ -4458,6 +4621,10 @@ class App(TkinterDnD.Tk):
             # Temporarily store the selected source so ai_function can use it
             self.temp_selected_source = selected_source
             
+            # For Format_Text, also get and store the selected format preset
+            if ai_job == "Format_Text" and hasattr(self, 'format_preset_var') and self.format_preset_var.get():
+                self.temp_format_preset = self.format_preset_var.get()
+            
             # Call the AI function with the stored text source
             self.ai_function(all_or_one_flag=all_or_one_flag, ai_job=ai_job)
             
@@ -4465,9 +4632,11 @@ class App(TkinterDnD.Tk):
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
             self.error_logging(f"Error in process_ai_with_selected_source: {str(e)}")
         finally:
-            # Clear the temporary text source even if there was an error
+            # Clear the temporary variables even if there was an error
             if hasattr(self, 'temp_selected_source'):
                 delattr(self, 'temp_selected_source')
+            if hasattr(self, 'temp_format_preset'):
+                delattr(self, 'temp_format_preset')
 
 if __name__ == "__main__":
     try:

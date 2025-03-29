@@ -330,7 +330,19 @@ class ExportManager:
             command=export_window.destroy
         ).grid(row=0, column=1, padx=5)
 
-    def export_as_csv(self, use_custom_separation=False, generate_metadata=None, single_author=None, citation=None, analyze_dates=None):
+    def _standardize_place_column_names(self, df):
+        """Ensure consistent naming for place columns"""
+        # Map Creation_Place to Place_of_Creation if needed
+        if 'Creation_Place' in df.columns and 'Place_of_Creation' not in df.columns:
+            df['Place_of_Creation'] = df['Creation_Place']
+            self.app.error_logging("Mapped Creation_Place to Place_of_Creation for consistency")
+        # Map Place_of_Creation to Creation_Place if needed
+        elif 'Place_of_Creation' in df.columns and 'Creation_Place' not in df.columns:
+            df['Creation_Place'] = df['Place_of_Creation']
+            self.app.error_logging("Mapped Place_of_Creation to Creation_Place for consistency")
+        return df
+
+    def export_as_csv(self, use_custom_separation=False, generate_metadata=None, single_author=None, citation=None, analyze_dates=None, text_source=None):
         """Export metadata for each document as a CSV file."""
         if self.app.main_df.empty:
             messagebox.showwarning("No Data", "No documents to export.")
@@ -365,6 +377,33 @@ class ExportManager:
                 
             # Ensure all required columns exist in the DataFrame
             compiled_df = self._ensure_required_columns(compiled_df)
+            
+            # Use the specified text source to populate the Text column
+            if text_source and text_source != "Text":
+                self.app.error_logging(f"Using {text_source} to populate Text column")
+                
+                # Create a function to get the appropriate text for each row
+                def get_text_from_source(index):
+                    try:
+                        if text_source == "Current Display":
+                            # Use current text display setting
+                            return self.app.find_right_text(index)
+                        elif text_source in self.app.main_df.columns:
+                            # Use the specified column directly
+                            source_text = self.app.main_df.at[index, text_source]
+                            return source_text if pd.notna(source_text) else ""
+                        else:
+                            # Fallback to find_right_text
+                            return self.app.find_right_text(index)
+                    except Exception as e:
+                        self.app.error_logging(f"Error getting text for row {index}: {str(e)}")
+                        return ""
+                
+                # Apply the function to each row
+                for idx in compiled_df.index:
+                    compiled_df.at[idx, 'Text'] = get_text_from_source(idx)
+                
+                self.app.error_logging(f"Updated Text column with {text_source} content")
             
             # Ask for metadata generation if not specified
             if generate_metadata is None:
@@ -401,6 +440,9 @@ class ExportManager:
             if analyze_dates:
                 compiled_df = self._analyze_dates_sequentially(compiled_df)
             
+            # Standardize place column names
+            compiled_df = self._standardize_place_column_names(compiled_df)
+            
             # Prepare final dataframe for export
             export_df = self._prepare_export_dataframe(compiled_df, use_custom_separation, documents_separated, citation)
             
@@ -423,7 +465,7 @@ class ExportManager:
                 self.app.refresh_display()
                 self.app.load_text()
                 self.app.counter_update()
-                
+            
     def _get_csv_save_path(self):
         """Ask user for CSV save location."""
         return filedialog.asksaveasfilename(
@@ -519,20 +561,25 @@ class ExportManager:
                 metadata_headers = [h.strip().replace(" ", "_") for h in header_str.split(';') if h.strip()]
                 
             # Ensure all potentially needed columns exist
-            all_possible_columns = required_columns + metadata_headers + ['People', 'Places', 'Translation']
+            all_possible_columns = required_columns + metadata_headers + ['People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+            
+            # Log the columns we're going to add
+            self.app.error_logging(f"Ensuring these columns exist in the DataFrame: {all_possible_columns}")
             
             # Add unique columns only
             for col in set(all_possible_columns):
                 if col not in df.columns:
                     df[col] = ""
+                    self.app.error_logging(f"Added missing column: {col}")
                     
         except Exception as e:
             # Fallback to basic columns if there's an error
             self.app.error_logging(f"Error setting up metadata columns: {str(e)}")
-            basic_columns = ['Page', 'Text', 'Citation', 'People', 'Places', 'Translation']
+            basic_columns = ['Page', 'Text', 'Citation', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
             for col in basic_columns:
                 if col not in df.columns:
                     df[col] = ""
+                    self.app.error_logging(f"Added missing basic column: {col}")
                 
         return df
         
@@ -581,7 +628,7 @@ class ExportManager:
     def _prepare_temp_df_for_ai(self, df):
         """Prepare a temporary dataframe for AI processing."""
         # Ensure all required columns for AI function exist
-        text_columns = ['Text_Toggle', 'Original_Text', 'Corrected_Text', 'Formatted_Text', 'Translation']
+        text_columns = ['Text_Toggle', 'Original_Text', 'Corrected_Text', 'Formatted_Text', 'Translation', 'Separated_Text']
         for col in text_columns:
             if col not in df.columns:
                 if col == 'Text_Toggle':
@@ -600,10 +647,27 @@ class ExportManager:
     def _copy_metadata_columns(self, target_df, source_df):
         """Copy metadata columns from source dataframe to target dataframe."""
         try:
-            # Get dynamic metadata columns from settings
+            # Get the metadata headers from the selected preset
             metadata_columns = []
-            if hasattr(self.app.settings, 'metadata_headers'):
+            preset_name = ""
+            
+            # First try to get headers from the selected preset
+            if hasattr(self.app.settings, 'metadata_preset') and hasattr(self.app.settings, 'metadata_presets'):
+                preset_name = self.app.settings.metadata_preset
+                # Find the selected preset
+                selected_preset = next((p for p in self.app.settings.metadata_presets if p.get('name') == preset_name), None)
+                
+                if selected_preset and 'metadata_headers' in selected_preset:
+                    # Get headers from the selected preset
+                    header_str = selected_preset['metadata_headers']
+                    self.app.error_logging(f"Using metadata headers from preset '{preset_name}': {header_str}")
+                    # Process the semicolon-separated list, converting to dataframe column names
+                    metadata_columns = [h.strip().replace(" ", "_") for h in header_str.split(';') if h.strip()]
+            
+            # Fallback to settings metadata_headers if preset headers not found
+            if not metadata_columns and hasattr(self.app.settings, 'metadata_headers'):
                 header_str = self.app.settings.metadata_headers
+                self.app.error_logging(f"Fallback to global metadata_headers: {header_str}")
                 # Process the semicolon-separated list, converting to dataframe column names
                 metadata_columns = [h.strip().replace(" ", "_") for h in header_str.split(';') if h.strip()]
             
@@ -613,7 +677,18 @@ class ExportManager:
                     'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place',
                     'Creation_Place', 'Date', 'Places', 'People', 'Summary'
                 ]
-                
+                self.app.error_logging(f"Using default metadata columns: {metadata_columns}")
+            
+            # Always ensure Creation_Place and Date are included in metadata columns
+            essential_columns = ['Creation_Place', 'Date']
+            for col in essential_columns:
+                if col not in metadata_columns:
+                    metadata_columns.append(col)
+                    self.app.error_logging(f"Added essential column: {col}")
+            
+            # Log the columns we'll be copying
+            self.app.error_logging(f"Metadata columns to copy: {metadata_columns}")
+            
             # Create counter for updates
             update_counts = {col: 0 for col in metadata_columns}
             
@@ -623,17 +698,37 @@ class ExportManager:
                     # Check if column exists in target_df
                     if col not in target_df.columns:
                         target_df[col] = ""
-                        
+                        self.app.error_logging(f"Created missing column in target: {col}")
+                    
                     # Copy values from source to target
                     target_df[col] = source_df[col]
                     # Count non-empty values
                     update_counts[col] = source_df[col].notna().sum()
+                    self.app.error_logging(f"Copied {update_counts[col]} values for column: {col}")
+                else:
+                    self.app.error_logging(f"Column not found in source dataframe: {col}")
+                    
+                    # Check if there's an alternate name for this column
+                    alt_names = {
+                        'Creation_Place': 'Place_of_Creation',
+                        'Place_of_Creation': 'Creation_Place'
+                    }
+                    
+                    if col in alt_names and alt_names[col] in source_df.columns:
+                        alt_col = alt_names[col]
+                        if col not in target_df.columns:
+                            target_df[col] = ""
+                        
+                        # Copy from alternate column name
+                        target_df[col] = source_df[alt_col]
+                        update_counts[col] = source_df[alt_col].notna().sum()
+                        self.app.error_logging(f"Copied {update_counts[col]} values from alternate column {alt_col} to {col}")
             
             # Print summary of updates
             print("\nMetadata generation summary:")
             for col, count in update_counts.items():
                 print(f"  {col}: {count} entries")
-                
+            
         except Exception as e:
             self.app.error_logging(f"Error copying metadata columns: {str(e)}")
             print(f"Error copying metadata columns: {str(e)}")
@@ -644,12 +739,12 @@ class ExportManager:
         """Analyze dates sequentially based on document context."""
         try:
             # Use the existing progress bar
-            progress_window, progress_bar, progress_label = self.app.progress_bar.create_progress_window("Analyzing Dates Sequentially")
+            progress_window, progress_bar, progress_label = self.app.progress_bar.create_progress_window("Analyzing Dates and Places Sequentially")
             
             # Update progress initially
             total_rows = len(compiled_df)
             self.app.progress_bar.update_progress(0, total_rows)
-            progress_label.config(text="Preparing date analysis...")
+            progress_label.config(text="Preparing date and place analysis...")
             self.app.update_idletasks()
             
             # Import required modules
@@ -657,7 +752,7 @@ class ExportManager:
             from util.APIHandler import APIHandler
             
             # Log the start of date analysis
-            self.app.error_logging("Starting date analysis sequence")
+            self.app.error_logging("Starting date and place analysis sequence")
             
             # Create date analysis dataframe
             date_df = self._prepare_date_df(compiled_df)
@@ -670,14 +765,22 @@ class ExportManager:
             )
             
             # Update progress
-            progress_label.config(text="Starting date analysis...")
+            progress_label.config(text="Starting date and place analysis...")
             self.app.update_idletasks()
             
             # Run date analysis
             result_df = self._run_date_analysis(api_handler, date_df)
             
+            # Log the result dataframe structure and first few rows
+            if result_df is not None:
+                self.app.error_logging(f"Date analysis returned dataframe with columns: {', '.join(result_df.columns.tolist())}")
+                sample_rows = min(3, len(result_df))
+                for i in range(sample_rows):
+                    row_data = {col: result_df.iloc[i][col] for col in result_df.columns}
+                    self.app.error_logging(f"Sample row {i}: {row_data}")
+            
             # Update progress
-            progress_label.config(text="Finalizing date analysis...")
+            progress_label.config(text="Finalizing date and place analysis...")
             self.app.update_idletasks()
             
             # Copy results back to compiled_df
@@ -694,8 +797,8 @@ class ExportManager:
             except:
                 pass
             
-            self.app.error_logging(f"Date analysis failed: {str(e)}")
-            messagebox.showerror("Error", f"Failed to analyze dates: {str(e)}")
+            self.app.error_logging(f"Date and place analysis failed: {str(e)}")
+            messagebox.showerror("Error", f"Failed to analyze dates and places: {str(e)}")
             
         return compiled_df
         
@@ -729,7 +832,12 @@ class ExportManager:
         # Get existing dates from compiled_df if any
         date_df['Date'] = compiled_df['Date'].apply(lambda x: str(x) if not pd.isna(x) else "")
         
-        # Get existing Creation_Place from compiled_df if any
+        # Ensure Creation_Place column exists and populate it
+        if 'Creation_Place' not in compiled_df.columns:
+            compiled_df['Creation_Place'] = ""
+            self.app.error_logging("Added missing Creation_Place column to compiled_df")
+        
+        # Get existing Creation_Place from compiled_df
         date_df['Creation_Place'] = compiled_df['Creation_Place'].apply(lambda x: str(x) if not pd.isna(x) else "")
         
         # Log dataframe creation
@@ -755,20 +863,61 @@ class ExportManager:
             result = loop.run_until_complete(process_with_progress())
             loop.close()
             print("Date analysis completed successfully")
+            
+            # Additional logging for result dataframe
+            if result is not None:
+                # Log column information
+                self.app.error_logging(f"Date analysis result dataframe has columns: {result.columns.tolist()}")
+                
+                # Log row count
+                self.app.error_logging(f"Date analysis result dataframe has {len(result)} rows")
+                
+                # Log dates found
+                date_count = sum(result['Date'].notna() & (result['Date'] != ""))
+                self.app.error_logging(f"Date analysis found {date_count} dates")
+                
+                # Log places found
+                if 'Creation_Place' in result.columns:
+                    place_count = sum(result['Creation_Place'].notna() & (result['Creation_Place'] != ""))
+                    self.app.error_logging(f"Date analysis found {place_count} creation places")
+                else:
+                    self.app.error_logging("Warning: Creation_Place column not found in date analysis results")
+                
+                # Sample first few rows
+                if len(result) > 0:
+                    sample_size = min(3, len(result))
+                    for i in range(sample_size):
+                        row_data = {
+                            'Page': result.iloc[i].get('Page', 'N/A'),
+                            'Date': result.iloc[i].get('Date', 'N/A'),
+                            'Creation_Place': result.iloc[i].get('Creation_Place', 'N/A')
+                        }
+                        self.app.error_logging(f"Sample row {i}: {row_data}")
+            else:
+                self.app.error_logging("Date analysis returned None result")
+            
             return result
         except Exception as loop_err:
             self.app.error_logging(f"Error in asyncio loop: {str(loop_err)}")
+            traceback_str = traceback.format_exc()
+            self.app.error_logging(f"Traceback: {traceback_str}")
             return None
             
     def _copy_date_results(self, compiled_df, result_df):
         """Copy date analysis results back to the compiled dataframe."""
         update_count = 0
         place_update_count = 0
+        
+        # Ensure Creation_Place column exists in target dataframe
+        if 'Creation_Place' not in compiled_df.columns:
+            compiled_df['Creation_Place'] = ""
+            self.app.error_logging("Added missing Creation_Place column to compiled_df before copying results")
+        
         for idx in result_df.index:
             try:
                 if idx < len(compiled_df):
                     # Update Date field
-                    if result_df.at[idx, 'Date']:
+                    if 'Date' in result_df.columns and result_df.at[idx, 'Date']:
                         compiled_df.at[idx, 'Date'] = result_df.at[idx, 'Date']
                         update_count += 1
                     
@@ -791,7 +940,7 @@ class ExportManager:
         # Always ensure Page is populated with row number starting at 1
         export_df['Page'] = export_df.index + 1
         
-        # Initialize potential columns list
+        # Initialize potential columns list - always include Text
         potential_columns = ['Text']
         
         # Get metadata fields from settings
@@ -801,31 +950,50 @@ class ExportManager:
             metadata_fields = [h.strip().replace(" ", "_") for h in header_str.split(';') if h.strip()]
             potential_columns.extend(metadata_fields)
         
-        # Add special columns to potential list
-        potential_columns.extend(['People', 'Places', 'Translation', 'Document_Page'])
+        # Add special columns to potential list - ensure Creation_Place and Date are included
+        potential_columns.extend(['People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date', 'Place_of_Creation'])
         
         # Add Citation column if a value was provided
         if citation and citation.strip():
             export_df['Citation'] = citation
             potential_columns.append('Citation')
         
-        # Check for Document_Page column if using Basic Pagination
-        if not use_custom_separation or not documents_separated:
-            if 'Document_Page' in export_df.columns:
-                potential_columns.append('Document_Page')
+        # Log available columns for debugging
+        self.app.error_logging(f"Available columns in export_df: {export_df.columns.tolist()}")
+        self.app.error_logging(f"Potential columns for export: {potential_columns}")
         
         # Filter columns to only include those with data
-        populated_columns = ['Page']  # Always include Page
+        populated_columns = ['Page', 'Text']  # Always include Page and Text
         
         for col in potential_columns:
+            if col == 'Text' or col == 'Page':
+                continue  # Already added to populated_columns
+            
             if col in export_df.columns:
                 # Check if column has any non-empty values
                 has_data = export_df[col].notna().any() and export_df[col].astype(str).str.strip().str.len().gt(0).any()
                 if has_data:
                     populated_columns.append(col)
+                    self.app.error_logging(f"Including column with data: {col}")
                     print(f"Including column with data: {col}")
                 else:
+                    self.app.error_logging(f"Excluding empty column: {col}")
                     print(f"Excluding empty column: {col}")
+        
+        # Always include Creation_Place, Date even if empty
+        mandatory_columns = ['Creation_Place', 'Date']
+        for col in mandatory_columns:
+            if col in export_df.columns and col not in populated_columns:
+                populated_columns.append(col)
+                self.app.error_logging(f"Including mandatory column even if empty: {col}")
+                print(f"Including mandatory column even if empty: {col}")
+        
+        # Ensure Place of Creation column is included if it has another name
+        if 'Creation_Place' not in populated_columns and 'Place_of_Creation' in export_df.columns:
+            place_col = 'Place_of_Creation'
+            populated_columns.append(place_col)
+            self.app.error_logging(f"Including place column with alternate name: {place_col}")
+            print(f"Including place column with alternate name: {place_col}")
         
         # Clear correspondent fields for non-letter document types
         for idx in export_df.index:
@@ -856,23 +1024,34 @@ class ExportManager:
                 'Correspondent', 
                 'Correspondent_Place',
                 'Creation_Place', 
+                'Place_of_Creation',
                 'Date', 
                 'People', 
                 'Places', 
                 'Summary',
-                'Text', 
+                'Text',          # Position Text after metadata but before other text variations
                 'Translation',
+                'Separated_Text',
                 'Citation'
             ]
             
+            # Ensure Page and Text are always included, even if they're not in the input list
+            essential_columns = []
+            for col in ['Page', 'Text']:
+                if col not in columns_to_include:
+                    essential_columns.append(col)
+            
             # Filter preferred order to only include columns in the input list
-            final_order = [col for col in preferred_order if col in columns_to_include]
+            final_order = [col for col in preferred_order if col in columns_to_include or col in essential_columns]
             
             # Add any remaining columns not specified in preferred_order
             for col in columns_to_include:
                 if col not in final_order:
                     final_order.append(col)
-                    
+                
+            # Log the final column order
+            self.app.error_logging(f"Final column order for export: {', '.join(final_order)}")
+            
             return final_order
             
         except Exception as e:
@@ -915,7 +1094,7 @@ class ExportManager:
         # Create the CSV options window
         csv_window = tk.Toplevel(self.app)
         csv_window.title("CSV Export Options")
-        csv_window.geometry("450x450")  # Made taller to accommodate new metadata options
+        csv_window.geometry("450x500")  # Made taller to accommodate text source dropdown
         csv_window.transient(self.app)  # Make window modal
         csv_window.grab_set()  # Make window modal
 
@@ -959,6 +1138,47 @@ class ExportManager:
         )
         pagination_desc.grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 10))
 
+        # Text source dropdown
+        ttk.Label(options_frame, text="Text Source:").grid(row=2, column=0, sticky="w", pady=5)
+        text_source_var = tk.StringVar(value="Current Display")
+        
+        # Get text source options - always include Current Display
+        text_sources = ["Current Display"]
+        
+        # Potential text source columns to check
+        potential_sources = ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]
+        
+        # Add columns that actually exist in the dataframe AND have non-empty values
+        for col in potential_sources + [col for col in self.app.main_df.columns if col.endswith("_Text")]:
+            # Skip duplicates
+            if col in text_sources:
+                continue
+            
+            # Check if column exists and has any non-empty values
+            if col in self.app.main_df.columns:
+                has_data = self.app.main_df[col].notna().any() and self.app.main_df[col].astype(str).str.strip().str.len().gt(0).any()
+                if has_data:
+                    text_sources.append(col)
+                    print(f"Adding text source with data: {col}")
+        
+        text_source_dropdown = ttk.Combobox(
+            options_frame,
+            textvariable=text_source_var,
+            values=text_sources,
+            state="readonly",
+            width=25
+        )
+        text_source_dropdown.grid(row=2, column=1, sticky="w", pady=5, padx=5)
+        
+        # Description for text source
+        text_source_desc = ttk.Label(
+            options_frame,
+            text="Select which text version to export in the Text column",
+            font=("Arial", 8),
+            justify=tk.LEFT
+        )
+        text_source_desc.grid(row=3, column=0, columnspan=2, sticky="w", pady=(0, 10))
+
         # Metadata generation checkbox
         generate_metadata_var = tk.BooleanVar(value=True)
         generate_metadata_cb = ttk.Checkbutton(
@@ -967,11 +1187,11 @@ class ExportManager:
             variable=generate_metadata_var,
             command=lambda: toggle_metadata_options()
         )
-        generate_metadata_cb.grid(row=2, column=0, columnspan=2, sticky="w", pady=5)
+        generate_metadata_cb.grid(row=4, column=0, columnspan=2, sticky="w", pady=5)
 
         # Create a frame for metadata options (hidden initially)
         metadata_frame = ttk.Frame(options_frame)
-        metadata_frame.grid(row=3, column=0, columnspan=2, padx=20, pady=5, sticky="ew")
+        metadata_frame.grid(row=5, column=0, columnspan=2, padx=20, pady=5, sticky="ew")
         metadata_frame.grid_columnconfigure(1, weight=1)
 
         # Metadata preset dropdown
@@ -1058,6 +1278,7 @@ class ExportManager:
                 single_author = author_var.get()
             citation = citation_var.get() if generate_metadata else None
             analyze_dates = sequential_dating_var.get() if generate_metadata else False
+            text_source = text_source_var.get()
 
             # Update the selected metadata preset in settings if needed
             if selected_metadata_preset and hasattr(self.app.settings, 'metadata_preset'):
@@ -1071,7 +1292,8 @@ class ExportManager:
                 generate_metadata=generate_metadata,
                 single_author=single_author,
                 citation=citation,
-                analyze_dates=analyze_dates
+                analyze_dates=analyze_dates,
+                text_source=text_source
             )
 
         # Add buttons

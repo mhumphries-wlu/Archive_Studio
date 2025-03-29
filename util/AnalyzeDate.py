@@ -383,7 +383,22 @@ Current Document to Analyze: {text_to_process}"""
         date_match = re.search(r'Date:\s*(.+?)(?:\n|Place:|$)', response)
         if date_match:
             return date_match.group(1).strip()
-            
+        
+        # Look for date with variations in formatting
+        # Try alternate patterns for "Date:"
+        alt_date_patterns = [
+            r'Date:\s*([^\n:]+)',            # Basic pattern: "Date: value"
+            r'DATE:\s*([^\n:]+)',            # All caps
+            r'date:\s*([^\n:]+)',            # Lowercase
+            r'\bDate\b[^\n:]*:\s*([^\n:]+)'  # Any variation with "Date" as a word
+        ]
+        
+        for pattern in alt_date_patterns:
+            match = re.search(pattern, response)
+            if match:
+                self.log(f"Found date with alternate pattern: {pattern}")
+                return match.group(1).strip()
+        
         # Look for date patterns
         date_patterns = [
             # DD/MM/YYYY
@@ -416,7 +431,27 @@ Current Document to Analyze: {text_to_process}"""
         place_match = re.search(r'Place:\s*(.+?)(?:\n|CHECK|$)', response)
         if place_match:
             return place_match.group(1).strip()
-            
+        
+        # Try various alternate patterns
+        alt_place_patterns = [
+            r'Place:\s*([^:\n]+)',                   # More flexible ending
+            r'PLACE:\s*([^:\n]+)',                   # All caps
+            r'place:\s*([^:\n]+)',                   # Lowercase
+            r'Place of Creation:\s*([^:\n]+)',       # Full variant
+            r'PLACE OF CREATION:\s*([^:\n]+)',       # Full variant caps
+            r'place of creation:\s*([^:\n]+)',       # Full variant lowercase
+            r'Place of creation:\s*([^:\n]+)',       # Mixed case
+            r'Creation Place:\s*([^:\n]+)',          # Alternate order
+            r'\bCreation\b[^\n:]*\bPlace\b[^\n:]*:\s*([^:\n]+)', # Variation with Creation and Place
+            r'\bPlace\b[^\n:]*\bof\b[^\n:]*\bCreation\b[^\n:]*:\s*([^:\n]+)'  # Variation with Place of Creation
+        ]
+        
+        for pattern in alt_place_patterns:
+            match = re.search(pattern, response, re.IGNORECASE)
+            if match:
+                self.log(f"Found place with alternate pattern: {pattern}")
+                return match.group(1).strip()
+        
         return ""
 
 async def analyze_dates(subject_df, api_handler, settings):
