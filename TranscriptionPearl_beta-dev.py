@@ -320,6 +320,12 @@ class App(TkinterDnD.Tk):
         self.process_menu.add_command(label="Find Errors", 
                                      command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Identify_Errors"))
         
+        # Add Format_Text option to the Process menu after Correct_Text
+        self.process_menu.add_command(label="Format Text", 
+                                     command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Format_Text"))
+        
+        self.process_menu.add_separator()
+        
         # Document Menu
 
         self.document_menu = tk.Menu(self.menubar, tearoff=0)
@@ -400,6 +406,10 @@ class App(TkinterDnD.Tk):
         self.bind("<Control-Shift-2>", lambda event: self.ai_function(all_or_one_flag="All Pages", ai_job="Correct_Text"))
         self.bind("<Control-t>", lambda event: self.ai_function(all_or_one_flag="Current Page", ai_job="Translation"))
         self.bind("<Control-Shift-t>", lambda event: self.ai_function(all_or_one_flag="All Pages", ai_job="Translation"))
+        
+        # Add key binding for Format_Text
+        self.bind("<Control-5>", lambda event: self.ai_function(all_or_one_flag="Current Page", ai_job="Format_Text"))
+        self.bind("<Control-Shift-5>", lambda event: self.ai_function(all_or_one_flag="All Pages", ai_job="Format_Text"))
         
         # Add key bindings for Chunk_Text
         self.bind("<Control-3>", lambda event: self.create_chunk_text_window("Current Page"))
@@ -2520,6 +2530,14 @@ class App(TkinterDnD.Tk):
                     self.text_display_var.set("Translation")
                 # Enable changes highlighting for translation
                 self.highlight_changes_var.set(True)
+            elif ai_job == "Format_Text":
+                self.main_df.loc[index, 'Formatted_Text'] = response
+                self.main_df.loc[index, 'Text_Toggle'] = "Formatted_Text"
+                # Enable changes highlighting when formatting is run
+                self.highlight_changes_var.set(True)
+                # Update display dropdown if this is the current page
+                if index == self.page_counter:
+                    self.text_display_var.set("Formatted_Text")
             
             # Load the updated text
             self.load_text()
@@ -2868,7 +2886,7 @@ class App(TkinterDnD.Tk):
 
     def ai_function(self, all_or_one_flag="All Pages", ai_job="HTR", batch_size=50):
         # Check if we should show text source selection window
-        if ai_job in ["Correct_Text", "Translation", "Identify_Errors"]:
+        if ai_job in ["Correct_Text", "Translation", "Identify_Errors", "Format_Text"]:
             # If we already have a selected source from the window, don't show the window again
             if not hasattr(self, 'temp_selected_source'):
                 self.create_text_source_window(all_or_one_flag, ai_job)
@@ -3220,6 +3238,8 @@ class App(TkinterDnD.Tk):
                     messagebox.showinfo("No Work Needed", "All pages either lack text to correct or already have corrections.")
                 elif ai_job == "Translation":
                     messagebox.showinfo("No Work Needed", "All pages either lack text to translate or already have translations.")
+                elif ai_job == "Format_Text":
+                    messagebox.showinfo("No Work Needed", "All pages either lack text to format or already have formatted text.")
                 else:
                     messagebox.showwarning("No Images", "No images are available for processing.")
                 self.toggle_button_state()  # Re-enable buttons before return
@@ -3254,6 +3274,14 @@ class App(TkinterDnD.Tk):
                             text_to_process = self.find_right_text(index)
                         elif ai_job == "Identify_Errors" and selected_source:
                             text_to_process = row_data[selected_source]
+                        elif ai_job == "Format_Text" and selected_source:
+                            # Find the best text to process
+                            if pd.notna(row_data['Corrected_Text']) and row_data['Corrected_Text'].strip():
+                                text_to_process = row_data['Corrected_Text']
+                            elif pd.notna(row_data['Original_Text']) and row_data['Original_Text'].strip():
+                                text_to_process = row_data['Original_Text']
+                            else:
+                                text_to_process = self.find_right_text(index)
                         else:
                             if row_data['Text_Toggle'] == "Original_Text":
                                 text_to_process = row_data['Original_Text']
@@ -3419,6 +3447,37 @@ class App(TkinterDnD.Tk):
                     "batch_size": self.settings.batch_size,
                     "use_images": False,
                     "headers": ["Document Type", "Author", "Correspondent", "Correspondent Place", "Date", "Place of Creation", "People", "Places", "Summary"]
+                }
+        elif ai_job == "Format_Text":
+            # Get the selected format preset if available
+            format_preset_name = getattr(self, 'temp_format_preset', None)
+            if not format_preset_name:
+                # Use first preset as default if none selected
+                if self.settings.format_presets:
+                    format_preset_name = self.settings.format_presets[0].get('name', '')
+            
+            preset = next((p for p in self.settings.format_presets if p.get('name', '') == format_preset_name), None)
+            if preset:
+                return {
+                    "temp": float(preset.get('temperature', 0.2)),
+                    "val_text": "Formatted Text:",
+                    "engine": preset.get('model', self.settings.model_list[0]),
+                    "user_prompt": preset.get('specific_instructions', 'Text to format:\n\n{text_to_process}'),
+                    "system_prompt": preset.get('general_instructions', ''),
+                    "batch_size": self.settings.batch_size,
+                    "use_images": preset.get('use_images', False)
+                }
+            else:
+                self.error_logging(f"Format preset not found: {format_preset_name}")
+                # Return default values
+                return {
+                    "temp": 0.2,
+                    "val_text": "Formatted Text:",
+                    "engine": self.settings.model_list[0],
+                    "user_prompt": "Text to format:\n\n{text_to_process}",
+                    "system_prompt": "You format historical documents to make them easier to read.",
+                    "batch_size": self.settings.batch_size,
+                    "use_images": False
                 }
         else:
             # Existing logic for function-based AI jobs
@@ -4331,15 +4390,42 @@ class App(TkinterDnD.Tk):
         """
         # Create the window
         source_window = tk.Toplevel(self)
-        source_window.title(f"Select Text Source for {ai_job.replace('_', ' ')}")
-        source_window.geometry("400x250")  
+        source_window.title(f"Select {'Format Preset and ' if ai_job == 'Format_Text' else ''}Text Source for {ai_job.replace('_', ' ')}")
+        source_window.geometry("400x300" if ai_job == "Format_Text" else "400x250")  
         source_window.grab_set()  # Make window modal
         
         # Message explaining purpose
         message_label = tk.Label(source_window, 
-            text=f"Select the text source to process:",
+            text=f"Select {'the format preset and ' if ai_job == 'Format_Text' else ''}the text source to process:",
             font=("Calibri", 12))
         message_label.pack(pady=15)
+        
+        # Add format preset selection for Format_Text
+        format_frame = None
+        if ai_job == "Format_Text":
+            format_frame = tk.Frame(source_window)
+            format_frame.pack(pady=10)
+            
+            format_label = tk.Label(format_frame, text="Format Preset:")
+            format_label.pack(side="left", padx=5)
+            
+            # Create a StringVar for the format preset dropdown
+            self.format_preset_var = tk.StringVar()
+            
+            # Get available format presets
+            format_options = [preset.get('name', f"Preset {i+1}") for i, preset in enumerate(self.settings.format_presets)]
+            
+            # Create the format preset dropdown
+            format_dropdown = ttk.Combobox(format_frame,
+                                         textvariable=self.format_preset_var,
+                                         values=format_options,
+                                         state="readonly",
+                                         width=20)
+            format_dropdown.pack(side="left", padx=5)
+            
+            # Set default to first format preset
+            if format_options:
+                self.format_preset_var.set(format_options[0])
         
         # Create the text source selection dropdown
         dropdown_frame = tk.Frame(source_window)
@@ -4403,6 +4489,14 @@ class App(TkinterDnD.Tk):
                 self.text_source_var.set("Formatted_Text")
             else:
                 self.text_source_var.set(source_options[0])
+        elif "Format_Text" == ai_job:
+            # For formatting, prefer Corrected_Text, then Original_Text
+            if "Corrected_Text" in source_options:
+                self.text_source_var.set("Corrected_Text")
+            elif "Original_Text" in source_options:
+                self.text_source_var.set("Original_Text")
+            else:
+                self.text_source_var.set(source_options[0])
         else:
             # Default to first option
             self.text_source_var.set(source_options[0])
@@ -4460,6 +4554,10 @@ class App(TkinterDnD.Tk):
             # Temporarily store the selected source so ai_function can use it
             self.temp_selected_source = selected_source
             
+            # For Format_Text, also get and store the selected format preset
+            if ai_job == "Format_Text" and hasattr(self, 'format_preset_var') and self.format_preset_var.get():
+                self.temp_format_preset = self.format_preset_var.get()
+            
             # Call the AI function with the stored text source
             self.ai_function(all_or_one_flag=all_or_one_flag, ai_job=ai_job)
             
@@ -4467,9 +4565,11 @@ class App(TkinterDnD.Tk):
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
             self.error_logging(f"Error in process_ai_with_selected_source: {str(e)}")
         finally:
-            # Clear the temporary text source even if there was an error
+            # Clear the temporary variables even if there was an error
             if hasattr(self, 'temp_selected_source'):
                 delattr(self, 'temp_selected_source')
+            if hasattr(self, 'temp_format_preset'):
+                delattr(self, 'temp_format_preset')
 
 if __name__ == "__main__":
     try:

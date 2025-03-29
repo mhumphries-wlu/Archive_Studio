@@ -519,7 +519,7 @@ class ExportManager:
                 metadata_headers = [h.strip().replace(" ", "_") for h in header_str.split(';') if h.strip()]
                 
             # Ensure all potentially needed columns exist
-            all_possible_columns = required_columns + metadata_headers + ['People', 'Places', 'Translation']
+            all_possible_columns = required_columns + metadata_headers + ['People', 'Places', 'Translation', 'Separated_Text']
             
             # Add unique columns only
             for col in set(all_possible_columns):
@@ -529,7 +529,7 @@ class ExportManager:
         except Exception as e:
             # Fallback to basic columns if there's an error
             self.app.error_logging(f"Error setting up metadata columns: {str(e)}")
-            basic_columns = ['Page', 'Text', 'Citation', 'People', 'Places', 'Translation']
+            basic_columns = ['Page', 'Text', 'Citation', 'People', 'Places', 'Translation', 'Separated_Text']
             for col in basic_columns:
                 if col not in df.columns:
                     df[col] = ""
@@ -581,7 +581,7 @@ class ExportManager:
     def _prepare_temp_df_for_ai(self, df):
         """Prepare a temporary dataframe for AI processing."""
         # Ensure all required columns for AI function exist
-        text_columns = ['Text_Toggle', 'Original_Text', 'Corrected_Text', 'Formatted_Text', 'Translation']
+        text_columns = ['Text_Toggle', 'Original_Text', 'Corrected_Text', 'Formatted_Text', 'Translation', 'Separated_Text']
         for col in text_columns:
             if col not in df.columns:
                 if col == 'Text_Toggle':
@@ -802,7 +802,7 @@ class ExportManager:
             potential_columns.extend(metadata_fields)
         
         # Add special columns to potential list
-        potential_columns.extend(['People', 'Places', 'Translation', 'Document_Page'])
+        potential_columns.extend(['People', 'Places', 'Translation', 'Separated_Text', 'Document_Page'])
         
         # Add Citation column if a value was provided
         if citation and citation.strip():
@@ -862,6 +862,7 @@ class ExportManager:
                 'Summary',
                 'Text', 
                 'Translation',
+                'Separated_Text',
                 'Citation'
             ]
             

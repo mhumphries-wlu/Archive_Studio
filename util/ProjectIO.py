@@ -66,7 +66,7 @@ class ProjectIO:
             self.app.main_df = pd.read_csv(project_file, encoding='utf-8')
             
             # Ensure required text columns exist...
-            for col in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Text_Toggle"]:
+            for col in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text", "Text_Toggle"]:
                 if col not in self.app.main_df.columns:
                     self.app.main_df[col] = ""
                 else:
@@ -79,7 +79,9 @@ class ProjectIO:
             # Update Text_Toggle for each row to show the highest level of populated text
             for idx, row in self.app.main_df.iterrows():
                 # Check text columns in order of priority (highest to lowest)
-                if pd.notna(row['Translation']) and row['Translation'].strip():
+                if pd.notna(row['Separated_Text']) and row['Separated_Text'].strip():
+                    self.app.main_df.at[idx, 'Text_Toggle'] = "Separated_Text"
+                elif pd.notna(row['Translation']) and row['Translation'].strip():
                     self.app.main_df.at[idx, 'Text_Toggle'] = "Translation"
                 elif pd.notna(row['Formatted_Text']) and row['Formatted_Text'].strip():
                     self.app.main_df.at[idx, 'Text_Toggle'] = "Formatted_Text"
@@ -279,6 +281,8 @@ class ProjectIO:
                     "Original_Text": [text_content],
                     "Corrected_Text": [""],
                     "Formatted_Text": [""],
+                    "Separated_Text": [""],
+                    "Translation": [""],
                     "Image_Path": [image_path],
                     "Text_Path": [text_path],
                     "Text_Toggle": ["Original_Text"]
