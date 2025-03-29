@@ -328,7 +328,7 @@ class APIHandler:
                     contents=contents,
                     config=generate_content_config,
                 ):
-                    if hasattr(chunk, 'text'):
+                    if hasattr(chunk, 'text') and chunk.text is not None:
                         response_text += chunk.text
                 
                 # Validate the response
