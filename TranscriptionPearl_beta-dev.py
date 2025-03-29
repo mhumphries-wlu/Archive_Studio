@@ -297,6 +297,9 @@ class App(TkinterDnD.Tk):
         self.process_menu.add_command(label="Correct Text", 
                                      command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Correct_Text"))
         
+        self.process_menu.add_command(label="Format Text", 
+                                     command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Format_Text"))
+
         self.process_menu.add_separator()
         
         self.process_menu.add_command(label="Translate Text", 
@@ -309,7 +312,7 @@ class App(TkinterDnD.Tk):
         
         self.process_menu.add_separator()
         
-        self.process_menu.add_command(label="Identify Document Separation", 
+        self.process_menu.add_command(label="Identify Document Separators", 
                                      command=lambda: self.create_chunk_text_window(self.process_mode.get()))
         
         self.process_menu.add_command(label="Apply Separation", 
@@ -321,8 +324,6 @@ class App(TkinterDnD.Tk):
                                      command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Identify_Errors"))
         
         # Add Format_Text option to the Process menu after Correct_Text
-        self.process_menu.add_command(label="Format Text", 
-                                     command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Format_Text"))
         
         self.process_menu.add_separator()
         

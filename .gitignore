@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+
+# Ignore ENV variables
+.env
+
+# Ignore all images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff  
+
+# Ignore all PDF files
+*.pdf
+
+# Ignore all text files
+*.txt
