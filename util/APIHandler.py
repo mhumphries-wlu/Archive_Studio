@@ -495,7 +495,13 @@ class APIHandler:
         # Check if validation text exists in response
         try:
             if val_text in response:
-                # Split and get everything after the validation text
+                # Special handling for Chunk_Text and Chunk_Translation jobs with Document Break Lines format
+                if job_type in ["Chunk_Text", "Chunk_Translation"] and "Document Break Lines:" in response:
+                    # For chunk jobs, we want to return the entire response including the validation text
+                    # since we need to extract line numbers in the main app
+                    return response, index
+                    
+                # Standard processing for other job types - split and get everything after the validation text
                 processed_response = response.split(val_text, 1)[1].strip()
                 
                 # Special validation for Metadata responses

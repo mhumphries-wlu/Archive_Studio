@@ -323,10 +323,6 @@ class App(TkinterDnD.Tk):
         self.process_menu.add_command(label="Find Errors", 
                                      command=lambda: self.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Identify_Errors"))
         
-        # Add Format_Text option to the Process menu after Correct_Text
-        
-        self.process_menu.add_separator()
-        
         # Document Menu
 
         self.document_menu = tk.Menu(self.menubar, tearoff=0)
@@ -2461,26 +2457,6 @@ class App(TkinterDnD.Tk):
                 # We now allow multiple highlight types simultaneously
             elif ai_job == "Metadata":
                 self.extract_metadata_from_response(index, response)
-            elif ai_job == "Chunk_Text":
-                # Always store the response in Separated_Text, regardless of source
-                self.main_df.loc[index, 'Separated_Text'] = response
-                self.main_df.loc[index, 'Text_Toggle'] = "Separated_Text"
-                # Update display dropdown if this is the current page
-                if index == self.page_counter:
-                    self.text_display_var.set("Separated_Text")
-                
-                # Additional info about the source text if needed for debugging
-                source_text_type = getattr(self, 'chunk_text_source_var', tk.StringVar()).get()
-                if not source_text_type:
-                    source_text_type = "Corrected_Text"  # Default if not set
-                self.error_logging(f"Chunk_Text processed from {source_text_type} and saved to Separated_Text", level="DEBUG")
-            elif ai_job == "Chunk_Translation":
-                # Special job type for chunking translations
-                if pd.notna(self.main_df.loc[index, 'Translation']) and self.main_df.loc[index, 'Translation'].strip():
-                    self.main_df.loc[index, 'Translation'] = response
-                    # Update display dropdown if this is the current page and Translation was showing
-                    if index == self.page_counter and self.text_display_var.get() == "Translation":
-                        self.text_display_var.set("Translation")
             elif ai_job == "Auto_Rotate":
                 self.update_image_rotation(index, response)
             elif ai_job == "Identify_Errors":
@@ -3800,6 +3776,9 @@ class App(TkinterDnD.Tk):
             error_count = 0
             processed_indices = set()
             
+            # Dictionary to store line mappings for each document
+            line_mappings = {}
+            
             # Process in batches
             with ThreadPoolExecutor(max_workers=batch_size) as executor:
                 futures_to_index = {}
@@ -3824,6 +3803,10 @@ class App(TkinterDnD.Tk):
                         # Skip if no text to process
                         continue
                     
+                    # Format text with line numbers and store the mapping
+                    formatted_text, line_map = self.format_text_with_line_numbers(text_to_process)
+                    line_mappings[index] = (text_to_process, line_map)
+                    
                     # Get images
                     images_data = self.get_images_for_job(ai_job_type, index, row_data, job_params)
                     
@@ -3835,7 +3818,7 @@ class App(TkinterDnD.Tk):
                             user_prompt=job_params['user_prompt'],
                             temp=job_params['temp'],
                             image_data=images_data,
-                            text_to_process=text_to_process,
+                            text_to_process=formatted_text,
                             val_text=job_params['val_text'],
                             engine=job_params['engine'],
                             index=index,
@@ -3862,7 +3845,14 @@ class App(TkinterDnD.Tk):
                         if response == "Error":
                             error_count += 1
                         else:
-                            self.update_df_with_ai_job_response(ai_job_type, index, response)
+                            # Process the line number response to add separators
+                            if index in line_mappings:
+                                original_text, line_map = line_mappings[index]
+                                separated_text = self.insert_separators_by_line_numbers(original_text, response, line_map)
+                                self.update_df_with_chunk_result(index, separated_text)
+                            else:
+                                error_count += 1
+                                self.error_logging(f"Missing line mapping for index {index}")
                     except Exception as e:
                         error_count += 1
                         self.error_logging(f"Error processing future for index {futures_to_index[future]}: {str(e)}")
@@ -3933,6 +3923,9 @@ class App(TkinterDnD.Tk):
             error_count = 0
             processed_indices = set()
             
+            # Dictionary to store line mappings for each translation
+            line_mappings = {}
+            
             # Process in batches
             with ThreadPoolExecutor(max_workers=batch_size) as executor:
                 futures_to_index = {}
@@ -3946,6 +3939,10 @@ class App(TkinterDnD.Tk):
                     if not text_to_process.strip() or text_toggle != "Translation":
                         continue
                     
+                    # Format text with line numbers and store the mapping
+                    formatted_text, line_map = self.format_text_with_line_numbers(text_to_process)
+                    line_mappings[index] = (text_to_process, line_map)
+                    
                     # Get images
                     images_data = self.get_images_for_job("Chunk_Text", index, row_data, job_params)
                     
@@ -3957,7 +3954,7 @@ class App(TkinterDnD.Tk):
                             user_prompt=job_params['user_prompt'],
                             temp=job_params['temp'],
                             image_data=images_data,
-                            text_to_process=text_to_process,
+                            text_to_process=formatted_text,
                             val_text=job_params['val_text'],
                             engine=job_params['engine'],
                             index=index,
@@ -3984,8 +3981,21 @@ class App(TkinterDnD.Tk):
                         if response == "Error":
                             error_count += 1
                         else:
-                            # Use Chunk_Translation job type for updating
-                            self.update_df_with_ai_job_response("Chunk_Translation", index, response)
+                            # Process the line number response and update the Translation field
+                            if index in line_mappings:
+                                original_text, line_map = line_mappings[index]
+                                separated_text = self.insert_separators_by_line_numbers(original_text, response, line_map)
+                                
+                                # Update the Translation field directly
+                                self.main_df.loc[index, 'Translation'] = separated_text
+                                
+                                # Update display if this is the current page and Translation was showing
+                                if index == self.page_counter and self.text_display_var.get() == "Translation":
+                                    self.text_display_var.set("Translation")
+                                    self.load_text()
+                            else:
+                                error_count += 1
+                                self.error_logging(f"Missing line mapping for translation index {index}")
                     except Exception as e:
                         error_count += 1
                         self.error_logging(f"Error processing translation future for index {futures_to_index[future]}: {str(e)}")
@@ -4638,6 +4648,125 @@ class App(TkinterDnD.Tk):
                 delattr(self, 'temp_selected_source')
             if hasattr(self, 'temp_format_preset'):
                 delattr(self, 'temp_format_preset')
+
+    def format_text_with_line_numbers(self, text):
+        """
+        Format text with line numbers for chunking.
+        
+        Args:
+            text (str): The text to format with line numbers
+            
+        Returns:
+            tuple: (formatted_text, line_map) where formatted_text has line numbers and
+                  line_map is a dict mapping line numbers to original text lines
+        """
+        if not text or not text.strip():
+            return "", {}
+            
+        lines = text.strip().split('\n')
+        line_map = {}
+        formatted_lines = []
+        
+        for i, line in enumerate(lines, 1):
+            line_map[i] = line
+            formatted_lines.append(f"{i}: {line}")
+            
+        formatted_text = '\n'.join(formatted_lines)
+        return formatted_text, line_map
+
+    def insert_separators_by_line_numbers(self, original_text, line_numbers_response, line_map):
+        """
+        Insert document separators based on line numbers from the API response.
+        
+        Args:
+            original_text (str): The original text without line numbers
+            line_numbers_response (str): The API response containing line numbers where separators should be inserted
+            line_map (dict): Dictionary mapping line numbers to original text lines
+            
+        Returns:
+            str: Text with document separators inserted
+        """
+        try:
+            # Extract line numbers from the response
+            # The response should be in the format "Document Break Lines: 4;15;27"
+            # We need to extract the numbers after the validation text
+            
+            # Split by lines first to handle potential multi-line responses
+            lines = line_numbers_response.strip().split('\n')
+            line_numbers_str = None
+            
+            # Find the line containing line numbers
+            for line in lines:
+                if ":" in line:
+                    parts = line.split(":", 1)
+                    line_numbers_str = parts[1].strip()
+                    break
+            
+            if not line_numbers_str:
+                self.error_logging(f"Could not extract line numbers from response: {line_numbers_response}")
+                return original_text
+            
+            # Parse the line numbers, handling various formats
+            line_numbers = []
+            # Split by semicolons, or commas if semicolons are not found
+            separators = ";" if ";" in line_numbers_str else ","
+            number_strings = line_numbers_str.split(separators)
+            
+            for num_str in number_strings:
+                try:
+                    num = int(num_str.strip())
+                    line_numbers.append(num)
+                except ValueError:
+                    # Skip non-integer values
+                    continue
+            
+            # Sort line numbers for consistent processing
+            line_numbers.sort()
+            
+            if not line_numbers:
+                self.error_logging(f"No valid line numbers found in: {line_numbers_str}")
+                return original_text
+            
+            # Insert separators
+            lines = original_text.split('\n')
+            result_lines = []
+            
+            for i, line in enumerate(lines, 1):
+                if i in line_numbers:
+                    result_lines.append("*****")
+                result_lines.append(line)
+            
+            return '\n'.join(result_lines)
+            
+        except Exception as e:
+            self.error_logging(f"Error inserting separators: {str(e)}")
+            return original_text
+    
+    def update_df_with_chunk_result(self, index, separated_text):
+        """
+        Update the DataFrame with the chunked text result.
+        
+        Args:
+            index (int): The index in the DataFrame to update
+            separated_text (str): The text with separators inserted
+        """
+        try:
+            # Always store the response in Separated_Text, regardless of source
+            self.main_df.loc[index, 'Separated_Text'] = separated_text
+            self.main_df.loc[index, 'Text_Toggle'] = "Separated_Text"
+            
+            # Update display dropdown if this is the current page
+            if index == self.page_counter:
+                self.text_display_var.set("Separated_Text")
+            
+            # Additional info about the source text if needed for debugging
+            source_text_type = getattr(self, 'chunk_text_source_var', tk.StringVar()).get()
+            if not source_text_type:
+                source_text_type = "Corrected_Text"  # Default if not set
+            self.error_logging(f"Chunk_Text processed from {source_text_type} and saved to Separated_Text", level="DEBUG")
+            
+        except Exception as e:
+            self.error_logging(f"Error updating DataFrame with chunk result: {str(e)}")
 
 if __name__ == "__main__":
     try:

@@ -42,9 +42,9 @@ class Settings:
                 "name": "Letterbook",
                 "model": "gemini-2.0-flash",
                 "temperature": "0.2",
-                "general_instructions": f'''You are an expert in historical document analysis. You will be provided with an image of a page from a letterbook along with its transcription. These letterbooks contain a series of letters transcribed sequentially by a scribe, and letters may span multiple pages.
+                "general_instructions": f'''You are an expert in historical document analysis. You will be provided with a historical document with numbered lines. These letterbooks contain a series of letters transcribed sequentially by a scribe, and letters may span multiple pages.
 
-Your task is to insert a letter break marker ("*****") on a new line immediately before the beginning of each new letter. To do this accurately, follow these guidelines:
+Your task is to identify the line numbers immediately before the beginning of each new letter where a document separator should be inserted. To do this accurately, follow these guidelines:
 
 1. Identify a New Letter Opening:
 
@@ -64,61 +64,65 @@ No Break on Internal Paragraphs: Do not insert a letter break marker between par
 
 Uncertainty: When it is unclear whether a new letter is starting, rely on the absence of header elements and distinct formatting. In such cases, do not insert a break marker.
 
-In your response, begin by providing a brief explanation of how the above clues were evaluated. Then on a new line write "Transcription:" followed by the present transcription of the text, inserting the letter break marker ("*****") on a new line immediately before any confirmed new letter.
+In your response, begin by providing a brief explanation of how the above clues were evaluated. Then on a new line write "Document Break Lines:" followed by the line numbers where a document break should be inserted, separated by semicolons. 
+For example: "Document Break Lines: 4;15;27"
+
+These are the line numbers where a document separator should be placed immediately BEFORE that line. The document separator will mark the start of a new letter.
 
 Your objective is to ensure that break markers are inserted only when a new letter truly begins, avoiding incorrect breaks between paragraphs within the same letter.''',
                 "specific_instructions": "Document Text: {text_to_process}",
-                "val_text": "Transcription:",
+                "val_text": "Document Break Lines:",
                 "use_images": False
             },
             {
                 "name": "Diary",
                 "model": "gemini-2.0-flash",
                 "temperature": "0.2",
-                "general_instructions": f'''You are an expert in historical document analysis. You will be provided with a page from a historical diary that may contain part of a diary entry that continues from a previous page and/or onto the next page, or it may contain multiple diary entries.
-
-Your task is to insert an entry break marker ("*****") on a new line immediately before the beginning of each new diary entry (including the first entry on the page if it begins on this page). To do this accurately, follow these guidelines:
+                "general_instructions": f'''You are an expert in historical document analysis. You will receieve a page from a historical diary with numbered lines. Your task is to identify the line numbers on which each new diary entry begins (including the first text on the page if it begins on this page). To do this accurately, follow these guidelines:
 
 1. Identify a New Diary Entry Opening:
 
-Date Indicators: Look for temporal markers that typically begin a new entry (e.g., "January 23, 1789", "Monday 4th", "Saturday 4th", etc). These date markers will always be found at the beginning of a paragraph.
-
+Date Indicators: Look for temporal markers at the beginning of a paragraph(e.g., "January 23, 1789", "Monday 4th", "Saturday 4th", etc). Sometimes date elements like the year, month (including abbreviations), day of the week, and day of the month might appear over multiple lines. When this is the case, the entry begins with the first element of the date.
 Formatting Cues: Notice any clear changes in formatting such as marginal notations, paragraphing, indentation, line breaks, or that consistently indicate a new entry in this diary.
 
 2. Contextual Analysis:
 
-Chunk Boundaries: Be aware that the text you're analyzing might begin in the middle of an entry. If the text begins without a clear date marker but seems to continue from a previous page, it likely belongs to an entry that started on the previous page.
+Chunk Boundaries: Be aware that the text you're analyzing might begin in the middle of an entry. If the text begins without a clear date marker/element but seems to continue from a previous page, it likely belongs to an entry that started on the previous page.
 
 3. Avoiding False Breaks:
 
-No Break on Topic Changes: Do not insert an entry break marker when the diarist merely changes topics within the same day's entry.
+When the diarist merely changes topics within the same day's entry, it is not a new entry. Similarily, when the diarist merely starts a new paragraph without a date indicator, it is unlikely to be a new entry.
 
-No Break on New Paragraphs that Do Not Begin With Some Sort of Date Indicator: Do not insert an entry break marker when the diarist merely starts a new paragraph that does not begin a new entry, as identified by the Date Indicators above.
+4. Handling Uncertainty: If you cannot determine with reasonable confidence whether text represents a new entry, err on the side of continuity and do not insert a break marker.
 
-Handling Uncertainty: If you cannot determine with reasonable confidence whether text represents a new entry, err on the side of continuity and do not insert a break marker.
+*****
 
-In your response, begin by providing a brief explanation of how you identified entry breaks. Then on a new line write "Processed Diary Text:" followed by the exact text of the provided page with entry break markers ("*****") inserted on a new line immediately before each new diary entry.
+Handling the First Text on Page: be sure to include the line number of the first text on the page if it is a date indicator/element and otherwise appears to be a new entry.
+
+In your response, write "Document Break Lines:" followed by the line numbers where a document break should be inserted, separated by semicolons. Always include the first line number of the page if it is a date indicator or otherwise appears to be a new entry.
+For example: "Document Break Lines: 4;15;27". 
+
+These are the line numbers where a document separator should be placed immediately BEFORE that line. The document separator will mark the start of a new entry.
 
 Your objective is to preserve the original diary structure as accurately as possible, ensuring entries are properly delineated for future analysis.''',
-"specific_instructions": "Document Text: {text_to_process}",               
-"val_text": "Processed Diary Text:",
+                "specific_instructions": "Document Text: {text_to_process}",               
+                "val_text": "Document Break Lines:",
                 "use_images": False
             },
             {
                 "name": "Parish Register",
                 "model": "gemini-2.0-flash",
                 "temperature": "0.2",
-                "general_instructions": '''You are an expert in historical document analysis, specialized in identifying boundaries between distinct entries in a parish register of baptisms marriages, and burials. When presented with transcribed text and its corresponding page image, your task is to re-transcribe the text exactly as written, although any marginalia, spacing, etc should be standardized and formatted as follows:
+                "general_instructions": '''You are an expert in historical document analysis, specialized in identifying boundaries between distinct entries in a parish register of baptisms marriages, and burials. When presented with transcribed text with numbered lines, your task is to identify where new entries begin.
 
-Title of entry
-Content
-Signatures etc
+Your task is to identify the line numbers immediately before the beginning of each new entry (including the first entry on the page if it begins on this page). Skip this step when the first lines on a page began on the previous page.
 
-Preceed each new entry that begins on the current page with "*****" written on a new line. Skip this step when the first lines on a page began on the previous page.
+In your response, write any notes you need to that will help you. Then write "Document Break Lines:" followed by the line numbers where a document break should be inserted, separated by semicolons. 
+For example: "Document Break Lines: 4;15;27"
 
-In your response, write any notes you need to that will help you. Then write "Transcription: " followed by your re-formatted transcription and nothing else.''',
+These are the line numbers where a document separator should be placed immediately BEFORE that line. The document separator will mark the start of a new entry.''',
                 "specific_instructions": "Document Text: {text_to_process}",
-                "val_text": "Transcription:",
+                "val_text": "Document Break Lines:",
                 "use_images": False
             }
         ]
