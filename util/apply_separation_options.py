@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw
 from util.process_boxes import process_image_with_bounding_boxes, apply_separation_with_boxes_batched, get_split_images_dir, normalize_coordinates
 
 def create_separation_options_window(app):
+    
     """
     Creates a window with options for document separation methods.
     

@@ -3834,6 +3834,9 @@ class App(TkinterDnD.Tk):
                 for future in as_completed(futures_to_index):
                     try:
                         response, index = future.result()
+
+                        #Print the response
+                        print(response)
                         
                         # Only increment progress if this index hasn't been processed before
                         if index not in processed_indices:
@@ -4688,26 +4691,29 @@ class App(TkinterDnD.Tk):
         """
         try:
             # Extract line numbers from the response
-            # The response should be in the format "Document Break Lines: 4;15;27"
-            # We need to extract the numbers after the validation text
-            
-            # Split by lines first to handle potential multi-line responses
-            lines = line_numbers_response.strip().split('\n')
-            line_numbers_str = None
-            
-            # Find the line containing line numbers
-            for line in lines:
-                if ":" in line:
-                    parts = line.split(":", 1)
-                    line_numbers_str = parts[1].strip()
-                    break
-            
-            if not line_numbers_str:
-                self.error_logging(f"Could not extract line numbers from response: {line_numbers_response}")
-                return original_text
+            # The response should now be just the line numbers, e.g. "4;15;27"
+            # since the validation text has already been removed by _validate_response
             
             # Parse the line numbers, handling various formats
             line_numbers = []
+            
+            # The response might still contain explanatory text, so check if it contains digits
+            # and try to find the actual line numbers
+            line_numbers_str = line_numbers_response.strip()
+            
+            # If response still has multiple lines, look for a line with numbers
+            if '\n' in line_numbers_str:
+                for line in line_numbers_str.split('\n'):
+                    if any(c.isdigit() for c in line):
+                        # If this line has digits, use it
+                        line_numbers_str = line.strip()
+                        break
+            
+            # If there's a colon in the string, it might still have a label
+            if ':' in line_numbers_str:
+                parts = line_numbers_str.split(':', 1)
+                line_numbers_str = parts[1].strip()
+            
             # Split by semicolons, or commas if semicolons are not found
             separators = ";" if ";" in line_numbers_str else ","
             number_strings = line_numbers_str.split(separators)
