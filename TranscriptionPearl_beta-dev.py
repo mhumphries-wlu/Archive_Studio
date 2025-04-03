@@ -363,7 +363,7 @@ class App(TkinterDnD.Tk):
                                      command=lambda: self.create_chunk_text_window(self.process_mode.get()))
         
         self.process_menu.add_command(label="Apply Separation", 
-                                     command=self.open_document_separation_options)
+                                     command=self.create_document_separation_options_window)
         
         self.process_menu.add_separator()
         
@@ -410,7 +410,7 @@ class App(TkinterDnD.Tk):
         self.tools_menu.add_separator()
         self.tools_menu.add_command(
             label="Find Relevant Documents",
-            command=self.find_relevant_documents
+            command=self.create_find_relevant_documents_window
         )
 
     def create_key_bindings(self):
@@ -468,7 +468,7 @@ class App(TkinterDnD.Tk):
         self.bind("<Control-Shift-3>", lambda event: self.create_chunk_text_window("All Pages"))
         
         # Add key binding for document separation
-        self.bind("<Control-4>", lambda event: self.open_document_separation_options())
+        self.bind("<Control-4>", lambda event: self.create_document_separation_options_window())
 
         # Mouse bindings
         self.image_display.bind("<Control-MouseWheel>", self.image_handler.zoom)
@@ -479,49 +479,6 @@ class App(TkinterDnD.Tk):
         # Document Page Navigation Bindings (Example - adjust as needed)
         self.bind("<Alt-Left>", lambda event: self.document_page_nav(-1))
         self.bind("<Alt-Right>", lambda event: self.document_page_nav(1))
-
-    def create_collate_names_places_window(self):
-        """
-        A larger window with two text boxes for the collated lines from the LLM.
-        The user can manually edit or remove lines before applying replacements.
-        """
-        window = tk.Toplevel(self)
-        window.title("Collate Names & Places")
-        window.geometry("600x500")
-        window.grab_set()
-
-        # Frame for labels
-        lbl_frame = tk.Frame(window)
-        lbl_frame.pack(side="top", fill="x", pady=5)
-        
-        names_label = tk.Label(lbl_frame, text="Collated Names (edit as needed):")
-        names_label.pack(anchor="w", padx=5)
-
-        # Text display for Names
-        self.names_textbox = tk.Text(window, wrap="word", height=10)
-        self.names_textbox.pack(fill="both", expand=True, padx=5, pady=(0,10))
-        self.names_textbox.insert("1.0", self.collated_names_raw)
-
-        places_label = tk.Label(window, text="Collated Places (edit as needed):")
-        places_label.pack(anchor="w", padx=5)
-
-        # Text display for Places
-        self.places_textbox = tk.Text(window, wrap="word", height=10)
-        self.places_textbox.pack(fill="both", expand=True, padx=5, pady=(0,10))
-        self.places_textbox.insert("1.0", self.collated_places_raw)
-
-        # Buttons at bottom
-        btn_frame = tk.Frame(window)
-        btn_frame.pack(side="bottom", pady=10)
-
-        btn_names = tk.Button(btn_frame, text="Replace Names", command=self.replace_names_button)
-        btn_names.pack(side="left", padx=10)
-
-        btn_places = tk.Button(btn_frame, text="Replace Places", command=self.replace_places_button)
-        btn_places.pack(side="left", padx=10)
-
-        btn_cancel = tk.Button(btn_frame, text="Cancel", command=window.destroy)
-        btn_cancel.pack(side="left", padx=10)
 
     def replace_names_button(self):
         """
@@ -572,7 +529,337 @@ class App(TkinterDnD.Tk):
         text_widget.bind('<Control-f>', self.find_and_replace)
         text_widget.bind('<Control-z>', self.undo)
         text_widget.bind('<Control-y>', self.redo)
-           
+
+# Create Secondary Windows
+
+    def create_find_relevant_documents_window(self):
+        """Create a window for finding relevant documents using AI analysis"""
+        # Create the window
+        relevance_window = tk.Toplevel(self)
+        relevance_window.title("Find Relevant Documents")
+        relevance_window.geometry("600x400")
+        relevance_window.grab_set()  # Make window modal
+        
+        # Message explaining purpose
+        message_label = tk.Label(relevance_window, 
+            text="Describe what makes a document relevant to your research:",
+            font=("Calibri", 12))
+        message_label.pack(pady=15)
+        
+        # Create a large text box for the relevance criteria
+        criteria_frame = tk.Frame(relevance_window)
+        criteria_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        criteria_text = tk.Text(criteria_frame, wrap="word", height=10, undo=True)
+        criteria_text.pack(fill="both", expand=True, side="left")
+        
+        # Add scrollbar
+        scrollbar = tk.Scrollbar(criteria_frame, command=criteria_text.yview)
+        scrollbar.pack(side="right", fill="y")
+        criteria_text.config(yscrollcommand=scrollbar.set)
+        
+        # Create the text source selection dropdown
+        dropdown_frame = tk.Frame(relevance_window)
+        dropdown_frame.pack(pady=10)
+        
+        source_label = tk.Label(dropdown_frame, text="Text Source:")
+        source_label.pack(side="left", padx=5)
+        
+        # Create a StringVar for the text source dropdown
+        self.relevance_source_var = tk.StringVar()
+        
+        # Create text source options based on available data
+        source_options = []
+        if not self.main_df.empty:
+            row = self.page_counter
+            if pd.notna(self.main_df.loc[row, 'Original_Text']) and self.main_df.loc[row, 'Original_Text'].strip():
+                source_options.append("Original_Text")
+            if pd.notna(self.main_df.loc[row, 'Corrected_Text']) and self.main_df.loc[row, 'Corrected_Text'].strip():
+                source_options.append("Corrected_Text")
+            if pd.notna(self.main_df.loc[row, 'Formatted_Text']) and self.main_df.loc[row, 'Formatted_Text'].strip():
+                source_options.append("Formatted_Text")
+            if pd.notna(self.main_df.loc[row, 'Translation']) and self.main_df.loc[row, 'Translation'].strip():
+                source_options.append("Translation")
+            if pd.notna(self.main_df.loc[row, 'Separated_Text']) and self.main_df.loc[row, 'Separated_Text'].strip():
+                source_options.append("Separated_Text")
+        
+        # If no options, add some defaults
+        if not source_options:
+            source_options = ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]
+        
+        # Create the text source dropdown
+        source_dropdown = ttk.Combobox(dropdown_frame,
+                                    textvariable=self.relevance_source_var,
+                                    values=source_options,
+                                    state="readonly",
+                                    width=20)
+        source_dropdown.pack(side="left", padx=5)
+        
+        # Set a default value - prefer formatted or corrected text
+        if "Formatted_Text" in source_options:
+            self.relevance_source_var.set("Formatted_Text")
+        elif "Corrected_Text" in source_options:
+            self.relevance_source_var.set("Corrected_Text")
+        elif source_options:
+            self.relevance_source_var.set(source_options[0])
+        
+        # Mode selection for All Pages or Current Page
+        mode_frame = tk.Frame(relevance_window)
+        mode_frame.pack(pady=10)
+        
+        self.relevance_mode_var = tk.StringVar(value="All Pages")
+        
+        mode_label = tk.Label(mode_frame, text="Process:")
+        mode_label.pack(side="left", padx=5)
+        
+        current_radio = tk.Radiobutton(mode_frame, text="Current Page", variable=self.relevance_mode_var, value="Current Page")
+        current_radio.pack(side="left", padx=5)
+        
+        all_radio = tk.Radiobutton(mode_frame, text="All Pages", variable=self.relevance_mode_var, value="All Pages")
+        all_radio.pack(side="left", padx=5)
+        
+        # Buttons at the bottom
+        button_frame = tk.Frame(relevance_window)
+        button_frame.pack(pady=20)
+        
+        # Function to handle OK button
+        def on_ok():
+            criteria_text_content = criteria_text.get("1.0", "end-1c").strip()
+            if not criteria_text_content:
+                messagebox.showwarning("Warning", "Please enter relevance criteria.")
+                return
+                
+            selected_source = self.relevance_source_var.get()
+            mode = self.relevance_mode_var.get()
+            
+            # Close the window
+            relevance_window.destroy()
+            
+            # Process the relevance search
+            self.process_relevance_search(criteria_text_content, selected_source, mode)
+        
+        # Function to handle Cancel button
+        def on_cancel():
+            relevance_window.destroy()
+        
+        # Create buttons
+        ok_button = tk.Button(button_frame, text="OK", command=on_ok, width=10)
+        ok_button.pack(side="left", padx=10)
+        
+        cancel_button = tk.Button(button_frame, text="Cancel", command=on_cancel, width=10)
+        cancel_button.pack(side="left", padx=10)
+        
+        # Center the window
+        relevance_window.update_idletasks()
+        width = relevance_window.winfo_width()
+        height = relevance_window.winfo_height()
+        x = (relevance_window.winfo_screenwidth() // 2) - (width // 2)
+        y = (relevance_window.winfo_screenheight() // 2) - (height // 2)
+        relevance_window.geometry(f'{width}x{height}+{x}+{y}')
+        
+        # Bind keyboard shortcuts
+        relevance_window.bind("<Return>", lambda event: on_ok())
+        relevance_window.bind("<Escape>", lambda event: on_cancel())
+        
+        # Give focus to the text widget
+        criteria_text.focus_set()
+        
+        # Wait for the window to be closed
+        self.wait_window(relevance_window)
+
+    def create_collate_names_places_window(self):
+        """
+        A larger window with two text boxes for the collated lines from the LLM.
+        The user can manually edit or remove lines before applying replacements.
+        """
+        window = tk.Toplevel(self)
+        window.title("Collate Names & Places")
+        window.geometry("600x500")
+        window.grab_set()
+
+        # Frame for labels
+        lbl_frame = tk.Frame(window)
+        lbl_frame.pack(side="top", fill="x", pady=5)
+        
+        names_label = tk.Label(lbl_frame, text="Collated Names (edit as needed):")
+        names_label.pack(anchor="w", padx=5)
+
+        # Text display for Names
+        self.names_textbox = tk.Text(window, wrap="word", height=10)
+        self.names_textbox.pack(fill="both", expand=True, padx=5, pady=(0,10))
+        self.names_textbox.insert("1.0", self.collated_names_raw)
+
+        places_label = tk.Label(window, text="Collated Places (edit as needed):")
+        places_label.pack(anchor="w", padx=5)
+
+        # Text display for Places
+        self.places_textbox = tk.Text(window, wrap="word", height=10)
+        self.places_textbox.pack(fill="both", expand=True, padx=5, pady=(0,10))
+        self.places_textbox.insert("1.0", self.collated_places_raw)
+
+        # Buttons at bottom
+        btn_frame = tk.Frame(window)
+        btn_frame.pack(side="bottom", pady=10)
+
+        btn_names = tk.Button(btn_frame, text="Replace Names", command=self.replace_names_button)
+        btn_names.pack(side="left", padx=10)
+
+        btn_places = tk.Button(btn_frame, text="Replace Places", command=self.replace_places_button)
+        btn_places.pack(side="left", padx=10)
+
+        btn_cancel = tk.Button(btn_frame, text="Cancel", command=window.destroy)
+        btn_cancel.pack(side="left", padx=10)
+
+    def create_text_source_window(self, all_or_one_flag, ai_job):
+        """
+        Creates a window for selecting text source before running AI functions
+        """
+        # Create the window
+        source_window = tk.Toplevel(self)
+        source_window.title(f"Select {'Format Preset and ' if ai_job == 'Format_Text' else ''}Text Source for {ai_job.replace('_', ' ')}")
+        source_window.geometry("400x300" if ai_job == "Format_Text" else "400x250")  
+        source_window.grab_set()  # Make window modal
+        
+        # Message explaining purpose
+        message_label = tk.Label(source_window, 
+            text=f"Select {'the format preset and ' if ai_job == 'Format_Text' else ''}the text source to process:",
+            font=("Calibri", 12))
+        message_label.pack(pady=15)
+        
+        # Add format preset selection for Format_Text
+        format_frame = None
+        if ai_job == "Format_Text":
+            format_frame = tk.Frame(source_window)
+            format_frame.pack(pady=10)
+            
+            format_label = tk.Label(format_frame, text="Format Preset:")
+            format_label.pack(side="left", padx=5)
+            
+            # Create a StringVar for the format preset dropdown
+            self.format_preset_var = tk.StringVar()
+            
+            # Get available format presets
+            format_options = [preset.get('name', f"Preset {i+1}") for i, preset in enumerate(self.settings.format_presets)]
+            
+            # Create the format preset dropdown
+            format_dropdown = ttk.Combobox(format_frame,
+                                         textvariable=self.format_preset_var,
+                                         values=format_options,
+                                         state="readonly",
+                                         width=20)
+            format_dropdown.pack(side="left", padx=5)
+            
+            # Set default to first format preset
+            if format_options:
+                self.format_preset_var.set(format_options[0])
+        
+        # Create the text source selection dropdown
+        dropdown_frame = tk.Frame(source_window)
+        dropdown_frame.pack(pady=10)
+        
+        source_label = tk.Label(dropdown_frame, text="Text Source:")
+        source_label.pack(side="left", padx=5)
+        
+        # Create a StringVar for the text source dropdown
+        self.text_source_var = tk.StringVar()
+        
+        # Create text source options based on available data
+        source_options = []
+        if not self.main_df.empty:
+            row = self.page_counter
+            if pd.notna(self.main_df.loc[row, 'Original_Text']) and self.main_df.loc[row, 'Original_Text'].strip():
+                source_options.append("Original_Text")
+            if pd.notna(self.main_df.loc[row, 'Corrected_Text']) and self.main_df.loc[row, 'Corrected_Text'].strip():
+                source_options.append("Corrected_Text")
+            if pd.notna(self.main_df.loc[row, 'Formatted_Text']) and self.main_df.loc[row, 'Formatted_Text'].strip():
+                source_options.append("Formatted_Text")
+            if pd.notna(self.main_df.loc[row, 'Translation']) and self.main_df.loc[row, 'Translation'].strip():
+                source_options.append("Translation")
+            if pd.notna(self.main_df.loc[row, 'Separated_Text']) and self.main_df.loc[row, 'Separated_Text'].strip():
+                source_options.append("Separated_Text")
+        
+        # If no options, add some defaults
+        if not source_options:
+            source_options = ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]
+        
+        # Create the text source dropdown
+        source_dropdown = ttk.Combobox(dropdown_frame,
+                                    textvariable=self.text_source_var,
+                                    values=source_options,
+                                    state="readonly",
+                                    width=20)
+        source_dropdown.pack(side="left", padx=5)
+        
+        # Set a sensible default based on the AI job
+        if "Correct_Text" == ai_job:
+            # For correction, prefer Original_Text
+            if "Original_Text" in source_options:
+                self.text_source_var.set("Original_Text")
+            else:
+                self.text_source_var.set(source_options[0])
+        elif "Translation" == ai_job:
+            # For translation, prefer Corrected_Text, then Formatted_Text, then Original_Text
+            if "Corrected_Text" in source_options:
+                self.text_source_var.set("Corrected_Text")
+            elif "Formatted_Text" in source_options:
+                self.text_source_var.set("Formatted_Text")
+            elif "Original_Text" in source_options:
+                self.text_source_var.set("Original_Text")
+            else:
+                self.text_source_var.set(source_options[0])
+        elif "Identify_Errors" == ai_job:
+            # For error identification, prefer Corrected_Text
+            if "Corrected_Text" in source_options:
+                self.text_source_var.set("Corrected_Text")
+            elif "Formatted_Text" in source_options:
+                self.text_source_var.set("Formatted_Text")
+            else:
+                self.text_source_var.set(source_options[0])
+        elif "Format_Text" == ai_job:
+            # For formatting, prefer Corrected_Text, then Original_Text
+            if "Corrected_Text" in source_options:
+                self.text_source_var.set("Corrected_Text")
+            elif "Original_Text" in source_options:
+                self.text_source_var.set("Original_Text")
+            else:
+                self.text_source_var.set(source_options[0])
+        else:
+            # Default to first option
+            self.text_source_var.set(source_options[0])
+        
+        # Buttons frame
+        button_frame = tk.Frame(source_window)
+        button_frame.pack(pady=20)
+        
+        # Function to handle OK button
+        def on_ok():
+            # Close the window
+            source_window.destroy()
+            # Run the AI function with the selected parameters
+            self.process_ai_with_selected_source(all_or_one_flag, ai_job)
+        
+        # Function to handle Cancel button
+        def on_cancel():
+            source_window.destroy()
+        
+        # Create buttons
+        ok_button = tk.Button(button_frame, text="OK", command=on_ok, width=10)
+        ok_button.pack(side="left", padx=10)
+        
+        cancel_button = tk.Button(button_frame, text="Cancel", command=on_cancel, width=10)
+        cancel_button.pack(side="left", padx=10)
+        
+        # Center the window on the screen
+        source_window.update_idletasks()
+        width = source_window.winfo_width()
+        height = source_window.winfo_height()
+        x = (source_window.winfo_screenwidth() // 2) - (width // 2)
+        y = (source_window.winfo_screenheight() // 2) - (height // 2)
+        source_window.geometry(f'{width}x{height}+{x}+{y}')
+        
+        # Wait for the window to be closed
+        self.wait_window(source_window)
+         
     def create_chunk_text_window(self, all_or_one_flag):
         """
         Creates a window for selecting document type before running Chunk_Text
@@ -673,6 +960,62 @@ class App(TkinterDnD.Tk):
         
         # Wait for the window to be closed
         self.wait_window(chunk_window)
+
+    def create_document_separation_options_window(self):
+        """Opens a window with document separation options."""
+        try:
+            # First check if any separators exist in the document
+            has_separators = False
+            for index, row in self.main_df.iterrows():
+                # Check all text columns
+                for col in ['Original_Text', 'Corrected_Text', 'Formatted_Text', 'Translation', 'Separated_Text']:
+                    if col in self.main_df.columns and pd.notna(row.get(col)) and isinstance(row.get(col), str):
+                        # Use regex to look for 5 or more consecutive asterisks (allowing for whitespace)
+                        if re.search(r'\*{5,}', row.get(col)):
+                            has_separators = True
+                            break
+                if has_separators:
+                    break
+            
+            # If no separators found, warn the user and don't open the window
+            if not has_separators:
+                messagebox.showwarning(
+                    "No Separators Found", 
+                    "No document separators ('*****') were found in any text column. "
+                    "Please add separators before applying document separation."
+                )
+                return
+                
+            # If separators exist, proceed with opening the window
+            from util.apply_separation_options import create_separation_options_window
+            
+            # Fix for the By Page / By Row dropdown issue
+            def fix_separation_dropdown(options_window):
+                # Find the mode dropdown in the window's children
+                for widget in options_window.winfo_children():
+                    if isinstance(widget, tk.Frame):
+                        for child in widget.winfo_children():
+                            if isinstance(child, tk.OptionMenu):
+                                # Reset the dropdown state to make it properly active
+                                child.config(state="normal")
+                                # If there's a StringVar attached to it, verify it has a valid value
+                                for var in options_window.winfo_variables():
+                                    if isinstance(var, tk.StringVar) and var.get() in ["By Page", "By Row"]:
+                                        # Ensure it has a valid selection
+                                        if not var.get():
+                                            var.set("By Page")
+            
+            # Create the window with the fix applied afterward
+            options_window = create_separation_options_window(self)
+            
+            # Apply the fix if the window was created
+            if options_window:
+                self.after(100, lambda: fix_separation_dropdown(options_window))
+                
+        finally:
+            # Make sure buttons are properly enabled
+            if self.button1['state'] == "disabled" and self.button2['state'] == "disabled":
+                self.toggle_button_state()
 
 # Initialize Settings Functions
 
@@ -1034,6 +1377,11 @@ class App(TkinterDnD.Tk):
             # Should only happen if relevant_indices was initially empty
             messagebox.showinfo("Not Found", "No other relevant documents found.")
 
+    def document_page_nav(self, direction):
+        """Dummy function for document page navigation buttons."""
+        print(f"Document Page Navigation called with direction: {direction}") # Debug print
+        pass # Placeholder for future implementation
+    
 # Image Functions
 
     def resize_image(self, image_path, output_path, max_size=1980):
@@ -1290,6 +1638,7 @@ class App(TkinterDnD.Tk):
         )
         if pdf_file:
             self.open_pdf(pdf_file)
+
 
 # Loading Functions
 
@@ -1927,6 +2276,102 @@ class App(TkinterDnD.Tk):
 
             self.quit()
 
+    def format_text_with_line_numbers(self, text):
+        """
+        Format text with line numbers for chunking.
+        
+        Args:
+            text (str): The text to format with line numbers
+            
+        Returns:
+            tuple: (formatted_text, line_map) where formatted_text has line numbers and
+                  line_map is a dict mapping line numbers to original text lines
+        """
+        if not text or not text.strip():
+            return "", {}
+            
+        lines = text.strip().split('\n')
+        line_map = {}
+        formatted_lines = []
+        
+        for i, line in enumerate(lines, 1):
+            line_map[i] = line
+            formatted_lines.append(f"{i}: {line}")
+            
+        formatted_text = '\n'.join(formatted_lines)
+        return formatted_text, line_map
+
+    def insert_separators_by_line_numbers(self, original_text, line_numbers_response, line_map):
+        """
+        Insert document separators based on line numbers from the API response.
+        
+        Args:
+            original_text (str): The original text without line numbers
+            line_numbers_response (str): The API response containing line numbers where separators should be inserted
+            line_map (dict): Dictionary mapping line numbers to original text lines
+            
+        Returns:
+            str: Text with document separators inserted
+        """
+        try:
+            # Extract line numbers from the response
+            # The response should now be just the line numbers, e.g. "4;15;27"
+            # since the validation text has already been removed by _validate_response
+            
+            # Parse the line numbers, handling various formats
+            line_numbers = []
+            
+            # The response might still contain explanatory text, so check if it contains digits
+            # and try to find the actual line numbers
+            line_numbers_str = line_numbers_response.strip()
+            
+            # If response still has multiple lines, look for a line with numbers
+            if '\n' in line_numbers_str:
+                for line in line_numbers_str.split('\n'):
+                    if any(c.isdigit() for c in line):
+                        # If this line has digits, use it
+                        line_numbers_str = line.strip()
+                        break
+            
+            # If there's a colon in the string, it might still have a label
+            if ':' in line_numbers_str:
+                parts = line_numbers_str.split(':', 1)
+                line_numbers_str = parts[1].strip()
+            
+            # Split by semicolons, or commas if semicolons are not found
+            separators = ";" if ";" in line_numbers_str else ","
+            number_strings = line_numbers_str.split(separators)
+            
+            for num_str in number_strings:
+                try:
+                    num = int(num_str.strip())
+                    line_numbers.append(num)
+                except ValueError:
+                    # Skip non-integer values
+                    continue
+            
+            # Sort line numbers for consistent processing
+            line_numbers.sort()
+            
+            if not line_numbers:
+                self.error_logging(f"No valid line numbers found in: {line_numbers_str}")
+                return original_text
+            
+            # Insert separators
+            lines = original_text.split('\n')
+            result_lines = []
+            
+            for i, line in enumerate(lines, 1):
+                if i in line_numbers:
+                    result_lines.append("*****")
+                result_lines.append(line)
+            
+            return '\n'.join(result_lines)
+            
+        except Exception as e:
+            self.error_logging(f"Error inserting separators: {str(e)}")
+            return original_text
+    
 # GUI Actions / Toggles
 
     def run_collation_and_open_window(self):
@@ -2116,7 +2561,15 @@ class App(TkinterDnD.Tk):
 
         self.load_text()
     
-# Highlighting Functions
+    def toggle_relevance_display(self, event=None):
+         """Toggle the visibility of the entire relevance section (dropdown and buttons)"""
+         self.show_relevance.set(not self.show_relevance.get())
+         self.toggle_relevance_visibility() # This now handles dropdown and buttons together
+
+    def toggle_nav_display(self, event=None):
+        """Toggle the visibility of the document navigation controls"""
+        self.show_page_nav.set(not self.show_page_nav.get())
+        self.toggle_page_nav_visibility()
 
     def toggle_highlight_options(self):
         """Update highlight display based on toggle states without mutual exclusivity"""
@@ -2136,6 +2589,124 @@ class App(TkinterDnD.Tk):
         # Update menu item states
         self.update_highlight_menu_states()
 
+    def toggle_relevance_visibility(self):
+        """Toggles the visibility of the relevance dropdown, label, AND navigation buttons."""
+        if self.show_relevance.get():
+            # Show relevance elements
+            self.relevance_label.pack(side="left", padx=2)
+            self.relevance_dropdown.pack(side="left", padx=2)
+            # Show navigation buttons directly
+            self.relevant_back_button.pack(side="left", padx=(5, 2))
+            self.relevant_forward_button.pack(side="left", padx=2)
+        else:
+            # Hide relevance elements
+            self.relevance_label.pack_forget()
+            self.relevance_dropdown.pack_forget()
+            # Hide navigation buttons directly
+            self.relevant_back_button.pack_forget()
+            self.relevant_forward_button.pack_forget()
+
+    def toggle_page_nav_visibility(self):
+        """Toggles the visibility of the document page navigation controls."""
+        if self.show_page_nav.get():
+            self.doc_page_label.pack(side="left", padx=(5, 2))
+            self.doc_button1.pack(side="left", padx=2)
+            self.doc_button2.pack(side="left", padx=2)
+            self.doc_page_counter_label.pack(side="left", padx=2)
+            self.doc_button4.pack(side="left", padx=2)
+            self.doc_button5.pack(side="left", padx=2)
+        else:
+            self.doc_page_label.pack_forget()
+            self.doc_button1.pack_forget()
+            self.doc_button2.pack_forget()
+            self.doc_page_counter_label.pack_forget()
+            self.doc_button4.pack_forget()
+            self.doc_button5.pack_forget()
+
+    def update_highlight_menu_states(self):
+        """Enable or disable highlight menu items based on data availability"""
+        if self.main_df.empty or self.page_counter < 0 or self.page_counter >= len(self.main_df):
+            # Disable all highlight options if no data is loaded
+            self.document_menu.entryconfig("Highlight Names", state="disabled")
+            self.document_menu.entryconfig("Highlight Places", state="disabled")
+            self.document_menu.entryconfig("Highlight Changes", state="disabled")
+            self.document_menu.entryconfig("Highlight Errors", state="disabled")
+            return
+            
+        # Get current page data
+        index = self.page_counter
+        current_toggle = self.main_df.loc[index, 'Text_Toggle']
+        
+        # Check for names data
+        has_names = False
+        if 'People' in self.main_df.columns:
+            names = self.main_df.loc[index, 'People']
+            has_names = pd.notna(names) and names.strip() != ""
+        
+        # Only enable the menu item if there's data, never disable the toggle if already on
+        self.document_menu.entryconfig("Highlight Names", state="normal" if has_names else "disabled")
+        
+        # Check for places data
+        has_places = False
+        if 'Places' in self.main_df.columns:
+            places = self.main_df.loc[index, 'Places']
+            has_places = pd.notna(places) and places.strip() != ""
+        
+        # Only enable the menu item if there's data, never disable the toggle if already on
+        self.document_menu.entryconfig("Highlight Places", state="normal" if has_places else "disabled")
+        
+        # Check for changes - needs at least two text versions
+        has_changes = False
+        if current_toggle == "Corrected_Text":
+            original_text = self.main_df.loc[index, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
+            Corrected_Text = self.main_df.loc[index, 'Corrected_Text'] if 'Corrected_Text' in self.main_df.columns else ""
+            has_changes = (pd.notna(original_text) and original_text.strip() != "" and 
+                          pd.notna(Corrected_Text) and Corrected_Text.strip() != "")
+        elif current_toggle == "Formatted_Text":
+            Corrected_Text = self.main_df.loc[index, 'Corrected_Text'] if 'Corrected_Text' in self.main_df.columns else ""
+            Formatted_Text = self.main_df.loc[index, 'Formatted_Text'] if 'Formatted_Text' in self.main_df.columns else ""
+            has_changes = (pd.notna(Corrected_Text) and Corrected_Text.strip() != "" and 
+                          pd.notna(Formatted_Text) and Formatted_Text.strip() != "")
+            if not has_changes:
+                # Try with Original_Text if Corrected_Text is empty
+                original_text = self.main_df.loc[index, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
+                has_changes = (pd.notna(original_text) and original_text.strip() != "" and 
+                              pd.notna(Formatted_Text) and Formatted_Text.strip() != "")
+        elif current_toggle == "Translation":
+            # Add check for Translation vs Original Text or Corrected_Text
+            original_text = self.main_df.loc[index, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
+            Corrected_Text = self.main_df.loc[index, 'Corrected_Text'] if 'Corrected_Text' in self.main_df.columns else ""
+            translation = self.main_df.loc[index, 'Translation'] if 'Translation' in self.main_df.columns else ""
+            
+            has_changes = (pd.notna(translation) and translation.strip() != "") and (
+                (pd.notna(original_text) and original_text.strip() != "") or
+                (pd.notna(Corrected_Text) and Corrected_Text.strip() != "")
+            )
+        
+        # Only enable the menu item if there's data, never disable the toggle if already on
+        self.document_menu.entryconfig("Highlight Changes", state="normal" if has_changes else "disabled")
+        
+        # Check for errors data - must have data and be viewing the right text version
+        has_errors = False
+        current_display = self.text_display_var.get()
+        if 'Errors' in self.main_df.columns and 'Errors_Source' in self.main_df.columns:
+            errors = self.main_df.loc[index, 'Errors']
+            errors_source = self.main_df.loc[index, 'Errors_Source']
+            
+            # Only count errors if they exist and apply to the current text version
+            has_errors = (pd.notna(errors) and errors.strip() != "" and
+                         (not errors_source or errors_source == current_display))
+        
+        # Only enable the menu item if there's applicable errors data
+        self.document_menu.entryconfig("Highlight Errors", state="normal" if has_errors else "disabled")
+
+    def update_separation_menu_state(self, state="normal"):
+        """Update the state of the document separation menu items."""
+        # Always keep the Apply Separation menu item enabled
+        self.process_menu.entryconfig("Apply Separation", state="normal")
+
+# Highlighting Functions
+    
     def highlight_names_or_places(self):
         """Highlight names and/or places in the text based on DataFrame data"""
         # Clear existing highlights first
@@ -2495,7 +3066,50 @@ class App(TkinterDnD.Tk):
         except Exception as e:
             self.error_logging(f"Error highlighting errors: {str(e)}")
 
-# DF Update Functions
+# GUI and DF Update Functions
+
+    def refresh_display(self):
+        """Refresh the current image and text display with proper path handling"""
+        if not self.main_df.empty:
+            # Ensure page_counter is within valid bounds
+            self.page_counter = min(self.page_counter, len(self.main_df) - 1)
+            self.page_counter = max(0, self.page_counter)
+
+            try:
+                # Get image path
+                image_path = self.main_df.iloc[self.page_counter]['Image_Path']
+                
+                # Convert to absolute path if necessary
+                if not os.path.isabs(image_path):
+                    image_path = os.path.join(self.project_directory, image_path)
+                
+                # Verify file exists
+                if os.path.exists(image_path):
+                    self.current_image_path = image_path
+                    self.image_handler.load_image(self.current_image_path)
+                    
+                    # Make sure the text_display_var matches the Text_Toggle
+                    current_toggle = self.main_df.loc[self.page_counter, 'Text_Toggle']
+                    self.text_display_var.set(current_toggle if pd.notna(current_toggle) else "None")
+                    
+                    self.load_text()
+                else:
+                    messagebox.showerror("Error", f"Image file not found: {image_path}")
+                    
+                self.counter_update()
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to refresh display: {str(e)}")
+                self.error_logging(f"Refresh display error: {str(e)}")
+        else:
+            self.error_logging("No images to display", level="INFO")
+            # Clear the image display
+            self.image_display.delete("all")
+            # Clear the text display
+            self.text_display.delete("1.0", tk.END)
+            # Reset the text display dropdown to "None"
+            self.text_display_var.set("None")
+            self.counter_update()
 
     def update_df(self):
         self.save_toggle = False
@@ -2819,7 +3433,24 @@ class App(TkinterDnD.Tk):
         self.load_text()
         self.counter_update()
 
-# External Tools
+# Callbacks
+
+    def on_relevance_change(self, event=None):
+        """Callback function when the relevance dropdown selection changes."""
+        if self.main_df.empty:
+            return
+
+        index = self.page_counter
+        selected_relevance = self.relevance_var.get()
+
+        # Update the 'Relevance' column in the DataFrame for the current row
+        if 'Relevance' in self.main_df.columns:
+            self.main_df.loc[index, 'Relevance'] = selected_relevance
+            print(f"Updated Relevance for index {index} to: {selected_relevance}") # Debug print
+        else:
+            print(f"Warning: 'Relevance' column not found in main_df.") # Debug print
+
+# Function Handlers
 
     def find_and_replace(self, event=None):
         self.find_replace.update_main_df(self.main_df)
@@ -3018,6 +3649,63 @@ class App(TkinterDnD.Tk):
             messagebox.showerror("Error", f"Failed to process edited images: {str(e)}")
             self.error_logging(f"Process edited image error: {str(e)}") 
 
+    def apply_document_separation(self):
+        """Apply document separation based on ***** markers and replace main_df with the compiled documents."""
+        try:
+            # Check if any pages have no recognized text
+            unrecognized_pages = self.main_df[
+                (self.main_df['Original_Text'].isna()) | 
+                (self.main_df['Original_Text'] == '')
+            ]
+            
+            if not unrecognized_pages.empty:
+                warning_message = (
+                    f"Warning: {len(unrecognized_pages)} page(s) have no recognized text and will be lost during separation. "
+                    "Do you want to continue anyway?"
+                )
+                if not messagebox.askyesno("Unrecognized Pages", warning_message):
+                    return
+            
+            from util.apply_separation_options import apply_document_separation
+            apply_document_separation(self)
+        finally:
+            # Make sure buttons are re-enabled regardless of success or failure
+            self.toggle_button_state()
+            
+    def apply_document_separation_with_boxes(self):
+        """Apply document separation based on ***** markers and replace main_df with the compiled documents,
+        while also creating cropped images for each section."""
+        try:
+            # Check if any pages have no recognized text
+            unrecognized_pages = self.main_df[
+                (self.main_df['Original_Text'].isna()) | 
+                (self.main_df['Original_Text'] == '')
+            ]
+            
+            if not unrecognized_pages.empty:
+                warning_message = (
+                    f"Warning: {len(unrecognized_pages)} page(s) have no recognized text and will be lost during separation. "
+                    "Do you want to continue anyway?"
+                )
+                if not messagebox.askyesno("Unrecognized Pages", warning_message):
+                    return
+                    
+            from util.apply_separation_options import apply_document_separation_with_boxes
+            apply_document_separation_with_boxes(self)
+        finally:
+            # Make sure buttons are re-enabled regardless of success or failure
+            self.toggle_button_state()  
+
+    def run_collation_and_open_window(self):
+        """
+        First collects names and places from the LLM, then shows the GUI for user editing.
+        """
+        # 1) Collect suggestions from the LLM automatically
+        self.collate_names_and_places()
+
+        # 2) Now show the user a GUI with the raw lines
+        self.create_collate_names_places_window()
+
     async def process_api_request(self, system_prompt, user_prompt, temp, image_data, 
                                     text_to_process, val_text, engine, index, 
                                     is_base64=True, formatting_function=False, ai_job=None, job_params=None):
@@ -3041,7 +3729,7 @@ class App(TkinterDnD.Tk):
             print(f"API Error: {e}")
             return "Error", index
 
-# AI Functions
+# General AI Functions
 
     def ai_function(self, all_or_one_flag="All Pages", ai_job="HTR", batch_size=50):
         # Check if we should show text source selection window
@@ -4211,136 +4899,6 @@ class App(TkinterDnD.Tk):
             except:
                 pass
 
-    def run_collation_and_open_window(self):
-        """
-        First collects names and places from the LLM, then shows the GUI for user editing.
-        """
-        # 1) Collect suggestions from the LLM automatically
-        self.collate_names_and_places()
-
-        # 2) Now show the user a GUI with the raw lines
-        self.create_collate_names_places_window()
-
-    def refresh_display(self):
-        """Refresh the current image and text display with proper path handling"""
-        if not self.main_df.empty:
-            # Ensure page_counter is within valid bounds
-            self.page_counter = min(self.page_counter, len(self.main_df) - 1)
-            self.page_counter = max(0, self.page_counter)
-
-            try:
-                # Get image path
-                image_path = self.main_df.iloc[self.page_counter]['Image_Path']
-                
-                # Convert to absolute path if necessary
-                if not os.path.isabs(image_path):
-                    image_path = os.path.join(self.project_directory, image_path)
-                
-                # Verify file exists
-                if os.path.exists(image_path):
-                    self.current_image_path = image_path
-                    self.image_handler.load_image(self.current_image_path)
-                    
-                    # Make sure the text_display_var matches the Text_Toggle
-                    current_toggle = self.main_df.loc[self.page_counter, 'Text_Toggle']
-                    self.text_display_var.set(current_toggle if pd.notna(current_toggle) else "None")
-                    
-                    self.load_text()
-                else:
-                    messagebox.showerror("Error", f"Image file not found: {image_path}")
-                    
-                self.counter_update()
-                
-            except Exception as e:
-                messagebox.showerror("Error", f"Failed to refresh display: {str(e)}")
-                self.error_logging(f"Refresh display error: {str(e)}")
-        else:
-            self.error_logging("No images to display", level="INFO")
-            # Clear the image display
-            self.image_display.delete("all")
-            # Clear the text display
-            self.text_display.delete("1.0", tk.END)
-            # Reset the text display dropdown to "None"
-            self.text_display_var.set("None")
-            self.counter_update()
-
-    def update_highlight_menu_states(self):
-        """Enable or disable highlight menu items based on data availability"""
-        if self.main_df.empty or self.page_counter < 0 or self.page_counter >= len(self.main_df):
-            # Disable all highlight options if no data is loaded
-            self.document_menu.entryconfig("Highlight Names", state="disabled")
-            self.document_menu.entryconfig("Highlight Places", state="disabled")
-            self.document_menu.entryconfig("Highlight Changes", state="disabled")
-            self.document_menu.entryconfig("Highlight Errors", state="disabled")
-            return
-            
-        # Get current page data
-        index = self.page_counter
-        current_toggle = self.main_df.loc[index, 'Text_Toggle']
-        
-        # Check for names data
-        has_names = False
-        if 'People' in self.main_df.columns:
-            names = self.main_df.loc[index, 'People']
-            has_names = pd.notna(names) and names.strip() != ""
-        
-        # Only enable the menu item if there's data, never disable the toggle if already on
-        self.document_menu.entryconfig("Highlight Names", state="normal" if has_names else "disabled")
-        
-        # Check for places data
-        has_places = False
-        if 'Places' in self.main_df.columns:
-            places = self.main_df.loc[index, 'Places']
-            has_places = pd.notna(places) and places.strip() != ""
-        
-        # Only enable the menu item if there's data, never disable the toggle if already on
-        self.document_menu.entryconfig("Highlight Places", state="normal" if has_places else "disabled")
-        
-        # Check for changes - needs at least two text versions
-        has_changes = False
-        if current_toggle == "Corrected_Text":
-            original_text = self.main_df.loc[index, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
-            Corrected_Text = self.main_df.loc[index, 'Corrected_Text'] if 'Corrected_Text' in self.main_df.columns else ""
-            has_changes = (pd.notna(original_text) and original_text.strip() != "" and 
-                          pd.notna(Corrected_Text) and Corrected_Text.strip() != "")
-        elif current_toggle == "Formatted_Text":
-            Corrected_Text = self.main_df.loc[index, 'Corrected_Text'] if 'Corrected_Text' in self.main_df.columns else ""
-            Formatted_Text = self.main_df.loc[index, 'Formatted_Text'] if 'Formatted_Text' in self.main_df.columns else ""
-            has_changes = (pd.notna(Corrected_Text) and Corrected_Text.strip() != "" and 
-                          pd.notna(Formatted_Text) and Formatted_Text.strip() != "")
-            if not has_changes:
-                # Try with Original_Text if Corrected_Text is empty
-                original_text = self.main_df.loc[index, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
-                has_changes = (pd.notna(original_text) and original_text.strip() != "" and 
-                              pd.notna(Formatted_Text) and Formatted_Text.strip() != "")
-        elif current_toggle == "Translation":
-            # Add check for Translation vs Original Text or Corrected_Text
-            original_text = self.main_df.loc[index, 'Original_Text'] if 'Original_Text' in self.main_df.columns else ""
-            Corrected_Text = self.main_df.loc[index, 'Corrected_Text'] if 'Corrected_Text' in self.main_df.columns else ""
-            translation = self.main_df.loc[index, 'Translation'] if 'Translation' in self.main_df.columns else ""
-            
-            has_changes = (pd.notna(translation) and translation.strip() != "") and (
-                (pd.notna(original_text) and original_text.strip() != "") or
-                (pd.notna(Corrected_Text) and Corrected_Text.strip() != "")
-            )
-        
-        # Only enable the menu item if there's data, never disable the toggle if already on
-        self.document_menu.entryconfig("Highlight Changes", state="normal" if has_changes else "disabled")
-        
-        # Check for errors data - must have data and be viewing the right text version
-        has_errors = False
-        current_display = self.text_display_var.get()
-        if 'Errors' in self.main_df.columns and 'Errors_Source' in self.main_df.columns:
-            errors = self.main_df.loc[index, 'Errors']
-            errors_source = self.main_df.loc[index, 'Errors_Source']
-            
-            # Only count errors if they exist and apply to the current text version
-            has_errors = (pd.notna(errors) and errors.strip() != "" and
-                         (not errors_source or errors_source == current_display))
-        
-        # Only enable the menu item if there's applicable errors data
-        self.document_menu.entryconfig("Highlight Errors", state="normal" if has_errors else "disabled")
-
     def extract_metadata_from_response(self, index, response):
         """
         Extract metadata from an AI response and update the DataFrame columns.
@@ -4539,264 +5097,6 @@ class App(TkinterDnD.Tk):
             print(f"ERROR: Exception extracting metadata for index {index}: {str(e)}")
             return False
 
-    def apply_document_separation(self):
-        """Apply document separation based on ***** markers and replace main_df with the compiled documents."""
-        try:
-            # Check if any pages have no recognized text
-            unrecognized_pages = self.main_df[
-                (self.main_df['Original_Text'].isna()) | 
-                (self.main_df['Original_Text'] == '')
-            ]
-            
-            if not unrecognized_pages.empty:
-                warning_message = (
-                    f"Warning: {len(unrecognized_pages)} page(s) have no recognized text and will be lost during separation. "
-                    "Do you want to continue anyway?"
-                )
-                if not messagebox.askyesno("Unrecognized Pages", warning_message):
-                    return
-            
-            from util.apply_separation_options import apply_document_separation
-            apply_document_separation(self)
-        finally:
-            # Make sure buttons are re-enabled regardless of success or failure
-            self.toggle_button_state()
-            
-    def apply_document_separation_with_boxes(self):
-        """Apply document separation based on ***** markers and replace main_df with the compiled documents,
-        while also creating cropped images for each section."""
-        try:
-            # Check if any pages have no recognized text
-            unrecognized_pages = self.main_df[
-                (self.main_df['Original_Text'].isna()) | 
-                (self.main_df['Original_Text'] == '')
-            ]
-            
-            if not unrecognized_pages.empty:
-                warning_message = (
-                    f"Warning: {len(unrecognized_pages)} page(s) have no recognized text and will be lost during separation. "
-                    "Do you want to continue anyway?"
-                )
-                if not messagebox.askyesno("Unrecognized Pages", warning_message):
-                    return
-                    
-            from util.apply_separation_options import apply_document_separation_with_boxes
-            apply_document_separation_with_boxes(self)
-        finally:
-            # Make sure buttons are re-enabled regardless of success or failure
-            self.toggle_button_state()
-        
-    def open_document_separation_options(self):
-        """Opens a window with document separation options."""
-        try:
-            # First check if any separators exist in the document
-            has_separators = False
-            for index, row in self.main_df.iterrows():
-                # Check all text columns
-                for col in ['Original_Text', 'Corrected_Text', 'Formatted_Text', 'Translation', 'Separated_Text']:
-                    if col in self.main_df.columns and pd.notna(row.get(col)) and isinstance(row.get(col), str):
-                        # Use regex to look for 5 or more consecutive asterisks (allowing for whitespace)
-                        if re.search(r'\*{5,}', row.get(col)):
-                            has_separators = True
-                            break
-                if has_separators:
-                    break
-            
-            # If no separators found, warn the user and don't open the window
-            if not has_separators:
-                messagebox.showwarning(
-                    "No Separators Found", 
-                    "No document separators ('*****') were found in any text column. "
-                    "Please add separators before applying document separation."
-                )
-                return
-                
-            # If separators exist, proceed with opening the window
-            from util.apply_separation_options import create_separation_options_window
-            
-            # Fix for the By Page / By Row dropdown issue
-            def fix_separation_dropdown(options_window):
-                # Find the mode dropdown in the window's children
-                for widget in options_window.winfo_children():
-                    if isinstance(widget, tk.Frame):
-                        for child in widget.winfo_children():
-                            if isinstance(child, tk.OptionMenu):
-                                # Reset the dropdown state to make it properly active
-                                child.config(state="normal")
-                                # If there's a StringVar attached to it, verify it has a valid value
-                                for var in options_window.winfo_variables():
-                                    if isinstance(var, tk.StringVar) and var.get() in ["By Page", "By Row"]:
-                                        # Ensure it has a valid selection
-                                        if not var.get():
-                                            var.set("By Page")
-            
-            # Create the window with the fix applied afterward
-            options_window = create_separation_options_window(self)
-            
-            # Apply the fix if the window was created
-            if options_window:
-                self.after(100, lambda: fix_separation_dropdown(options_window))
-                
-        finally:
-            # Make sure buttons are properly enabled
-            if self.button1['state'] == "disabled" and self.button2['state'] == "disabled":
-                self.toggle_button_state()
-
-    def update_separation_menu_state(self, state="normal"):
-        """Update the state of the document separation menu items."""
-        # Always keep the Apply Separation menu item enabled
-        self.process_menu.entryconfig("Apply Separation", state="normal")
-
-    def create_text_source_window(self, all_or_one_flag, ai_job):
-        """
-        Creates a window for selecting text source before running AI functions
-        """
-        # Create the window
-        source_window = tk.Toplevel(self)
-        source_window.title(f"Select {'Format Preset and ' if ai_job == 'Format_Text' else ''}Text Source for {ai_job.replace('_', ' ')}")
-        source_window.geometry("400x300" if ai_job == "Format_Text" else "400x250")  
-        source_window.grab_set()  # Make window modal
-        
-        # Message explaining purpose
-        message_label = tk.Label(source_window, 
-            text=f"Select {'the format preset and ' if ai_job == 'Format_Text' else ''}the text source to process:",
-            font=("Calibri", 12))
-        message_label.pack(pady=15)
-        
-        # Add format preset selection for Format_Text
-        format_frame = None
-        if ai_job == "Format_Text":
-            format_frame = tk.Frame(source_window)
-            format_frame.pack(pady=10)
-            
-            format_label = tk.Label(format_frame, text="Format Preset:")
-            format_label.pack(side="left", padx=5)
-            
-            # Create a StringVar for the format preset dropdown
-            self.format_preset_var = tk.StringVar()
-            
-            # Get available format presets
-            format_options = [preset.get('name', f"Preset {i+1}") for i, preset in enumerate(self.settings.format_presets)]
-            
-            # Create the format preset dropdown
-            format_dropdown = ttk.Combobox(format_frame,
-                                         textvariable=self.format_preset_var,
-                                         values=format_options,
-                                         state="readonly",
-                                         width=20)
-            format_dropdown.pack(side="left", padx=5)
-            
-            # Set default to first format preset
-            if format_options:
-                self.format_preset_var.set(format_options[0])
-        
-        # Create the text source selection dropdown
-        dropdown_frame = tk.Frame(source_window)
-        dropdown_frame.pack(pady=10)
-        
-        source_label = tk.Label(dropdown_frame, text="Text Source:")
-        source_label.pack(side="left", padx=5)
-        
-        # Create a StringVar for the text source dropdown
-        self.text_source_var = tk.StringVar()
-        
-        # Create text source options based on available data
-        source_options = []
-        if not self.main_df.empty:
-            row = self.page_counter
-            if pd.notna(self.main_df.loc[row, 'Original_Text']) and self.main_df.loc[row, 'Original_Text'].strip():
-                source_options.append("Original_Text")
-            if pd.notna(self.main_df.loc[row, 'Corrected_Text']) and self.main_df.loc[row, 'Corrected_Text'].strip():
-                source_options.append("Corrected_Text")
-            if pd.notna(self.main_df.loc[row, 'Formatted_Text']) and self.main_df.loc[row, 'Formatted_Text'].strip():
-                source_options.append("Formatted_Text")
-            if pd.notna(self.main_df.loc[row, 'Translation']) and self.main_df.loc[row, 'Translation'].strip():
-                source_options.append("Translation")
-            if pd.notna(self.main_df.loc[row, 'Separated_Text']) and self.main_df.loc[row, 'Separated_Text'].strip():
-                source_options.append("Separated_Text")
-        
-        # If no options, add some defaults
-        if not source_options:
-            source_options = ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]
-        
-        # Create the text source dropdown
-        source_dropdown = ttk.Combobox(dropdown_frame,
-                                    textvariable=self.text_source_var,
-                                    values=source_options,
-                                    state="readonly",
-                                    width=20)
-        source_dropdown.pack(side="left", padx=5)
-        
-        # Set a sensible default based on the AI job
-        if "Correct_Text" == ai_job:
-            # For correction, prefer Original_Text
-            if "Original_Text" in source_options:
-                self.text_source_var.set("Original_Text")
-            else:
-                self.text_source_var.set(source_options[0])
-        elif "Translation" == ai_job:
-            # For translation, prefer Corrected_Text, then Formatted_Text, then Original_Text
-            if "Corrected_Text" in source_options:
-                self.text_source_var.set("Corrected_Text")
-            elif "Formatted_Text" in source_options:
-                self.text_source_var.set("Formatted_Text")
-            elif "Original_Text" in source_options:
-                self.text_source_var.set("Original_Text")
-            else:
-                self.text_source_var.set(source_options[0])
-        elif "Identify_Errors" == ai_job:
-            # For error identification, prefer Corrected_Text
-            if "Corrected_Text" in source_options:
-                self.text_source_var.set("Corrected_Text")
-            elif "Formatted_Text" in source_options:
-                self.text_source_var.set("Formatted_Text")
-            else:
-                self.text_source_var.set(source_options[0])
-        elif "Format_Text" == ai_job:
-            # For formatting, prefer Corrected_Text, then Original_Text
-            if "Corrected_Text" in source_options:
-                self.text_source_var.set("Corrected_Text")
-            elif "Original_Text" in source_options:
-                self.text_source_var.set("Original_Text")
-            else:
-                self.text_source_var.set(source_options[0])
-        else:
-            # Default to first option
-            self.text_source_var.set(source_options[0])
-        
-        # Buttons frame
-        button_frame = tk.Frame(source_window)
-        button_frame.pack(pady=20)
-        
-        # Function to handle OK button
-        def on_ok():
-            # Close the window
-            source_window.destroy()
-            # Run the AI function with the selected parameters
-            self.process_ai_with_selected_source(all_or_one_flag, ai_job)
-        
-        # Function to handle Cancel button
-        def on_cancel():
-            source_window.destroy()
-        
-        # Create buttons
-        ok_button = tk.Button(button_frame, text="OK", command=on_ok, width=10)
-        ok_button.pack(side="left", padx=10)
-        
-        cancel_button = tk.Button(button_frame, text="Cancel", command=on_cancel, width=10)
-        cancel_button.pack(side="left", padx=10)
-        
-        # Center the window on the screen
-        source_window.update_idletasks()
-        width = source_window.winfo_width()
-        height = source_window.winfo_height()
-        x = (source_window.winfo_screenwidth() // 2) - (width // 2)
-        y = (source_window.winfo_screenheight() // 2) - (height // 2)
-        source_window.geometry(f'{width}x{height}+{x}+{y}')
-        
-        # Wait for the window to be closed
-        self.wait_window(source_window)
-
     def process_ai_with_selected_source(self, all_or_one_flag, ai_job):
         """
         Process AI function with the text source selected by the user
@@ -4834,102 +5134,6 @@ class App(TkinterDnD.Tk):
             if hasattr(self, 'temp_format_preset'):
                 delattr(self, 'temp_format_preset')
 
-    def format_text_with_line_numbers(self, text):
-        """
-        Format text with line numbers for chunking.
-        
-        Args:
-            text (str): The text to format with line numbers
-            
-        Returns:
-            tuple: (formatted_text, line_map) where formatted_text has line numbers and
-                  line_map is a dict mapping line numbers to original text lines
-        """
-        if not text or not text.strip():
-            return "", {}
-            
-        lines = text.strip().split('\n')
-        line_map = {}
-        formatted_lines = []
-        
-        for i, line in enumerate(lines, 1):
-            line_map[i] = line
-            formatted_lines.append(f"{i}: {line}")
-            
-        formatted_text = '\n'.join(formatted_lines)
-        return formatted_text, line_map
-
-    def insert_separators_by_line_numbers(self, original_text, line_numbers_response, line_map):
-        """
-        Insert document separators based on line numbers from the API response.
-        
-        Args:
-            original_text (str): The original text without line numbers
-            line_numbers_response (str): The API response containing line numbers where separators should be inserted
-            line_map (dict): Dictionary mapping line numbers to original text lines
-            
-        Returns:
-            str: Text with document separators inserted
-        """
-        try:
-            # Extract line numbers from the response
-            # The response should now be just the line numbers, e.g. "4;15;27"
-            # since the validation text has already been removed by _validate_response
-            
-            # Parse the line numbers, handling various formats
-            line_numbers = []
-            
-            # The response might still contain explanatory text, so check if it contains digits
-            # and try to find the actual line numbers
-            line_numbers_str = line_numbers_response.strip()
-            
-            # If response still has multiple lines, look for a line with numbers
-            if '\n' in line_numbers_str:
-                for line in line_numbers_str.split('\n'):
-                    if any(c.isdigit() for c in line):
-                        # If this line has digits, use it
-                        line_numbers_str = line.strip()
-                        break
-            
-            # If there's a colon in the string, it might still have a label
-            if ':' in line_numbers_str:
-                parts = line_numbers_str.split(':', 1)
-                line_numbers_str = parts[1].strip()
-            
-            # Split by semicolons, or commas if semicolons are not found
-            separators = ";" if ";" in line_numbers_str else ","
-            number_strings = line_numbers_str.split(separators)
-            
-            for num_str in number_strings:
-                try:
-                    num = int(num_str.strip())
-                    line_numbers.append(num)
-                except ValueError:
-                    # Skip non-integer values
-                    continue
-            
-            # Sort line numbers for consistent processing
-            line_numbers.sort()
-            
-            if not line_numbers:
-                self.error_logging(f"No valid line numbers found in: {line_numbers_str}")
-                return original_text
-            
-            # Insert separators
-            lines = original_text.split('\n')
-            result_lines = []
-            
-            for i, line in enumerate(lines, 1):
-                if i in line_numbers:
-                    result_lines.append("*****")
-                result_lines.append(line)
-            
-            return '\n'.join(result_lines)
-            
-        except Exception as e:
-            self.error_logging(f"Error inserting separators: {str(e)}")
-            return original_text
-    
     def update_df_with_chunk_result(self, index, separated_text):
         """
         Update the DataFrame with the chunked text result.
@@ -4955,244 +5159,6 @@ class App(TkinterDnD.Tk):
             
         except Exception as e:
             self.error_logging(f"Error updating DataFrame with chunk result: {str(e)}")
-
-    def on_relevance_change(self, event=None):
-        """Callback function when the relevance dropdown selection changes."""
-        if self.main_df.empty:
-            return
-
-        index = self.page_counter
-        selected_relevance = self.relevance_var.get()
-
-        # Update the 'Relevance' column in the DataFrame for the current row
-        if 'Relevance' in self.main_df.columns:
-            self.main_df.loc[index, 'Relevance'] = selected_relevance
-            print(f"Updated Relevance for index {index} to: {selected_relevance}") # Debug print
-        else:
-            print(f"Warning: 'Relevance' column not found in main_df.") # Debug print
-
-    def document_page_nav(self, direction):
-        """Dummy function for document page navigation buttons."""
-        print(f"Document Page Navigation called with direction: {direction}") # Debug print
-        pass # Placeholder for future implementation
-
-
-    def highlight_changes(self):
-        """
-        Highlight differences between the current text level and the previous level:
-        - When viewing Corrected_Text, highlight changes from Original_Text
-        - When viewing Formatted_Text, highlight changes from Corrected_Text
-        """
-        index = self.page_counter
-        current_toggle = self.main_df.loc[index, 'Text_Toggle']
-        
-        # Early exit if we're at the Original_Text level (no previous text to compare with)
-        if current_toggle == "Original_Text" or current_toggle == "None":
-            return
-            
-        # Determine which texts to compare based on current level
-        if current_toggle == "Corrected_Text":
-            # Compare Corrected_Text with Original_Text
-            current_text = self.main_df.loc[index, 'Corrected_Text']
-            previous_text = self.main_df.loc[index, 'Original_Text']
-            
-            # Skip if either text is missing
-            if pd.isna(current_text) or pd.isna(previous_text):
-                return
-                
-        elif current_toggle == "Formatted_Text":
-            # Compare Formatted_Text with Corrected_Text
-            current_text = self.main_df.loc[index, 'Formatted_Text']
-            previous_text = self.main_df.loc[index, 'Corrected_Text']
-            
-            # If Corrected_Text is empty, compare with Original_Text instead
-            if pd.isna(previous_text) or previous_text.strip() == '':
-                previous_text = self.main_df.loc[index, 'Original_Text']
-                
-            # Skip if either text is missing
-            if pd.isna(current_text) or pd.isna(previous_text):
-                return
-        else:
-            # Unrecognized toggle value
-            return
-        
-        # Use the advanced highlighting
-        highlight_text_differences(self.text_display, current_text, previous_text)
-
-    # --- Visibility Toggle Functions ---
-
-    def toggle_relevance_visibility(self):
-        """Toggles the visibility of the relevance dropdown, label, AND navigation buttons."""
-        if self.show_relevance.get():
-            # Show relevance elements
-            self.relevance_label.pack(side="left", padx=2)
-            self.relevance_dropdown.pack(side="left", padx=2)
-            # Show navigation buttons directly
-            self.relevant_back_button.pack(side="left", padx=(5, 2))
-            self.relevant_forward_button.pack(side="left", padx=2)
-        else:
-            # Hide relevance elements
-            self.relevance_label.pack_forget()
-            self.relevance_dropdown.pack_forget()
-            # Hide navigation buttons directly
-            self.relevant_back_button.pack_forget()
-            self.relevant_forward_button.pack_forget()
-
-    def toggle_page_nav_visibility(self):
-        """Toggles the visibility of the document page navigation controls."""
-        if self.show_page_nav.get():
-            self.doc_page_label.pack(side="left", padx=(5, 2))
-            self.doc_button1.pack(side="left", padx=2)
-            self.doc_button2.pack(side="left", padx=2)
-            self.doc_page_counter_label.pack(side="left", padx=2)
-            self.doc_button4.pack(side="left", padx=2)
-            self.doc_button5.pack(side="left", padx=2)
-        else:
-            self.doc_page_label.pack_forget()
-            self.doc_button1.pack_forget()
-            self.doc_button2.pack_forget()
-            self.doc_page_counter_label.pack_forget()
-            self.doc_button4.pack_forget()
-            self.doc_button5.pack_forget()
-
-    # REMOVED toggle_relevance_nav_visibility
-
-    # --- End Visibility Toggle Functions ---
-
-    def find_relevant_documents(self):
-        """Create a window for finding relevant documents using AI analysis"""
-        # Create the window
-        relevance_window = tk.Toplevel(self)
-        relevance_window.title("Find Relevant Documents")
-        relevance_window.geometry("600x400")
-        relevance_window.grab_set()  # Make window modal
-        
-        # Message explaining purpose
-        message_label = tk.Label(relevance_window, 
-            text="Describe what makes a document relevant to your research:",
-            font=("Calibri", 12))
-        message_label.pack(pady=15)
-        
-        # Create a large text box for the relevance criteria
-        criteria_frame = tk.Frame(relevance_window)
-        criteria_frame.pack(fill="both", expand=True, padx=10, pady=5)
-        
-        criteria_text = tk.Text(criteria_frame, wrap="word", height=10, undo=True)
-        criteria_text.pack(fill="both", expand=True, side="left")
-        
-        # Add scrollbar
-        scrollbar = tk.Scrollbar(criteria_frame, command=criteria_text.yview)
-        scrollbar.pack(side="right", fill="y")
-        criteria_text.config(yscrollcommand=scrollbar.set)
-        
-        # Create the text source selection dropdown
-        dropdown_frame = tk.Frame(relevance_window)
-        dropdown_frame.pack(pady=10)
-        
-        source_label = tk.Label(dropdown_frame, text="Text Source:")
-        source_label.pack(side="left", padx=5)
-        
-        # Create a StringVar for the text source dropdown
-        self.relevance_source_var = tk.StringVar()
-        
-        # Create text source options based on available data
-        source_options = []
-        if not self.main_df.empty:
-            row = self.page_counter
-            if pd.notna(self.main_df.loc[row, 'Original_Text']) and self.main_df.loc[row, 'Original_Text'].strip():
-                source_options.append("Original_Text")
-            if pd.notna(self.main_df.loc[row, 'Corrected_Text']) and self.main_df.loc[row, 'Corrected_Text'].strip():
-                source_options.append("Corrected_Text")
-            if pd.notna(self.main_df.loc[row, 'Formatted_Text']) and self.main_df.loc[row, 'Formatted_Text'].strip():
-                source_options.append("Formatted_Text")
-            if pd.notna(self.main_df.loc[row, 'Translation']) and self.main_df.loc[row, 'Translation'].strip():
-                source_options.append("Translation")
-            if pd.notna(self.main_df.loc[row, 'Separated_Text']) and self.main_df.loc[row, 'Separated_Text'].strip():
-                source_options.append("Separated_Text")
-        
-        # If no options, add some defaults
-        if not source_options:
-            source_options = ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]
-        
-        # Create the text source dropdown
-        source_dropdown = ttk.Combobox(dropdown_frame,
-                                    textvariable=self.relevance_source_var,
-                                    values=source_options,
-                                    state="readonly",
-                                    width=20)
-        source_dropdown.pack(side="left", padx=5)
-        
-        # Set a default value - prefer formatted or corrected text
-        if "Formatted_Text" in source_options:
-            self.relevance_source_var.set("Formatted_Text")
-        elif "Corrected_Text" in source_options:
-            self.relevance_source_var.set("Corrected_Text")
-        elif source_options:
-            self.relevance_source_var.set(source_options[0])
-        
-        # Mode selection for All Pages or Current Page
-        mode_frame = tk.Frame(relevance_window)
-        mode_frame.pack(pady=10)
-        
-        self.relevance_mode_var = tk.StringVar(value="All Pages")
-        
-        mode_label = tk.Label(mode_frame, text="Process:")
-        mode_label.pack(side="left", padx=5)
-        
-        current_radio = tk.Radiobutton(mode_frame, text="Current Page", variable=self.relevance_mode_var, value="Current Page")
-        current_radio.pack(side="left", padx=5)
-        
-        all_radio = tk.Radiobutton(mode_frame, text="All Pages", variable=self.relevance_mode_var, value="All Pages")
-        all_radio.pack(side="left", padx=5)
-        
-        # Buttons at the bottom
-        button_frame = tk.Frame(relevance_window)
-        button_frame.pack(pady=20)
-        
-        # Function to handle OK button
-        def on_ok():
-            criteria_text_content = criteria_text.get("1.0", "end-1c").strip()
-            if not criteria_text_content:
-                messagebox.showwarning("Warning", "Please enter relevance criteria.")
-                return
-                
-            selected_source = self.relevance_source_var.get()
-            mode = self.relevance_mode_var.get()
-            
-            # Close the window
-            relevance_window.destroy()
-            
-            # Process the relevance search
-            self.process_relevance_search(criteria_text_content, selected_source, mode)
-        
-        # Function to handle Cancel button
-        def on_cancel():
-            relevance_window.destroy()
-        
-        # Create buttons
-        ok_button = tk.Button(button_frame, text="OK", command=on_ok, width=10)
-        ok_button.pack(side="left", padx=10)
-        
-        cancel_button = tk.Button(button_frame, text="Cancel", command=on_cancel, width=10)
-        cancel_button.pack(side="left", padx=10)
-        
-        # Center the window
-        relevance_window.update_idletasks()
-        width = relevance_window.winfo_width()
-        height = relevance_window.winfo_height()
-        x = (relevance_window.winfo_screenwidth() // 2) - (width // 2)
-        y = (relevance_window.winfo_screenheight() // 2) - (height // 2)
-        relevance_window.geometry(f'{width}x{height}+{x}+{y}')
-        
-        # Bind keyboard shortcuts
-        relevance_window.bind("<Return>", lambda event: on_ok())
-        relevance_window.bind("<Escape>", lambda event: on_cancel())
-        
-        # Give focus to the text widget
-        criteria_text.focus_set()
-        
-        # Wait for the window to be closed
-        self.wait_window(relevance_window)
 
     def process_relevance_search(self, criteria_text, selected_source, mode):
         """Process the relevance search using AI and update the DataFrame"""
@@ -5340,18 +5306,6 @@ class App(TkinterDnD.Tk):
                 
                 # Refresh display to ensure relevance is shown
                 self.load_text()
-
-    def toggle_relevance_display(self, event=None):
-         """Toggle the visibility of the entire relevance section (dropdown and buttons)"""
-         self.show_relevance.set(not self.show_relevance.get())
-         self.toggle_relevance_visibility() # This now handles dropdown and buttons together
-
-    def toggle_nav_display(self, event=None):
-        """Toggle the visibility of the document navigation controls"""
-        self.show_page_nav.set(not self.show_page_nav.get())
-        self.toggle_page_nav_visibility()
-
-    # REMOVED toggle_relevance_nav_display
 
 if __name__ == "__main__":
     try:
