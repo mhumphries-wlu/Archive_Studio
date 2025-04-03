@@ -54,6 +54,7 @@ class App(TkinterDnD.Tk):
         # Control visibility of bottom bar elements
         self.show_relevance = tk.BooleanVar(value=False)
         self.show_page_nav = tk.BooleanVar(value=False)
+        self.page_nav_buttons_visible = False # Initialize the visibility flag
         # self.show_relevance_nav = tk.BooleanVar(value=True) # REMOVED - Visibility tied to show_relevance
 
         self.current_scale = 1
@@ -1186,77 +1187,74 @@ class App(TkinterDnD.Tk):
 # Navigation Functions
 
     def navigate_images(self, direction):
-        if self.main_df.empty:
+        """Navigate between images in the main dataframe"""
+        # Check if main_df exists and is not empty
+        if not hasattr(self, 'main_df') or self.main_df.empty:
             return
-
-        # Save current text changes before navigating only if not in "None" mode
-        current_display = self.main_df.loc[self.page_counter, 'Text_Toggle']
-        if current_display != "None":
-            # Get the current text from the text widget
-            text = self.clean_text(self.text_display.get("1.0", tk.END))
             
-            # Save the text to the appropriate column based on CURRENT display type
-            if current_display == "Original_Text":
-                self.main_df.loc[self.page_counter, 'Original_Text'] = text
-            elif current_display == "Corrected_Text":
-                self.main_df.loc[self.page_counter, 'Corrected_Text'] = text
-            elif current_display == "Formatted_Text":
-                self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
-            elif current_display == "Translation":
-                self.main_df.loc[self.page_counter, 'Translation'] = text
-            elif current_display == "Separated_Text":
-                self.main_df.loc[self.page_counter, 'Separated_Text'] = text
-            
-        # Store the current display type to maintain it across pages
-        selected_display = self.text_display_var.get()
-            
-        # Handle double-arrow navigation
-        if abs(direction) == 2:
-            # Go to first image
-            if direction < 0:
-                self.page_counter = 0
-            # Go to last image
-            else:
-                self.page_counter = len(self.main_df) - 1
-        else:
-            # Handle single-arrow navigation
+        # Save current text changes before navigating
+        self.update_df()
+        
+        # Handle navigation direction
+        if direction == -2:  # First page
+            self.page_counter = 0
+        elif direction == 2:  # Last page
+            self.page_counter = len(self.main_df) - 1
+        else:  # Normal navigation
             new_counter = self.page_counter + direction
-            
-            # Ensure the new counter is within valid bounds
-            if new_counter < 0:
-                new_counter = 0
-            elif new_counter >= len(self.main_df):
-                new_counter = len(self.main_df) - 1
-                
-            self.page_counter = new_counter
-
-        try:
-            # Get image path with safety checks
-            image_path = self.main_df.iloc[self.page_counter]['Image_Path']
-            if pd.isna(image_path):
-                messagebox.showerror("Error", "Invalid image path in database")
+            if 0 <= new_counter < len(self.main_df):
+                self.page_counter = new_counter
+            else:
+                # Show message if reached the end
+                if new_counter < 0:
+                    messagebox.showinfo("Start of Document", "You are already at the first page.")
+                else:
+                    messagebox.showinfo("End of Document", "You have reached the last page.")
                 return
-                
-            # Use get_full_path to resolve relative paths
-            image_path = self.get_full_path(image_path)
-                
-            if not os.path.exists(image_path):
-                messagebox.showerror("Error", f"Image file not found: {image_path}")
-                return
-                
-            self.current_image_path = image_path
-            self.image_handler.load_image(self.current_image_path)
-            
-            # Update the Text_Toggle in the DataFrame to maintain display type
-            if selected_display != "None":
-                self.main_df.at[self.page_counter, 'Text_Toggle'] = selected_display
-            
-            self.load_text()
-            self.counter_update()
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to navigate images: {str(e)}")
-            self.error_logging(f"Navigation error: {str(e)}")
+        
+        # Get the image path(s) for the new page
+        image_path_data = self.main_df.loc[self.page_counter, 'Image_Path']
+        
+        # Handle different image path formats and set show_page_nav accordingly
+        current_image_path = None
+        if isinstance(image_path_data, list):
+            # Handle list of image paths
+            if image_path_data:  # Check if list is not empty
+                current_image_path = image_path_data[0]  # Use the first image in the list
+                self.show_page_nav.set(True)  # Enable page navigation for lists
+            else:
+                # Handle empty list case
+                self.error_logging(f"Image path list is empty for index {self.page_counter}", level="WARNING")
+                self.show_page_nav.set(False)
+        else:
+            # Handle single image path
+            if pd.notna(image_path_data) and image_path_data:
+                current_image_path = str(image_path_data)
+                self.show_page_nav.set(False)  # Disable page navigation for single images
+            else:
+                # Handle missing image path
+                self.error_logging(f"Image path is missing for index {self.page_counter}", level="WARNING")
+                self.show_page_nav.set(False)
+        
+        # Update the page navigation visibility
+        self.toggle_page_nav_visibility()
+        
+        # Load and display the image if available
+        if current_image_path:
+            full_path = self.get_full_path(current_image_path)
+            if os.path.exists(full_path):
+                try:
+                    self.image_handler.load_image(full_path)
+                except Exception as e:
+                    self.error_logging(f"Error loading image {full_path}: {e}")
+                    messagebox.showerror("Error", f"Failed to load image: {str(e)}")
+            else:
+                self.error_logging(f"Image file not found: {full_path}", level="WARNING")
+                messagebox.showerror("Error", f"Image file not found: {full_path}")
+        
+        # Update the text display and counter
+        self.load_text()
+        self.counter_update()
 
     def counter_update(self):
         total_images = len(self.main_df) - 1
@@ -2609,19 +2607,23 @@ class App(TkinterDnD.Tk):
     def toggle_page_nav_visibility(self):
         """Toggles the visibility of the document page navigation controls."""
         if self.show_page_nav.get():
+            # Show page navigation elements
             self.doc_page_label.pack(side="left", padx=(5, 2))
             self.doc_button1.pack(side="left", padx=2)
             self.doc_button2.pack(side="left", padx=2)
             self.doc_page_counter_label.pack(side="left", padx=2)
             self.doc_button4.pack(side="left", padx=2)
             self.doc_button5.pack(side="left", padx=2)
+            self.page_nav_buttons_visible = True
         else:
+            # Hide page navigation elements
             self.doc_page_label.pack_forget()
             self.doc_button1.pack_forget()
             self.doc_button2.pack_forget()
             self.doc_page_counter_label.pack_forget()
             self.doc_button4.pack_forget()
             self.doc_button5.pack_forget()
+            self.page_nav_buttons_visible = False
 
     def update_highlight_menu_states(self):
         """Enable or disable highlight menu items based on data availability"""
@@ -4202,233 +4204,6 @@ class App(TkinterDnD.Tk):
             if error_count > 0:
                 message = f"An error occurred while processing the current page." if all_or_one_flag == "Current Page" else f"Errors occurred while processing {error_count} page(s)."
                 messagebox.showwarning("Processing Error", message)
-    
-    def setup_job_parameters(self, ai_job):
-        """Set up parameters for different AI jobs"""
-        self.error_logging(f"Setting up job parameters for {ai_job}")
-        self.error_logging(f"Available presets: {[p['name'] for p in self.settings.function_presets]}")
-        
-        if ai_job == "HTR":
-            preset = next((p for p in self.settings.function_presets if p['name'] == "HTR"), None)
-            if preset:
-                return {
-                    "temp": float(preset.get('temperature', 0.7)),
-                    "val_text": preset.get('val_text', ''),
-                    "engine": preset.get('model', self.settings.model_list[0]),
-                    "user_prompt": preset.get('specific_instructions', ''),
-                    "system_prompt": preset.get('general_instructions', ''),
-                    "batch_size": self.settings.batch_size,
-                    "use_images": preset.get('use_images', False)
-                }
-            else:
-                # Fallback defaults if no preset is found
-                return {
-                    "temp": 0.7,
-                    "val_text": "",
-                    "engine": self.settings.model_list[0],
-                    "user_prompt": "",
-                    "system_prompt": "",
-                    "batch_size": self.settings.batch_size,
-                    "use_images": False
-                }
-        elif ai_job == "Chunk_Text":
-            # Get the selected chunking strategy
-            selected_strategy = self.chunking_strategy_var.get()
-            preset = next((p for p in self.settings.chunk_text_presets if p['name'] == selected_strategy), None)
-            
-            if preset:
-                return {
-                    "temp": float(preset.get('temperature', 0.7)),
-                    "val_text": preset.get('val_text', ''),
-                    "engine": preset.get('model', self.settings.model_list[0]),
-                    "user_prompt": preset.get('specific_instructions', ''),
-                    "system_prompt": preset.get('general_instructions', ''),
-                    "batch_size": self.settings.batch_size,
-                    "use_images": preset.get('use_images', False)
-                }
-            else:
-                self.error_logging(f"Chunk text preset not found for strategy: {selected_strategy}")
-                raise ValueError(f"Chunk text preset not found for strategy: {selected_strategy}")
-        elif ai_job == "Metadata":
-            # Use the selected metadata preset
-            try:
-                # Get the currently selected metadata preset name
-                preset_name = self.settings.metadata_preset if hasattr(self.settings, 'metadata_preset') else "Standard Metadata"
-                
-                # Find the preset in the metadata_presets list
-                preset = next((p for p in self.settings.metadata_presets if p['name'] == preset_name), None)
-                
-                if preset:
-                    # Log the selected preset information
-                    self.error_logging(f"Using metadata preset: {preset_name}")
-                    headers = []
-                    
-                    # Get metadata_headers from the preset if available
-                    if 'metadata_headers' in preset:
-                        headers = [h.strip() for h in preset['metadata_headers'].split(';') if h.strip()]
-                        self.error_logging(f"Using headers from preset {preset_name}: {headers}")
-                    else:
-                        self.error_logging(f"No metadata_headers found in preset {preset_name}")
-                        
-                    # If headers are empty, try fallback headers
-                    if not headers and hasattr(self.settings, 'metadata_headers'):
-                        headers = [h.strip() for h in self.settings.metadata_headers.split(';') if h.strip()]
-                        self.error_logging(f"Using headers from legacy settings: {headers}")
-                        
-                    return {
-                        "temp": float(preset.get('temperature', 0.3)),
-                        "val_text": preset.get('val_text', 'Metadata:'),
-                        "engine": preset.get('model', self.settings.model_list[0] if self.settings.model_list else "claude-3-5-sonnet-20241022"),
-                        "user_prompt": preset.get('specific_instructions', 'Text to analyze:\n\n{text_to_process}'),
-                        "system_prompt": preset.get('general_instructions', ''),
-                        "batch_size": self.settings.batch_size,
-                        "use_images": False,  # Metadata doesn't use images by default
-                        "headers": headers
-                    }
-                else:
-                    # If selected preset not found, fall back to legacy settings
-                    self.error_logging(f"Selected metadata preset '{preset_name}' not found, using legacy settings")
-                    headers = []
-                    if hasattr(self.settings, 'metadata_headers'):
-                        headers = [h.strip() for h in self.settings.metadata_headers.split(';') if h.strip()]
-                        self.error_logging(f"Using headers from legacy settings: {headers}")
-                        
-                    return {
-                        "temp": float(self.settings.metadata_temp),
-                        "val_text": self.settings.metadata_val_text,
-                        "engine": self.settings.metadata_model,
-                        "user_prompt": self.settings.metadata_user_prompt,
-                        "system_prompt": self.settings.metadata_system_prompt,
-                        "batch_size": self.settings.batch_size,
-                        "use_images": False,  # Metadata doesn't use images by default
-                        "headers": headers
-                    }
-            except Exception as e:
-                self.error_logging(f"Error setting up metadata parameters: {str(e)}")
-                # If there's an error, use sensible defaults
-                default_headers = ["Document Type", "Author", "Correspondent", "Correspondent Place", "Date", "Place of Creation", "People", "Places", "Summary"]
-                self.error_logging(f"Using default headers due to error: {default_headers}")
-                return {
-                    "temp": 0.3,
-                    "val_text": "Metadata:",
-                    "engine": self.settings.model_list[0] if self.settings.model_list else "claude-3-5-sonnet-20241022",
-                    "user_prompt": "Text to analyze:\n\n{text_to_process}",
-                    "system_prompt": "You analyze historical documents to extract information.",
-                    "batch_size": self.settings.batch_size,
-                    "use_images": False,
-                    "headers": default_headers
-                }
-        elif ai_job == "Format_Text":
-            # Get the selected format preset if available
-            format_preset_name = getattr(self, 'temp_format_preset', None)
-            if not format_preset_name:
-                # Use first preset as default if none selected
-                if self.settings.format_presets:
-                    format_preset_name = self.settings.format_presets[0].get('name', '')
-            
-            preset = next((p for p in self.settings.format_presets if p.get('name', '') == format_preset_name), None)
-            if preset:
-                return {
-                    "temp": float(preset.get('temperature', 0.2)),
-                    "val_text": "Formatted Text:",
-                    "engine": preset.get('model', self.settings.model_list[0]),
-                    "user_prompt": preset.get('specific_instructions', 'Text to format:\n\n{text_to_process}'),
-                    "system_prompt": preset.get('general_instructions', ''),
-                    "batch_size": self.settings.batch_size,
-                    "use_images": preset.get('use_images', False)
-                }
-            else:
-                self.error_logging(f"Format preset not found: {format_preset_name}")
-                # Return default values
-                return {
-                    "temp": 0.2,
-                    "val_text": "Formatted Text:",
-                    "engine": self.settings.model_list[0],
-                    "user_prompt": "Text to format:\n\n{text_to_process}",
-                    "system_prompt": "You format historical documents to make them easier to read.",
-                    "batch_size": self.settings.batch_size,
-                    "use_images": False
-                }
-        else:
-            # Existing logic for function-based AI jobs
-            preset = next((p for p in self.settings.function_presets if p['name'] == ai_job), None)
-            if preset:
-                return {
-                    "temp": float(preset.get('temperature', 0.7)),
-                    "val_text": preset.get('val_text', ''),
-                    "engine": preset.get('model', self.settings.model_list[0]),
-                    "user_prompt": preset.get('specific_instructions', ''),
-                    "system_prompt": preset.get('general_instructions', ''),
-                    "batch_size": self.settings.batch_size,
-                    "use_images": preset.get('use_images', True)
-                }
-            else:
-                self.error_logging(f"Preset not found for job: {ai_job}")
-                raise ValueError(f"Preset not found for job: {ai_job}")
-        
-    def get_images_for_job(self, ai_job, index, row_data, job_params):
-        """
-        Get and prepare images for AI job processing.
-        
-        Args:
-            ai_job (str): Type of AI job being performed
-            index (int): Current index in the DataFrame
-            row_data (pd.Series): Current row data
-            job_params (dict): Parameters for the job
-            
-        Returns:
-            list: Prepared image data or empty list if error occurs
-        """
-        try:
-            # First check if we need images at all
-            if not job_params.get("use_images", True) or job_params.get("current_image", "Yes") != "Yes":
-                return []
-
-            # Get image path with error checking
-            try:
-                current_image = row_data.get('Image_Path', "")
-                if not current_image:
-                    self.error_logging(f"Empty image path at index {index}")
-                    return []
-            except Exception as e:
-                self.error_logging(f"Error getting image path at index {index}: {str(e)}")
-                return []
-
-            # Convert to absolute path
-            try:
-                current_image = self.get_full_path(current_image)
-                if not current_image:
-                    self.error_logging(f"Failed to get full path for image at index {index}")
-                    return []
-            except Exception as e:
-                self.error_logging(f"Error converting to full path at index {index}: {str(e)}")
-                return []
-
-            # Validate image path
-            if not isinstance(current_image, str) or not current_image.strip():
-                self.error_logging(f"Invalid image path at index {index}: {current_image}")
-                return []
-
-            # Check if file exists
-            if not os.path.exists(current_image):
-                self.error_logging(f"Image file not found at index {index}: {current_image}")
-                return []
-
-            # Prepare image data
-            try:
-                raw_images_data = [(current_image, "Document Image:")]
-                return self.api_handler.prepare_image_data(
-                    raw_images_data,
-                    job_params.get('engine', 'default_engine'),  # Added fallback
-                    not "gemini" in job_params.get('engine', '').lower()
-                )
-            except Exception as e:
-                self.error_logging(f"Error preparing image data at index {index}: {str(e)}")
-                return []
-
-        except Exception as e:
-            self.error_logging(f"Critical error in get_images_for_job at index {index}: {str(e)}")
-            return []  # Return empty list as safe fallback
 
     def collate_names_and_places(self):
         """

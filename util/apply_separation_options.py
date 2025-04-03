@@ -237,10 +237,29 @@ def apply_document_separation(app):
             # Get the original indices that make up this document
             original_indices = row['Original_Index']
             
-            # Use the first original index to get the image path
-            first_idx = original_indices[0] if isinstance(original_indices, list) and original_indices else 0
-            if first_idx < len(original_df):
-                new_row['Image_Path'] = original_df.loc[first_idx, 'Image_Path']
+            # Collect all image paths associated with the original indices
+            image_paths = []
+            if isinstance(original_indices, list) and original_indices:
+                for original_idx in original_indices:
+                    if original_idx < len(original_df):
+                        path = original_df.loc[original_idx, 'Image_Path']
+                        if pd.notna(path) and path not in image_paths:
+                            image_paths.append(path)
+            
+            # Ensure image_paths is a list, even if empty or single item
+            if not image_paths:
+                # Fallback: try to get the first image path if indices were problematic
+                if not original_df.empty:
+                     first_path = original_df.loc[0, 'Image_Path']
+                     if pd.notna(first_path):
+                         image_paths = [first_path]
+                     else:
+                         image_paths = [] # Store empty list if no path found
+                else:
+                     image_paths = [] # Store empty list if original_df is empty
+            
+            # Store the list of image paths
+            new_row['Image_Path'] = image_paths
             
             # Copy metadata fields if they exist
             for metadata_field in ['People', 'Places', 'Document_Type', 'Author', 'Correspondent', 
@@ -409,14 +428,20 @@ def apply_document_separation_with_boxes(app):
             # Get the original indices that make up this document
             original_indices = row['Original_Index']
             
-            # Use the first original index to get the image path
-            first_idx = original_indices[0] if isinstance(original_indices, list) and original_indices else 0
-            if first_idx < len(original_df):
-                image_path = original_df.loc[first_idx, 'Image_Path']
-            else:
-                # Fallback to the first available image if index is out of range
-                image_path = original_df.loc[0, 'Image_Path'] if not original_df.empty else ""
+            # Collect all original image paths associated with the indices
+            original_image_paths = []
+            if isinstance(original_indices, list) and original_indices:
+                for original_idx in original_indices:
+                    if original_idx < len(original_df):
+                        path = original_df.loc[original_idx, 'Image_Path']
+                        if pd.notna(path) and path not in original_image_paths:
+                            original_image_paths.append(path)
             
+            # Ensure we have at least one path if possible
+            if not original_image_paths and not original_df.empty:
+                first_path = original_df.loc[0, 'Image_Path']
+                if pd.notna(first_path):
+                    original_image_paths = [first_path]
             
             # Create a new row for the main_df
             new_row = {col: "" for col in app.main_df.columns}
@@ -425,37 +450,49 @@ def apply_document_separation_with_boxes(app):
             new_row['Original_Text'] = row['Text'] if 'Text' in row and pd.notna(row['Text']) else ""
             new_row['Text_Toggle'] = "Original_Text" if new_row['Original_Text'].strip() else "None"
             
-            text_length = len(new_row['Original_Text'])
+            # Update progress occasionally
+            if idx % 10 == 0:
+                progress_bar.step(2)
+                progress_label.config(text=f"Processing document {idx+1} of {len(compiled_df)}...")
             
-            # Find the matching bounding box and set the image path to the cropped image
-            found_match = False
-            if image_path in image_to_boxes_map:
-                boxes = image_to_boxes_map[image_path]
-                
-                # Find the box containing this text
-                for box_idx, box in enumerate(boxes):
-                    label_text = box['label']
-                    original_text = new_row['Original_Text']
+            # Determine the final image paths (cropped or original)
+            final_image_paths = []
+            processed_row_info = batch_results.get(idx) # Get processed info for this compiled row index
+
+            if processed_row_info and 'box_2d' in processed_row_info:
+                box_data = processed_row_info
+                box_coords = box_data['box_2d']
+                # Use the first original image path for cropping reference
+                image_path_for_cropping = original_image_paths[0] if original_image_paths else None
+
+                if image_path_for_cropping:
+                    full_image_path = image_path_for_cropping
+                    if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
+                         full_image_path = app.get_full_path(full_image_path)
+
+                    # Generate output path for cropped image
+                    image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
+                    output_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}.jpg")
                     
-                    # Check if there's significant text overlap (over 50% match)
-                    overlap_ratio = _calculate_overlap(label_text, original_text)
-                    
-                    if label_text in original_text or original_text in label_text or overlap_ratio > 0.5:
-                        # Use the cropped image path instead of the original
-                        new_row['Image_Path'] = box['cropped_image_path']
-                        found_match = True
-                        break
-                
-                if not found_match:
-                    # No matching box found, use the original image
-                    new_row['Image_Path'] = image_path
+                    try:
+                        # Crop and save the image
+                        cropped_image_path = crop_image(full_image_path, box_coords, output_path)
+                        final_image_paths = [cropped_image_path] # Store as a list
+                    except Exception as e:
+                        app.error_logging(f"Error cropping image for row {idx}: {str(e)}")
+                        final_image_paths = original_image_paths # Fallback to original paths list
+                else:
+                     final_image_paths = original_image_paths # Fallback if no ref path
             else:
-                # No boxes processed for this image, use the original
-                new_row['Image_Path'] = image_path
-            
+                # No box found or not processed, use the original image paths
+                final_image_paths = original_image_paths
+
+            # Store the final list of image paths
+            new_row['Image_Path'] = final_image_paths
+
             # Copy metadata fields if they exist
             for metadata_field in ['People', 'Places', 'Document_Type', 'Author', 'Correspondent', 
-                                   'Creation_Place', 'Correspondent_Place', 'Date', 'Summary']:
+                                  'Creation_Place', 'Correspondent_Place', 'Date', 'Summary']:
                 if metadata_field in row and pd.notna(row[metadata_field]) and metadata_field in new_main_df.columns:
                     new_row[metadata_field] = row[metadata_field]
             
@@ -619,18 +656,24 @@ def apply_document_separation_with_highlights(app):
         
         # For each row in compiled_df, create a new row in main_df
         for idx, row in compiled_df.iterrows():
-           
+            
             # Get the original indices that make up this document
             original_indices = row['Original_Index']
             
-            # Use the first original index to get the image path
-            first_idx = original_indices[0] if isinstance(original_indices, list) and original_indices else 0
-            if first_idx < len(original_df):
-                image_path = original_df.loc[first_idx, 'Image_Path']
-            else:
-                # Fallback to the first available image if index is out of range
-                image_path = original_df.loc[0, 'Image_Path'] if not original_df.empty else ""
+            # Collect all original image paths associated with the indices
+            original_image_paths = []
+            if isinstance(original_indices, list) and original_indices:
+                for original_idx in original_indices:
+                    if original_idx < len(original_df):
+                        path = original_df.loc[original_idx, 'Image_Path']
+                        if pd.notna(path) and path not in original_image_paths:
+                            original_image_paths.append(path)
             
+            # Ensure we have at least one path if possible
+            if not original_image_paths and not original_df.empty:
+                first_path = original_df.loc[0, 'Image_Path']
+                if pd.notna(first_path):
+                    original_image_paths = [first_path]
             
             # Create a new row for the main_df
             new_row = {col: "" for col in app.main_df.columns}
@@ -639,52 +682,48 @@ def apply_document_separation_with_highlights(app):
             new_row['Original_Text'] = row['Text'] if 'Text' in row and pd.notna(row['Text']) else ""
             new_row['Text_Toggle'] = "Original_Text" if new_row['Original_Text'].strip() else "None"
             
-            # Create a unique highlighted image for this document
-            found_match = False
-            if image_path in image_to_boxes_map:
-                boxes = image_to_boxes_map[image_path]
-                
-                document_text = new_row['Original_Text']
-                
-                # Find the box containing this text
-                for box_idx, box in enumerate(boxes):
-                    label_text = box['label']
+            # Update progress occasionally
+            if idx % 10 == 0:
+                progress_bar.step(2)
+                progress_label.config(text=f"Processing document {idx+1} of {len(compiled_df)}...")
+            
+            # Determine the final image paths (highlighted or original)
+            final_image_paths = []
+            processed_row_info = batch_results.get(idx) # Get processed info for this compiled row index
+
+            if processed_row_info and 'box_2d' in processed_row_info:
+                box_data = processed_row_info
+                # Use the first original image path for highlighting reference
+                image_path_for_highlighting = original_image_paths[0] if original_image_paths else None
+
+                if image_path_for_highlighting:
+                    full_image_path = image_path_for_highlighting
+                    if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
+                         full_image_path = app.get_full_path(full_image_path)
+
+                    # Generate a unique name for this document's highlighted image
+                    image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
+                    highlighted_image_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}_highlighted.jpg")
                     
-                    # Check if there's significant text overlap (over 50% match)
-                    overlap_ratio = _calculate_overlap(label_text, document_text)
-                    
-                    if label_text in document_text or document_text in label_text or overlap_ratio > 0.5:
-                        # Create a custom highlighted image for this document
-                        try:
-                            # Get the full image path
-                            full_image_path = image_path
-                            if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
-                                full_image_path = app.get_full_path(full_image_path)
-                            
-                            # Generate a unique name for this document's highlighted image
-                            image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
-                            highlighted_image_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}_highlighted.jpg")
-                            
-                            # Create highlighted image with just this document's box
-                            highlight_image(full_image_path, box, highlighted_image_path)
-                            
-                            # Use the highlighted image path
-                            new_row['Image_Path'] = highlighted_image_path
-                            found_match = True
-                            break
-                        except Exception as e:
-                            app.error_logging(f"Error creating highlighted image for document {idx+1}: {str(e)}")
-                
-                if not found_match:
-                    # No matching box found, use the original image
-                    new_row['Image_Path'] = image_path
+                    try:
+                        # Create highlighted image
+                        highlight_image(full_image_path, box_data, highlighted_image_path)
+                        final_image_paths = [highlighted_image_path] # Store as a list
+                    except Exception as e:
+                        app.error_logging(f"Error highlighting image for row {idx}: {str(e)}")
+                        final_image_paths = original_image_paths # Fallback to original paths list
+                else:
+                     final_image_paths = original_image_paths # Fallback if no ref path
             else:
-                # No boxes processed for this image, use the original
-                new_row['Image_Path'] = image_path
+                # No box found or not processed, use the original image paths
+                final_image_paths = original_image_paths
+                
+            # Store the final list of image paths
+            new_row['Image_Path'] = final_image_paths
             
             # Copy metadata fields if they exist
             for metadata_field in ['People', 'Places', 'Document_Type', 'Author', 'Correspondent', 
-                                   'Creation_Place', 'Correspondent_Place', 'Date', 'Summary']:
+                                  'Creation_Place', 'Correspondent_Place', 'Date', 'Summary']:
                 if metadata_field in row and pd.notna(row[metadata_field]) and metadata_field in new_main_df.columns:
                     new_row[metadata_field] = row[metadata_field]
             
@@ -911,13 +950,20 @@ def apply_document_separation_with_boxes_by_row(app):
             # Get the original indices that make up this document
             original_indices = row['Original_Index']
             
-            # Use the first original index to get the image path
-            first_idx = original_indices[0] if isinstance(original_indices, list) and original_indices else 0
-            if first_idx < len(original_df):
-                image_path = original_df.loc[first_idx, 'Image_Path']
-            else:
-                # Fallback to the first available image if index is out of range
-                image_path = original_df.loc[0, 'Image_Path'] if not original_df.empty else ""
+            # Collect all original image paths associated with the indices
+            original_image_paths = []
+            if isinstance(original_indices, list) and original_indices:
+                for original_idx in original_indices:
+                    if original_idx < len(original_df):
+                        path = original_df.loc[original_idx, 'Image_Path']
+                        if pd.notna(path) and path not in original_image_paths:
+                            original_image_paths.append(path)
+            
+            # Ensure we have at least one path if possible
+            if not original_image_paths and not original_df.empty:
+                first_path = original_df.loc[0, 'Image_Path']
+                if pd.notna(first_path):
+                    original_image_paths = [first_path]
             
             # Create a new row for the main_df
             new_row = {col: "" for col in app.main_df.columns}
@@ -931,34 +977,41 @@ def apply_document_separation_with_boxes_by_row(app):
                 progress_bar.step(2)
                 progress_label.config(text=f"Processing document {idx+1} of {len(compiled_df)}...")
             
-            # Get the full image path
-            full_image_path = image_path
-            if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
-                full_image_path = app.get_full_path(full_image_path)
-            
-            # If this row was processed in a batch, use the result
-            if idx in batch_results and batch_results[idx] is not None:
-                box_data = batch_results[idx]
+            # Determine the final image paths (cropped or original)
+            final_image_paths = []
+            processed_row_info = batch_results.get(idx) # Get processed info for this compiled row index
+
+            if processed_row_info and 'box_2d' in processed_row_info:
+                box_data = processed_row_info
                 box_coords = box_data['box_2d']
-                
-                # Generate output path for cropped image
-                image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
-                output_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}.jpg")
-                
-                try:
-                    # Crop and save the image
-                    cropped_image_path = crop_image(full_image_path, box_coords, output_path)
+                # Use the first original image path for cropping reference
+                image_path_for_cropping = original_image_paths[0] if original_image_paths else None
+
+                if image_path_for_cropping:
+                    full_image_path = image_path_for_cropping
+                    if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
+                         full_image_path = app.get_full_path(full_image_path)
+
+                    # Generate output path for cropped image
+                    image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
+                    output_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}.jpg")
                     
-                    # Use the cropped image path
-                    new_row['Image_Path'] = cropped_image_path
-                except Exception as e:
-                    app.error_logging(f"Error cropping image for row {idx}: {str(e)}")
-                    # Use original image on error
-                    new_row['Image_Path'] = image_path
+                    try:
+                        # Crop and save the image
+                        cropped_image_path = crop_image(full_image_path, box_coords, output_path)
+                        final_image_paths = [cropped_image_path] # Store as a list
+                    except Exception as e:
+                        app.error_logging(f"Error cropping image for row {idx}: {str(e)}")
+                        final_image_paths = original_image_paths # Fallback to original paths list
+                else:
+                     final_image_paths = original_image_paths # Fallback if no ref path
             else:
-                # No box found or not processed, use the original image
-                new_row['Image_Path'] = image_path
-            
+                # No box found or not processed, use the original image paths
+                final_image_paths = original_image_paths
+
+            # Store the final list of image paths
+            new_row['Image_Path'] = final_image_paths
+
             # Copy metadata fields if they exist
             for metadata_field in ['People', 'Places', 'Document_Type', 'Author', 'Correspondent', 
                                   'Creation_Place', 'Correspondent_Place', 'Date', 'Summary']:
@@ -1104,13 +1157,20 @@ def apply_document_separation_with_highlights_by_row(app):
             # Get the original indices that make up this document
             original_indices = row['Original_Index']
             
-            # Use the first original index to get the image path
-            first_idx = original_indices[0] if isinstance(original_indices, list) and original_indices else 0
-            if first_idx < len(original_df):
-                image_path = original_df.loc[first_idx, 'Image_Path']
-            else:
-                # Fallback to the first available image if index is out of range
-                image_path = original_df.loc[0, 'Image_Path'] if not original_df.empty else ""
+            # Collect all original image paths associated with the indices
+            original_image_paths = []
+            if isinstance(original_indices, list) and original_indices:
+                for original_idx in original_indices:
+                    if original_idx < len(original_df):
+                        path = original_df.loc[original_idx, 'Image_Path']
+                        if pd.notna(path) and path not in original_image_paths:
+                            original_image_paths.append(path)
+            
+            # Ensure we have at least one path if possible
+            if not original_image_paths and not original_df.empty:
+                first_path = original_df.loc[0, 'Image_Path']
+                if pd.notna(first_path):
+                    original_image_paths = [first_path]
             
             # Create a new row for the main_df
             new_row = {col: "" for col in app.main_df.columns}
@@ -1124,32 +1184,39 @@ def apply_document_separation_with_highlights_by_row(app):
                 progress_bar.step(2)
                 progress_label.config(text=f"Processing document {idx+1} of {len(compiled_df)}...")
             
-            # Get the full image path
-            full_image_path = image_path
-            if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
-                full_image_path = app.get_full_path(full_image_path)
-            
-            # If this row was processed in a batch, use the result
-            if idx in batch_results and batch_results[idx] is not None:
-                box_data = batch_results[idx]
-                
-                # Generate a unique name for this document's highlighted image
-                image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
-                highlighted_image_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}_highlighted.jpg")
-                
-                try:
-                    # Create highlighted image
-                    highlight_image(full_image_path, box_data, highlighted_image_path)
+            # Determine the final image paths (highlighted or original)
+            final_image_paths = []
+            processed_row_info = batch_results.get(idx) # Get processed info for this compiled row index
+
+            if processed_row_info and 'box_2d' in processed_row_info:
+                box_data = processed_row_info
+                # Use the first original image path for highlighting reference
+                image_path_for_highlighting = original_image_paths[0] if original_image_paths else None
+
+                if image_path_for_highlighting:
+                    full_image_path = image_path_for_highlighting
+                    if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
+                         full_image_path = app.get_full_path(full_image_path)
+
+                    # Generate a unique name for this document's highlighted image
+                    image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
+                    highlighted_image_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}_highlighted.jpg")
                     
-                    # Use the highlighted image path
-                    new_row['Image_Path'] = highlighted_image_path
-                except Exception as e:
-                    app.error_logging(f"Error highlighting image for row {idx}: {str(e)}")
-                    # Use original image on error
-                    new_row['Image_Path'] = image_path
+                    try:
+                        # Create highlighted image
+                        highlight_image(full_image_path, box_data, highlighted_image_path)
+                        final_image_paths = [highlighted_image_path] # Store as a list
+                    except Exception as e:
+                        app.error_logging(f"Error highlighting image for row {idx}: {str(e)}")
+                        final_image_paths = original_image_paths # Fallback to original paths list
+                else:
+                     final_image_paths = original_image_paths # Fallback if no ref path
             else:
-                # No box found or not processed, use the original image
-                new_row['Image_Path'] = image_path
+                # No box found or not processed, use the original image paths
+                final_image_paths = original_image_paths
+                
+            # Store the final list of image paths
+            new_row['Image_Path'] = final_image_paths
             
             # Copy metadata fields if they exist
             for metadata_field in ['People', 'Places', 'Document_Type', 'Author', 'Correspondent', 
