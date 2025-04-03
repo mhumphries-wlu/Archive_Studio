@@ -54,6 +54,7 @@ class App(TkinterDnD.Tk):
         # Control visibility of bottom bar elements
         self.show_relevance = tk.BooleanVar(value=False)
         self.show_page_nav = tk.BooleanVar(value=False)
+        # self.show_relevance_nav = tk.BooleanVar(value=True) # REMOVED - Visibility tied to show_relevance
 
         self.current_scale = 1
 
@@ -159,6 +160,14 @@ class App(TkinterDnD.Tk):
         self.relevance_dropdown.pack(side="left", padx=2)
         self.relevance_dropdown.bind('<<ComboboxSelected>>', self.on_relevance_change)
 
+        # --- Add Relevance Navigation Buttons ---
+        self.relevant_back_button = tk.Button(bottom_left_group, text="Previous", command=lambda: self.navigate_relevant(-1)) # Changed text
+        self.relevant_back_button.pack(side="left", padx=(5, 2)) # Add padding to separate from dropdown
+
+        self.relevant_forward_button = tk.Button(bottom_left_group, text="Next", command=lambda: self.navigate_relevant(1)) # Changed text
+        self.relevant_forward_button.pack(side="left", padx=2)
+        # --- End Add Relevance Navigation Buttons ---
+
         # Bottom Right group elements (Document Page Navigation)
         self.doc_page_label = tk.Label(bottom_right_group, text="Document Page:") # Made instance variable
         self.doc_page_label.pack(side="left", padx=(5, 2))
@@ -240,8 +249,9 @@ class App(TkinterDnD.Tk):
         self.enable_drag_and_drop()
 
         # Apply initial visibility settings
-        self.toggle_relevance_visibility()
+        self.toggle_relevance_visibility() # Call this to set initial state based on show_relevance
         self.toggle_page_nav_visibility()
+        # self.toggle_relevance_nav_visibility() # REMOVED
 
 # GUI Setup
 
@@ -439,7 +449,6 @@ class App(TkinterDnD.Tk):
         self.bind("<Control-Shift-i>", lambda event: self.edit_all_images())  # Added parentheses for method call
 
         # Visibility toggle bindings
-        self.bind("<Alt-r>", lambda event: self.toggle_relevance_display())
         self.bind("<Alt-n>", lambda event: self.toggle_nav_display())
 
         # AI function bindings
@@ -684,11 +693,12 @@ class App(TkinterDnD.Tk):
         self.highlight_changes_var.set(False)
         self.highlight_errors_var.set(False)
         
-        # Reset visibility toggles to default (False)
+        # Reset visibility toggles to default (False for most, True for relevance nav)
         self.show_relevance.set(False)
         self.show_page_nav.set(False)
         self.toggle_relevance_visibility()
         self.toggle_page_nav_visibility()
+        self.toggle_relevance_nav_visibility() # Apply relevance nav reset
         
         # Reset page counter
         self.page_counter = 0
@@ -721,11 +731,13 @@ class App(TkinterDnD.Tk):
 
         # Clear project and image directories
         self.initialize_temp_directory()
-        self.initialize_settings
-                        
+        # self.initialize_settings # Already called within initialize_temp_directory -> initialize_main_df chain? No, need it here if initialize_temp doesn't call it.
+        # Let's check initialize_temp_directory structure again. It calls initialize_main_df. initialize_settings is called in __init__. Okay, no need to call it here.
+
         # Clear the find and replace matches DataFrame
-        self.find_replace_matches_df = pd.DataFrame(columns=["Index", "Page"])
-        
+        if hasattr(self, 'find_replace'): # Ensure find_replace exists
+            self.find_replace.find_replace_matches_df = pd.DataFrame(columns=["Index", "Page"])
+
         # Reset the dropdown to "None"
         self.text_display_var.set("None")
 
@@ -947,6 +959,80 @@ class App(TkinterDnD.Tk):
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to navigate images: {str(e)}")
                 self.error_logging(f"Navigation error: {str(e)}")
+
+    def navigate_relevant(self, direction):
+        """Navigate to the next/previous relevant or partially relevant document."""
+        if self.main_df.empty:
+            messagebox.showinfo("No Documents", "No documents loaded.")
+            return
+
+        if 'Relevance' not in self.main_df.columns:
+            messagebox.showerror("Error", "Relevance data not found. Run 'Find Relevant Documents' first.")
+            return
+
+        target_relevance = ["Relevant", "Partially Relevant"]
+        current_index = self.page_counter
+        total_rows = len(self.main_df)
+
+        # Filter for relevant rows and get their indices
+        relevant_indices = self.main_df[self.main_df['Relevance'].isin(target_relevance)].index.tolist()
+
+        if not relevant_indices:
+            messagebox.showinfo("Not Found", "No documents marked as Relevant or Partially Relevant.")
+            return
+
+        next_index = -1
+
+        if direction == 1: # Forward
+            # Find the first relevant index after the current one
+            found_after = [idx for idx in relevant_indices if idx > current_index]
+            if found_after:
+                next_index = found_after[0]
+            else:
+                # Wrap around: find the first relevant index from the start
+                found_before = [idx for idx in relevant_indices if idx <= current_index]
+                if found_before:
+                    next_index = found_before[0] # Go to the first relevant item
+                else:
+                    # This case should not happen if relevant_indices is not empty
+                    pass
+
+        elif direction == -1: # Backward
+            # Find the first relevant index before the current one
+            found_before = [idx for idx in relevant_indices if idx < current_index]
+            if found_before:
+                next_index = found_before[-1]
+            else:
+                 # Wrap around: find the last relevant index from the end
+                found_after = [idx for idx in relevant_indices if idx >= current_index]
+                if found_after:
+                    next_index = found_after[-1] # Go to the last relevant item
+                else:
+                    # This case should not happen if relevant_indices is not empty
+                    pass
+
+        if next_index != -1 and next_index != current_index:
+            # Save current state before navigating
+            current_display = self.main_df.loc[self.page_counter, 'Text_Toggle']
+            if current_display != "None":
+                text = self.clean_text(self.text_display.get("1.0", tk.END))
+                if current_display == "Original_Text": self.main_df.loc[self.page_counter, 'Original_Text'] = text
+                elif current_display == "Corrected_Text": self.main_df.loc[self.page_counter, 'Corrected_Text'] = text
+                elif current_display == "Formatted_Text": self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
+                elif current_display == "Translation": self.main_df.loc[self.page_counter, 'Translation'] = text
+                elif current_display == "Separated_Text": self.main_df.loc[self.page_counter, 'Separated_Text'] = text
+
+            if hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
+                 self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
+
+            # Navigate
+            self.page_counter = next_index
+            self.refresh_display()
+        elif next_index == current_index:
+             messagebox.showinfo("Navigation Info", "Already at the only relevant document.")
+        else:
+            # Should only happen if relevant_indices was initially empty
+            messagebox.showinfo("Not Found", "No other relevant documents found.")
 
 # Image Functions
 
@@ -4936,13 +5022,21 @@ class App(TkinterDnD.Tk):
     # --- Visibility Toggle Functions ---
 
     def toggle_relevance_visibility(self):
-        """Toggles the visibility of the relevance dropdown and label."""
+        """Toggles the visibility of the relevance dropdown, label, AND navigation buttons."""
         if self.show_relevance.get():
+            # Show relevance elements
             self.relevance_label.pack(side="left", padx=2)
             self.relevance_dropdown.pack(side="left", padx=2)
+            # Show navigation buttons directly
+            self.relevant_back_button.pack(side="left", padx=(5, 2))
+            self.relevant_forward_button.pack(side="left", padx=2)
         else:
+            # Hide relevance elements
             self.relevance_label.pack_forget()
             self.relevance_dropdown.pack_forget()
+            # Hide navigation buttons directly
+            self.relevant_back_button.pack_forget()
+            self.relevant_forward_button.pack_forget()
 
     def toggle_page_nav_visibility(self):
         """Toggles the visibility of the document page navigation controls."""
@@ -4960,6 +5054,8 @@ class App(TkinterDnD.Tk):
             self.doc_page_counter_label.pack_forget()
             self.doc_button4.pack_forget()
             self.doc_button5.pack_forget()
+
+    # REMOVED toggle_relevance_nav_visibility
 
     # --- End Visibility Toggle Functions ---
 
@@ -5246,14 +5342,16 @@ class App(TkinterDnD.Tk):
                 self.load_text()
 
     def toggle_relevance_display(self, event=None):
-        """Toggle the visibility of the relevance dropdown"""
-        self.show_relevance.set(not self.show_relevance.get())
-        self.toggle_relevance_visibility()
-        
+         """Toggle the visibility of the entire relevance section (dropdown and buttons)"""
+         self.show_relevance.set(not self.show_relevance.get())
+         self.toggle_relevance_visibility() # This now handles dropdown and buttons together
+
     def toggle_nav_display(self, event=None):
         """Toggle the visibility of the document navigation controls"""
         self.show_page_nav.set(not self.show_page_nav.get())
         self.toggle_page_nav_visibility()
+
+    # REMOVED toggle_relevance_nav_display
 
 if __name__ == "__main__":
     try:
