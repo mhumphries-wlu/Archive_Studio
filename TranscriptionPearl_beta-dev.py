@@ -49,13 +49,18 @@ class App(TkinterDnD.Tk):
         self.highlight_changes_var = tk.BooleanVar()
         self.highlight_errors_var = tk.BooleanVar()
         self.skip_completed_pages = tk.BooleanVar(value=True)  # Default to skipping completed pages
-               
-        self.current_scale = 1    
+        self.relevance_var = tk.StringVar() # Added for relevance dropdown
+
+        # Control visibility of bottom bar elements
+        self.show_relevance = tk.BooleanVar(value=False)
+        self.show_page_nav = tk.BooleanVar(value=False)
+
+        self.current_scale = 1
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=0)  # Top frame
         self.grid_rowconfigure(1, weight=1)  # Main frame
-        self.grid_rowconfigure(2, weight=0)  # Bottom frame
+        self.grid_rowconfigure(2, weight=0)  # Bottom Bar frame
 
         # Modify the top frame configuration
         self.top_frame = tk.Frame(self)
@@ -92,6 +97,9 @@ class App(TkinterDnD.Tk):
         self.chunking_strategy_var = tk.StringVar()
         
         # Right group elements (navigation)
+        doc_num_label = tk.Label(right_group, text="Document Number:") # Added Document Number label
+        doc_num_label.pack(side="left", padx=(5, 2)) # Added Document Number label
+
         self.button1 = tk.Button(right_group, text="<<", command=lambda: self.navigate_images(-2))
         self.button1.pack(side="left", padx=2)
         
@@ -121,31 +129,56 @@ class App(TkinterDnD.Tk):
         self.main_frame.add(self.text_display)
         self.main_frame.add(self.image_display)
         
-        self.bottom_frame = tk.Frame(self)
-        self.bottom_frame.grid_rowconfigure(0, weight=1)
-        self.bottom_frame.grid(row=2, column=0, sticky="nsew")
-        
-        self.bottom_frame.grid_columnconfigure(0, weight=1)
-        self.bottom_frame.grid_columnconfigure(1, weight=1)
-        
-        button_frame = tk.Frame(self.bottom_frame)
-        button_frame.grid(row=0, column=0, sticky="nsw")
-        
-        button_frame.grid_columnconfigure(0, weight=0)
-        button_frame.grid_columnconfigure(1, weight=0)
-        button_frame.grid_columnconfigure(2, weight=1)
-        button_frame.grid_rowconfigure(0, weight=1)
-        button_frame.grid_rowconfigure(1, weight=1)
-        button_frame.grid_rowconfigure(2, weight=1)
-        button_frame.grid_rowconfigure(3, weight=1)
-        textbox_frame = tk.Frame(self.bottom_frame)
-        textbox_frame.grid(row=0, column=1, sticky="nsew")
-        
-        textbox_frame.grid_columnconfigure(0, weight=0)
-        textbox_frame.grid_columnconfigure(1, weight=1)
-        textbox_frame.grid_rowconfigure(0, weight=1)
-        textbox_frame.grid_rowconfigure(1, weight=1)
-        textbox_frame.grid_rowconfigure(2, weight=1)
+        # --- Bottom Bar Frame ---
+        self.bottom_bar_frame = tk.Frame(self)
+        self.bottom_bar_frame.grid(row=2, column=0, sticky="nsew")
+        self.bottom_bar_frame.grid_columnconfigure(1, weight=1) # Make middle column expandable
+
+        # Create groups in the bottom bar frame
+        bottom_left_group = tk.Frame(self.bottom_bar_frame)
+        bottom_left_group.grid(row=0, column=0, sticky="w", padx=5)
+
+        # Placeholder to keep the bottom bar visible
+        placeholder_label = tk.Label(self.bottom_bar_frame, text=" ")
+        placeholder_label.grid(row=0, column=1, sticky="ew")
+
+        bottom_right_group = tk.Frame(self.bottom_bar_frame)
+        bottom_right_group.grid(row=0, column=2, sticky="e", padx=(0, 5))
+
+        # Bottom Left group elements (Relevance)
+        self.relevance_label = tk.Label(bottom_left_group, text="Relevance:") # Made instance variable
+        self.relevance_label.pack(side="left", padx=2)
+
+        self.relevance_dropdown = ttk.Combobox(
+            bottom_left_group,
+            textvariable=self.relevance_var,
+            values=["", "Relevant", "Partially Relevant", "Irrelevant", "Uncertain"], # Added blank default
+            width=15,
+            state="readonly"
+        )
+        self.relevance_dropdown.pack(side="left", padx=2)
+        self.relevance_dropdown.bind('<<ComboboxSelected>>', self.on_relevance_change)
+
+        # Bottom Right group elements (Document Page Navigation)
+        self.doc_page_label = tk.Label(bottom_right_group, text="Document Page:") # Made instance variable
+        self.doc_page_label.pack(side="left", padx=(5, 2))
+
+        self.doc_button1 = tk.Button(bottom_right_group, text="<<", command=lambda: self.document_page_nav(-2))
+        self.doc_button1.pack(side="left", padx=2)
+
+        self.doc_button2 = tk.Button(bottom_right_group, text="<", command=lambda: self.document_page_nav(-1))
+        self.doc_button2.pack(side="left", padx=2)
+
+        self.doc_page_counter_var = tk.StringVar() # Variable for doc page counter
+        self.doc_page_counter_var.set("0 / 0")
+        self.doc_page_counter_label = tk.Label(bottom_right_group, textvariable=self.doc_page_counter_var) # Made instance variable
+        self.doc_page_counter_label.pack(side="left", padx=2)
+
+        self.doc_button4 = tk.Button(bottom_right_group, text=">", command=lambda: self.document_page_nav(1))
+        self.doc_button4.pack(side="left", padx=2)
+
+        self.doc_button5 = tk.Button(bottom_right_group, text=">>", command=lambda: self.document_page_nav(2))
+        self.doc_button5.pack(side="left", padx=2)
         
         # --- Continue with Existing Initialization ---
         self.initialize_temp_directory()
@@ -204,7 +237,11 @@ class App(TkinterDnD.Tk):
         self.bind_key_universal_commands(self.text_display)
         
         # Enable drag and drop
-        self.enable_drag_and_drop() 
+        self.enable_drag_and_drop()
+
+        # Apply initial visibility settings
+        self.toggle_relevance_visibility()
+        self.toggle_page_nav_visibility()
 
 # GUI Setup
 
@@ -360,6 +397,11 @@ class App(TkinterDnD.Tk):
             label="Collate Names & Places",
             command=self.run_collation_and_open_window  # <-- new function
         )
+        self.tools_menu.add_separator()
+        self.tools_menu.add_command(
+            label="Find Relevant Documents",
+            command=self.find_relevant_documents
+        )
 
     def create_key_bindings(self):
         # Navigation bindings
@@ -396,6 +438,10 @@ class App(TkinterDnD.Tk):
         self.bind("<Control-i>", lambda event: self.edit_single_image())  # Added parentheses for method call
         self.bind("<Control-Shift-i>", lambda event: self.edit_all_images())  # Added parentheses for method call
 
+        # Visibility toggle bindings
+        self.bind("<Alt-r>", lambda event: self.toggle_relevance_display())
+        self.bind("<Alt-n>", lambda event: self.toggle_nav_display())
+
         # AI function bindings
         self.bind("<Control-1>", lambda event: self.ai_function(all_or_one_flag="Current Page", ai_job="HTR"))
         self.bind("<Control-Shift-1>", lambda event: self.ai_function(all_or_one_flag="All Pages", ai_job="HTR"))
@@ -420,6 +466,10 @@ class App(TkinterDnD.Tk):
         self.image_display.bind("<MouseWheel>", self.image_handler.scroll)
         self.image_display.bind("<ButtonPress-1>", self.image_handler.start_pan)
         self.image_display.bind("<B1-Motion>", self.image_handler.pan)
+
+        # Document Page Navigation Bindings (Example - adjust as needed)
+        self.bind("<Alt-Left>", lambda event: self.document_page_nav(-1))
+        self.bind("<Alt-Right>", lambda event: self.document_page_nav(1))
 
     def create_collate_names_places_window(self):
         """
@@ -634,6 +684,12 @@ class App(TkinterDnD.Tk):
         self.highlight_changes_var.set(False)
         self.highlight_errors_var.set(False)
         
+        # Reset visibility toggles to default (False)
+        self.show_relevance.set(False)
+        self.show_page_nav.set(False)
+        self.toggle_relevance_visibility()
+        self.toggle_page_nav_visibility()
+        
         # Reset page counter
         self.page_counter = 0
             
@@ -745,13 +801,15 @@ class App(TkinterDnD.Tk):
             "Places",
             # Error tracking
             "Errors",
-            "Errors_Source"
+            "Errors_Source",
+            # Relevance tracking
+            "Relevance" # Added Relevance column
         ])
         
         # Initialize all text columns as empty strings instead of NaN
         text_columns = [
             "Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text",
-            "People", "Places", "Errors", "Errors_Source"
+            "People", "Places", "Errors", "Errors_Source", "Relevance" # Added Relevance
         ]
         for col in text_columns:
             self.main_df[col] = ""
@@ -1077,6 +1135,10 @@ class App(TkinterDnD.Tk):
                 elif current_display == "Separated_Text":
                     self.main_df.loc[self.page_counter, 'Separated_Text'] = text
         
+        # Save current relevance selection
+        if not self.main_df.empty and hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
+            self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
+
         self.project_io.save_project()
 
     def open_project(self):
@@ -1099,6 +1161,10 @@ class App(TkinterDnD.Tk):
                 elif current_display == "Separated_Text":
                     self.main_df.loc[self.page_counter, 'Separated_Text'] = text
         
+        # Save current relevance selection before opening
+        if not self.main_df.empty and hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
+            self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
+
         self.project_io.open_project()
 
     def save_project_as(self):
@@ -1121,6 +1187,10 @@ class App(TkinterDnD.Tk):
                 elif current_display == "Separated_Text":
                     self.main_df.loc[self.page_counter, 'Separated_Text'] = text
         
+        # Save current relevance selection before saving as
+        if not self.main_df.empty and hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
+             self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
+
         self.project_io.save_project_as()
 
     def open_pdf(self, pdf_file=None):
@@ -1221,7 +1291,8 @@ class App(TkinterDnD.Tk):
                 "People": "",
                 "Places": "",
                 "Errors": "",
-                "Errors_Source": ""
+                "Errors_Source": "",
+                "Relevance": ""
             }
             self.main_df.loc[i - 1] = new_row
 
@@ -1356,6 +1427,27 @@ class App(TkinterDnD.Tk):
         if pd.notna(self.main_df.loc[index, 'Separated_Text']) and self.main_df.loc[index, 'Separated_Text'].strip():
             available_options.append("Separated_Text")
         self.text_display_dropdown['values'] = available_options
+
+        # Load and set the relevance value for the current page
+        if 'Relevance' in self.main_df.columns:
+            relevance_value = self.main_df.loc[index, 'Relevance']
+            # Set to empty string if NaN or None
+            if pd.isna(relevance_value) or relevance_value is None:
+                relevance_value = ""
+            
+            # Update relevance dropdown
+            try:
+                self.relevance_var.set(relevance_value)
+                # If we have a non-empty relevance value, make sure the dropdown is visible
+                if relevance_value.strip() and self.show_relevance.get() == False:
+                    self.show_relevance.set(True)
+                    self.toggle_relevance_visibility()
+            except Exception as e:
+                self.error_logging(f"Error setting relevance value: {str(e)}")
+                self.relevance_var.set("")
+        else:
+            # Ensure dropdown is cleared if column doesn't exist
+            self.relevance_var.set("")
 
         # Re-highlight find/replace matches if that window is active
         if hasattr(self, 'find_replace') and self.find_replace.find_replace_toggle:
@@ -1743,6 +1835,10 @@ class App(TkinterDnD.Tk):
                     elif current_display == "Separated_Text":
                         self.main_df.loc[self.page_counter, 'Separated_Text'] = text
             
+            # Save relevance before quitting
+            if not self.main_df.empty and hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
+                self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
+
             self.quit()
 
 # GUI Actions / Toggles
@@ -4773,6 +4869,391 @@ class App(TkinterDnD.Tk):
             
         except Exception as e:
             self.error_logging(f"Error updating DataFrame with chunk result: {str(e)}")
+
+    def on_relevance_change(self, event=None):
+        """Callback function when the relevance dropdown selection changes."""
+        if self.main_df.empty:
+            return
+
+        index = self.page_counter
+        selected_relevance = self.relevance_var.get()
+
+        # Update the 'Relevance' column in the DataFrame for the current row
+        if 'Relevance' in self.main_df.columns:
+            self.main_df.loc[index, 'Relevance'] = selected_relevance
+            print(f"Updated Relevance for index {index} to: {selected_relevance}") # Debug print
+        else:
+            print(f"Warning: 'Relevance' column not found in main_df.") # Debug print
+
+    def document_page_nav(self, direction):
+        """Dummy function for document page navigation buttons."""
+        print(f"Document Page Navigation called with direction: {direction}") # Debug print
+        pass # Placeholder for future implementation
+
+
+    def highlight_changes(self):
+        """
+        Highlight differences between the current text level and the previous level:
+        - When viewing Corrected_Text, highlight changes from Original_Text
+        - When viewing Formatted_Text, highlight changes from Corrected_Text
+        """
+        index = self.page_counter
+        current_toggle = self.main_df.loc[index, 'Text_Toggle']
+        
+        # Early exit if we're at the Original_Text level (no previous text to compare with)
+        if current_toggle == "Original_Text" or current_toggle == "None":
+            return
+            
+        # Determine which texts to compare based on current level
+        if current_toggle == "Corrected_Text":
+            # Compare Corrected_Text with Original_Text
+            current_text = self.main_df.loc[index, 'Corrected_Text']
+            previous_text = self.main_df.loc[index, 'Original_Text']
+            
+            # Skip if either text is missing
+            if pd.isna(current_text) or pd.isna(previous_text):
+                return
+                
+        elif current_toggle == "Formatted_Text":
+            # Compare Formatted_Text with Corrected_Text
+            current_text = self.main_df.loc[index, 'Formatted_Text']
+            previous_text = self.main_df.loc[index, 'Corrected_Text']
+            
+            # If Corrected_Text is empty, compare with Original_Text instead
+            if pd.isna(previous_text) or previous_text.strip() == '':
+                previous_text = self.main_df.loc[index, 'Original_Text']
+                
+            # Skip if either text is missing
+            if pd.isna(current_text) or pd.isna(previous_text):
+                return
+        else:
+            # Unrecognized toggle value
+            return
+        
+        # Use the advanced highlighting
+        highlight_text_differences(self.text_display, current_text, previous_text)
+
+    # --- Visibility Toggle Functions ---
+
+    def toggle_relevance_visibility(self):
+        """Toggles the visibility of the relevance dropdown and label."""
+        if self.show_relevance.get():
+            self.relevance_label.pack(side="left", padx=2)
+            self.relevance_dropdown.pack(side="left", padx=2)
+        else:
+            self.relevance_label.pack_forget()
+            self.relevance_dropdown.pack_forget()
+
+    def toggle_page_nav_visibility(self):
+        """Toggles the visibility of the document page navigation controls."""
+        if self.show_page_nav.get():
+            self.doc_page_label.pack(side="left", padx=(5, 2))
+            self.doc_button1.pack(side="left", padx=2)
+            self.doc_button2.pack(side="left", padx=2)
+            self.doc_page_counter_label.pack(side="left", padx=2)
+            self.doc_button4.pack(side="left", padx=2)
+            self.doc_button5.pack(side="left", padx=2)
+        else:
+            self.doc_page_label.pack_forget()
+            self.doc_button1.pack_forget()
+            self.doc_button2.pack_forget()
+            self.doc_page_counter_label.pack_forget()
+            self.doc_button4.pack_forget()
+            self.doc_button5.pack_forget()
+
+    # --- End Visibility Toggle Functions ---
+
+    def find_relevant_documents(self):
+        """Create a window for finding relevant documents using AI analysis"""
+        # Create the window
+        relevance_window = tk.Toplevel(self)
+        relevance_window.title("Find Relevant Documents")
+        relevance_window.geometry("600x400")
+        relevance_window.grab_set()  # Make window modal
+        
+        # Message explaining purpose
+        message_label = tk.Label(relevance_window, 
+            text="Describe what makes a document relevant to your research:",
+            font=("Calibri", 12))
+        message_label.pack(pady=15)
+        
+        # Create a large text box for the relevance criteria
+        criteria_frame = tk.Frame(relevance_window)
+        criteria_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        criteria_text = tk.Text(criteria_frame, wrap="word", height=10, undo=True)
+        criteria_text.pack(fill="both", expand=True, side="left")
+        
+        # Add scrollbar
+        scrollbar = tk.Scrollbar(criteria_frame, command=criteria_text.yview)
+        scrollbar.pack(side="right", fill="y")
+        criteria_text.config(yscrollcommand=scrollbar.set)
+        
+        # Create the text source selection dropdown
+        dropdown_frame = tk.Frame(relevance_window)
+        dropdown_frame.pack(pady=10)
+        
+        source_label = tk.Label(dropdown_frame, text="Text Source:")
+        source_label.pack(side="left", padx=5)
+        
+        # Create a StringVar for the text source dropdown
+        self.relevance_source_var = tk.StringVar()
+        
+        # Create text source options based on available data
+        source_options = []
+        if not self.main_df.empty:
+            row = self.page_counter
+            if pd.notna(self.main_df.loc[row, 'Original_Text']) and self.main_df.loc[row, 'Original_Text'].strip():
+                source_options.append("Original_Text")
+            if pd.notna(self.main_df.loc[row, 'Corrected_Text']) and self.main_df.loc[row, 'Corrected_Text'].strip():
+                source_options.append("Corrected_Text")
+            if pd.notna(self.main_df.loc[row, 'Formatted_Text']) and self.main_df.loc[row, 'Formatted_Text'].strip():
+                source_options.append("Formatted_Text")
+            if pd.notna(self.main_df.loc[row, 'Translation']) and self.main_df.loc[row, 'Translation'].strip():
+                source_options.append("Translation")
+            if pd.notna(self.main_df.loc[row, 'Separated_Text']) and self.main_df.loc[row, 'Separated_Text'].strip():
+                source_options.append("Separated_Text")
+        
+        # If no options, add some defaults
+        if not source_options:
+            source_options = ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]
+        
+        # Create the text source dropdown
+        source_dropdown = ttk.Combobox(dropdown_frame,
+                                    textvariable=self.relevance_source_var,
+                                    values=source_options,
+                                    state="readonly",
+                                    width=20)
+        source_dropdown.pack(side="left", padx=5)
+        
+        # Set a default value - prefer formatted or corrected text
+        if "Formatted_Text" in source_options:
+            self.relevance_source_var.set("Formatted_Text")
+        elif "Corrected_Text" in source_options:
+            self.relevance_source_var.set("Corrected_Text")
+        elif source_options:
+            self.relevance_source_var.set(source_options[0])
+        
+        # Mode selection for All Pages or Current Page
+        mode_frame = tk.Frame(relevance_window)
+        mode_frame.pack(pady=10)
+        
+        self.relevance_mode_var = tk.StringVar(value="All Pages")
+        
+        mode_label = tk.Label(mode_frame, text="Process:")
+        mode_label.pack(side="left", padx=5)
+        
+        current_radio = tk.Radiobutton(mode_frame, text="Current Page", variable=self.relevance_mode_var, value="Current Page")
+        current_radio.pack(side="left", padx=5)
+        
+        all_radio = tk.Radiobutton(mode_frame, text="All Pages", variable=self.relevance_mode_var, value="All Pages")
+        all_radio.pack(side="left", padx=5)
+        
+        # Buttons at the bottom
+        button_frame = tk.Frame(relevance_window)
+        button_frame.pack(pady=20)
+        
+        # Function to handle OK button
+        def on_ok():
+            criteria_text_content = criteria_text.get("1.0", "end-1c").strip()
+            if not criteria_text_content:
+                messagebox.showwarning("Warning", "Please enter relevance criteria.")
+                return
+                
+            selected_source = self.relevance_source_var.get()
+            mode = self.relevance_mode_var.get()
+            
+            # Close the window
+            relevance_window.destroy()
+            
+            # Process the relevance search
+            self.process_relevance_search(criteria_text_content, selected_source, mode)
+        
+        # Function to handle Cancel button
+        def on_cancel():
+            relevance_window.destroy()
+        
+        # Create buttons
+        ok_button = tk.Button(button_frame, text="OK", command=on_ok, width=10)
+        ok_button.pack(side="left", padx=10)
+        
+        cancel_button = tk.Button(button_frame, text="Cancel", command=on_cancel, width=10)
+        cancel_button.pack(side="left", padx=10)
+        
+        # Center the window
+        relevance_window.update_idletasks()
+        width = relevance_window.winfo_width()
+        height = relevance_window.winfo_height()
+        x = (relevance_window.winfo_screenwidth() // 2) - (width // 2)
+        y = (relevance_window.winfo_screenheight() // 2) - (height // 2)
+        relevance_window.geometry(f'{width}x{height}+{x}+{y}')
+        
+        # Bind keyboard shortcuts
+        relevance_window.bind("<Return>", lambda event: on_ok())
+        relevance_window.bind("<Escape>", lambda event: on_cancel())
+        
+        # Give focus to the text widget
+        criteria_text.focus_set()
+        
+        # Wait for the window to be closed
+        self.wait_window(relevance_window)
+
+    def process_relevance_search(self, criteria_text, selected_source, mode):
+        """Process the relevance search using AI and update the DataFrame"""
+        if not self.main_df.empty:
+            # Show progress window
+            progress_title = f"Finding Relevant Documents ({mode})..."
+            progress_window, progress_bar, progress_label = self.progress_bar.create_progress_window(progress_title)
+            self.progress_bar.update_progress(0, 1)
+            
+            try:
+                # Disable navigation buttons during processing
+                self.toggle_button_state()
+                
+                # Determine which rows to process
+                if mode == "Current Page":
+                    batch_df = self.main_df.loc[[self.page_counter]]
+                else:
+                    # Get rows with text in the selected source
+                    batch_df = self.main_df[
+                        (self.main_df[selected_source].notna()) & 
+                        (self.main_df[selected_source] != '')
+                    ]
+                
+                if batch_df.empty:
+                    messagebox.showinfo("No Data", f"No rows found with text in {selected_source}.")
+                    self.progress_bar.close_progress_window()
+                    self.toggle_button_state()
+                    return
+                
+                # Set up job parameters based on relevance preset
+                relevance_preset = next((p for p in self.settings.analysis_presets if p['name'] == "Relevance"), None)
+                
+                if not relevance_preset:
+                    messagebox.showerror("Error", "Relevance preset not found in settings.")
+                    self.progress_bar.close_progress_window()
+                    self.toggle_button_state()
+                    return
+                
+                # Setup job parameters
+                job_params = {
+                    "temp": float(relevance_preset.get('temperature', 0.3)),
+                    "val_text": relevance_preset.get('val_text', 'Relevance:'),
+                    "engine": relevance_preset.get('model', self.settings.model_list[0]),
+                    "user_prompt": relevance_preset.get('specific_instructions', '').replace("{query_text}", criteria_text),
+                    "system_prompt": relevance_preset.get('general_instructions', ''),
+                    "batch_size": min(10, self.settings.batch_size),  # Use smaller batch size for complex processing
+                    "use_images": False
+                }
+                
+                # Initialize counters
+                total_rows = len(batch_df)
+                processed_rows = 0
+                error_count = 0
+                
+                # Process each row
+                with ThreadPoolExecutor(max_workers=job_params['batch_size']) as executor:
+                    futures_to_index = {}
+                    
+                    # Submit tasks for all rows
+                    for index, row in batch_df.iterrows():
+                        text_to_process = row[selected_source]
+                        
+                        if not pd.isna(text_to_process) and text_to_process.strip():
+                            # Submit the API request
+                            future = executor.submit(
+                                asyncio.run,
+                                self.api_handler.route_api_call(
+                                    system_prompt=job_params['system_prompt'],
+                                    user_prompt=job_params['user_prompt'],
+                                    temp=job_params['temp'],
+                                    image_data=[],  # No images for relevance
+                                    text_to_process=text_to_process,
+                                    val_text=job_params['val_text'],
+                                    engine=job_params['engine'],
+                                    index=index,
+                                    is_base64=False,
+                                    job_params=job_params
+                                )
+                            )
+                            
+                            futures_to_index[future] = index
+                    
+                    # Process results as they complete
+                    for future in as_completed(futures_to_index):
+                        index = futures_to_index[future]
+                        try:
+                            response, _ = future.result()
+                            
+                            # Update progress
+                            processed_rows += 1
+                            self.progress_bar.update_progress(processed_rows, total_rows)
+                            
+                            # Process the response
+                            if response != "Error":
+                                # Strip response to first line only
+                                if '\n' in response:
+                                    response = response.split('\n', 1)[0].strip()
+                                
+                                # Valid responses: "Relevant", "Partially Relevant", "Irrelevant", "Uncertain"
+                                valid_responses = ["Relevant", "Partially Relevant", "Irrelevant", "Uncertain"]
+                                
+                                # If response is not in valid responses, set to "Uncertain"
+                                if response not in valid_responses:
+                                    response = "Uncertain"
+                                
+                                # Update the DataFrame
+                                self.main_df.at[index, 'Relevance'] = response
+                            else:
+                                error_count += 1
+                                
+                        except Exception as e:
+                            self.error_logging(f"Error processing relevance for index {index}: {str(e)}")
+                            error_count += 1
+                
+                # Make the relevance dropdown visible
+                self.show_relevance.set(True)
+                self.toggle_relevance_visibility()
+                
+                # Refresh display to show updated relevance
+                if mode == "Current Page":
+                    # Update the displayed relevance value
+                    if 'Relevance' in self.main_df.columns and self.page_counter in self.main_df.index:
+                        relevance_value = self.main_df.loc[self.page_counter, 'Relevance']
+                        if pd.isna(relevance_value):
+                            relevance_value = ""
+                        self.relevance_var.set(relevance_value)
+                
+                # Show summary message
+                if error_count > 0:
+                    messagebox.showwarning("Processing Complete", 
+                                        f"Relevance analysis complete with {error_count} errors. "
+                                        f"Successfully processed {total_rows - error_count} documents.")
+                else:
+                    messagebox.showinfo("Processing Complete", 
+                                     f"Relevance analysis complete. {total_rows} documents processed.")
+                
+            except Exception as e:
+                self.error_logging(f"Error in process_relevance_search: {str(e)}")
+                messagebox.showerror("Error", f"An error occurred during relevance analysis: {str(e)}")
+            
+            finally:
+                # Close progress window and re-enable buttons
+                self.progress_bar.close_progress_window()
+                self.toggle_button_state()
+                
+                # Refresh display to ensure relevance is shown
+                self.load_text()
+
+    def toggle_relevance_display(self, event=None):
+        """Toggle the visibility of the relevance dropdown"""
+        self.show_relevance.set(not self.show_relevance.get())
+        self.toggle_relevance_visibility()
+        
+    def toggle_nav_display(self, event=None):
+        """Toggle the visibility of the document navigation controls"""
+        self.show_page_nav.set(not self.show_page_nav.get())
+        self.toggle_page_nav_visibility()
 
 if __name__ == "__main__":
     try:

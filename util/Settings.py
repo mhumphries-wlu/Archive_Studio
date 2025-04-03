@@ -62,7 +62,9 @@ Paragraph Continuity: If one paragraph directly follows another without a new he
 
 No Break on Internal Paragraphs: Do not insert a letter break marker between paragraphs that are part of the same letter. A mere change in subject matter or a simple formatting variation that does not involve a standalone header should not trigger a new letter marker.
 
-Uncertainty: When it is unclear whether a new letter is starting, rely on the absence of header elements and distinct formatting. In such cases, do not insert a break marker.
+4. Handling Uncertainty: When it is unclear whether a new letter is starting, rely on the absence of header elements and distinct formatting. In such cases, do not insert a break marker.
+
+5. Handling the First Text on Page: be sure to include the line number of the first text on the page if it is a date indicator/element and otherwise appears to be a new letter.
 
 In your response, begin by providing a brief explanation of how the above clues were evaluated. Then on a new line write "Document Break Lines:" followed by the line numbers where a document break should be inserted, separated by semicolons. 
 For example: "Document Break Lines: 4;15;27"
@@ -248,13 +250,12 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'model': "gemini-2.0-flash",
                 'temperature': "0.3",
                 'general_instructions' : '''You provide expert historical analysis. You examine a historical document and evaluate whether it meets the relevance criteria specified by a user. That criteria might include subjective factors such as whether the given document might be relevant to a particular research question or theme, or objective factors such as whether the document fits specific temporal or geographic requirements. Read the user's instructions, then the document provided, and determine whether the document fits the user's relevance criteria or not. Provide a confidence level for your judgement where 100% means absolute certainty. \n\nYou must end your response by writing: "Relevance:" followed by "Relevant", "Partially Relevant", "Irrelevant", or "Uncertain".''',
-                'specific_instructions': '''The user's query and specific criteria are as follows: {query_text}. \n\n Here is the text to analyze:\n\n{text_to_process}''',
+                'specific_instructions': '''Use the following criteria to determine the level of relevance of a given document:\n\n {query_text}. \n\n Here is the document to analyze:\n\n{text_to_process}''',
                 'use_images': False,
                 'current_image': "No",
                 'num_prev_images': "0",
                 'num_after_images': "0",
                 'val_text': "Relevance:",
-                'dataframe_field': "Relevance"
             },
             {
                 'name': "Bounding_Boxes",
@@ -325,9 +326,16 @@ If you don't have information for a heading or don't know, leave it blank.''',
 
         self.relevance_presets = [
             {
-                'name': "General_Relevance",
+                'name': "Relevance",
                 'model': "gemini-2.0-flash",
                 'temperature': "0.3",
+                'general_instructions' : '''You provide expert historical analysis. You examine a historical document and evaluate whether it meets the relevance criteria specified by a user. That criteria might include subjective factors such as whether the given document might be relevant to a particular research question or theme, or objective factors such as whether the document fits specific temporal or geographic requirements. Read the user's instructions, then the document provided, and determine whether the document fits the user's relevance criteria or not. Provide a confidence level for your judgement where 100% means absolute certainty. \n\nYou must end your response by writing: "Relevance:" followed by "Relevant", "Partially Relevant", "Irrelevant", or "Uncertain".''',
+                'specific_instructions': '''Use the following criteria to determine the level of relevance of a given document:\n\n {query_text}. \n\n Here is the document to analyze:\n\n{text_to_process}''',
+                'use_images': False,
+                'current_image': "No",
+                'num_prev_images': "0",
+                'num_after_images': "0",
+                'val_text': "Relevance:"
             }
         ]
 
@@ -413,17 +421,11 @@ Current Diary Entry to Analyze: {text_to_process}''',
         
         self.model_list = [
             "gpt-4o",
-            
-            "gpt-4.5-preview"
-            "o1",
+            "gpt-4.5-preview",
             "claude-3-5-sonnet-20241022",
-            "claude-3-5-sonnet-20240620",
             "claude-3-7-sonnet-20250219",
-            
-            
             "gemini-2.0-flash",
             "gemini-2.5-pro-exp-03-25"
-
         ]
 
         # Restore API keys

@@ -66,7 +66,7 @@ class ProjectIO:
             self.app.main_df = pd.read_csv(project_file, encoding='utf-8')
             
             # Ensure required text columns exist...
-            for col in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text", "Text_Toggle"]:
+            for col in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text", "Text_Toggle", "Relevance"]:
                 if col not in self.app.main_df.columns:
                     self.app.main_df[col] = ""
                 else:
@@ -94,6 +94,17 @@ class ProjectIO:
 
             # Initialize highlight toggles based on data presence
             self.initialize_highlight_toggles()
+            
+            # Check if any rows have relevance data and show the relevance dropdown if needed
+            if 'Relevance' in self.app.main_df.columns:
+                has_relevance = self.app.main_df['Relevance'].apply(
+                    lambda x: pd.notna(x) and str(x).strip() != ""
+                ).any()
+                
+                if has_relevance:
+                    self.app.show_relevance.set(True)
+                    self.app.toggle_relevance_visibility()
+                    self.app.error_logging("Enabled relevance dropdown due to existing relevance data")
 
             # Reset page counter and load the first image and text.
             self.app.page_counter = 0
@@ -285,7 +296,8 @@ class ProjectIO:
                     "Translation": [""],
                     "Image_Path": [image_path],
                     "Text_Path": [text_path],
-                    "Text_Toggle": ["Original_Text"]
+                    "Text_Toggle": ["Original_Text"],
+                    "Relevance": [""]
                 })
                 self.app.main_df = pd.concat([self.app.main_df, new_row], ignore_index=True)
 
