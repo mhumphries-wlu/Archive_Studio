@@ -373,8 +373,8 @@ class App(TkinterDnD.Tk):
         self.process_menu.add_command(label="Identify Document Separators",
                                      command=lambda: self.create_chunk_text_window(self.process_mode.get()))
 
-        self.process_menu.add_command(label="Apply Separation",
-                                     command=self.create_document_separation_options_window)
+        self.process_menu.add_command(label="Apply Document Separation",
+                                     command=self.apply_document_separation)
 
         self.process_menu.add_separator()
 
@@ -1030,36 +1030,8 @@ class App(TkinterDnD.Tk):
                 )
                 return
 
-            # If separators exist, proceed with opening the window
-            from util.apply_separation_options import create_separation_options_window
-
-            # Fix for the By Page / By Row dropdown issue
-            def fix_separation_dropdown(options_window):
-                # Find the mode dropdown in the window's children
-                for widget in options_window.winfo_children():
-                    if isinstance(widget, tk.Frame):
-                        for child in widget.winfo_children():
-                            if isinstance(child, tk.OptionMenu):
-                                # Reset the dropdown state to make it properly active
-                                child.config(state="normal")
-                                # If there's a StringVar attached to it, verify it has a valid value
-                                for var in options_window.winfo_children(): # Check variables in the options_window scope
-                                    if var.startswith('PY_VAR'): # Tkinter variable names often start like this
-                                        try:
-                                            actual_var = options_window.getvar(var)
-                                            if isinstance(actual_var, str) and actual_var in ["By Page", "By Row"]:
-                                                # Ensure it has a valid selection
-                                                if not options_window.getvar(var): # Use getvar to check the value
-                                                    options_window.setvar(var, "By Page") # Use setvar to set the value
-                                        except tk.TclError:
-                                            pass # Ignore if variable doesn't exist or isn't a StringVar
-
-            # Create the window with the fix applied afterward
-            options_window = create_separation_options_window(self)
-
-            # Apply the fix if the window was created
-            if options_window:
-                self.after(100, lambda: fix_separation_dropdown(options_window))
+            # Call the simplified document separation function
+            self.apply_document_separation()
 
         finally:
             # Make sure buttons are properly enabled
@@ -3034,8 +3006,8 @@ class App(TkinterDnD.Tk):
 
     def update_separation_menu_state(self, state="normal"):
         """Update the state of the document separation menu items."""
-        # Always keep the Apply Separation menu item enabled
-        self.process_menu.entryconfig("Apply Separation", state="normal")
+        # Always keep the Apply Document Separation menu item enabled
+        self.process_menu.entryconfig("Apply Document Separation", state="normal")
 
 # Highlighting Functions
 
@@ -4158,7 +4130,7 @@ class App(TkinterDnD.Tk):
                 if not messagebox.askyesno("Potentially Empty Pages", warning_message):
                     return
 
-            from util.apply_separation_options import apply_document_separation
+            from util.SeparateDocuments import apply_document_separation
             # Disable buttons during potentially long operation
             self.toggle_button_state()
             apply_document_separation(self) # Pass the App instance
@@ -4169,35 +4141,11 @@ class App(TkinterDnD.Tk):
                 self.toggle_button_state()
 
     def apply_document_separation_with_boxes(self):
-        """Apply document separation based on ***** markers and replace main_df with the compiled documents,
-        while also creating cropped images for each section."""
-        try:
-            # Check if any pages have no recognized text (using find_right_text)
-            unrecognized_pages = []
-            for index in self.main_df.index:
-                 text = self.find_right_text(index)
-                 if not text.strip():
-                      unrecognized_pages.append(index + 1) # Store 1-based page number
-
-            if unrecognized_pages:
-                page_list = ", ".join(map(str, unrecognized_pages[:5])) # Show first 5
-                if len(unrecognized_pages) > 5: page_list += "..."
-                warning_message = (
-                     f"Warning: {len(unrecognized_pages)} page(s) (e.g., {page_list}) have no usable text "
-                     f"in their selected display mode ('{self.text_display_var.get()}') and might be lost or misaligned during separation. "
-                     "Continue anyway?"
-                )
-                if not messagebox.askyesno("Potentially Empty Pages", warning_message):
-                    return
-
-            from util.apply_separation_options import apply_document_separation_with_boxes
-            # Disable buttons during potentially long operation
-            self.toggle_button_state()
-            apply_document_separation_with_boxes(self) # Pass the App instance
-        finally:
-            # Make sure buttons are re-enabled regardless of success or failure
-            if self.button1['state'] == "disabled":
-                self.toggle_button_state()
+        """
+        Legacy method kept for backward compatibility.
+        Now just calls the simplified separation method.
+        """
+        self.apply_document_separation()
 
 
 if __name__ == "__main__":
