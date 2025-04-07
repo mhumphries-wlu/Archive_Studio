@@ -1133,8 +1133,17 @@ class SettingsWindow:
             self.set_text_widget(self.analysis_specific_text, preset.get('specific_instructions', ""))
             # Validation text for analysis presets
             if 'val_text' in preset:
-                if not hasattr(self, 'analysis_val_entry'):
+                if not hasattr(self, 'analysis_val_entry') or not self.analysis_val_entry.winfo_exists():
+                    # First add the label for validation text
+                    validation_label = tk.Label(self.right_frame, text="Validation Text:")
+                    validation_label.grid(row=8, column=0, padx=10, pady=5, sticky="w")
+                    # Then create the entry widget
                     self.analysis_val_entry = tk.Entry(self.right_frame, width=60)
+                    self.analysis_val_entry.grid(row=8, column=1, padx=10, pady=5, sticky="w")
+                    # Bind the entry update
+                    self.bind_entry_update(self.analysis_val_entry, self.settings.analysis_presets, 
+                                      self.selected_preset_var, 'val_text')
+                # Set the text after ensuring the widget exists
                 self.set_entry_text(self.analysis_val_entry, preset.get('val_text', ""))
             self.toggle_image_controls()
             self.toggle_csv_columns()
@@ -2407,8 +2416,13 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 setter(preset.get(key, ""))
 
     def set_entry_text(self, entry_widget, text):
-        entry_widget.delete(0, tk.END)
-        entry_widget.insert(0, text)
+        """Safely set text in an entry widget with error handling"""
+        try:
+            if entry_widget and entry_widget.winfo_exists():
+                entry_widget.delete(0, tk.END)
+                entry_widget.insert(0, str(text) if text is not None else "")
+        except Exception as e:
+            print(f"Error setting entry text: {e}")
 
     def set_text_widget(self, text_widget, text):
         text_widget.delete("1.0", tk.END)

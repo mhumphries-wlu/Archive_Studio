@@ -3,7 +3,7 @@ import pandas as pd
 import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageDraw
-from util.process_boxes import process_image_with_bounding_boxes, apply_separation_with_boxes_batched, get_split_images_dir, normalize_coordinates
+from util.process_boxes import process_image_with_bounding_boxes, apply_separation_with_boxes_batched, get_split_images_dir, normalize_coordinates, crop_image
 
 def create_separation_options_window(app):
     
@@ -462,27 +462,47 @@ def apply_document_separation_with_boxes(app):
             if processed_row_info and 'box_2d' in processed_row_info:
                 box_data = processed_row_info
                 box_coords = box_data['box_2d']
-                # Use the first original image path for cropping reference
-                image_path_for_cropping = original_image_paths[0] if original_image_paths else None
-
-                if image_path_for_cropping:
-                    full_image_path = image_path_for_cropping
-                    if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
-                         full_image_path = app.get_full_path(full_image_path)
-
-                    # Generate output path for cropped image
-                    image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
-                    output_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}.jpg")
+                
+                # Process all images in the document
+                if original_image_paths:
+                    # First, try to process the primary image (for which we have bounding box data)
+                    primary_processed = False
+                    for i, image_path in enumerate(original_image_paths):
+                        try:
+                            if not image_path:
+                                continue
+                            
+                            full_image_path = image_path
+                            if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
+                                full_image_path = app.get_full_path(full_image_path)
+                            
+                            if not os.path.exists(full_image_path):
+                                continue
+                            
+                            # Generate unique output path for each image
+                            image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
+                            output_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}_{i+1}.jpg")
+                            
+                            # For the first/primary image, use the bounding box data to crop
+                            if not primary_processed:
+                                cropped_image_path = crop_image(full_image_path, box_coords, output_path)
+                                final_image_paths.append(cropped_image_path)
+                                primary_processed = True
+                            else:
+                                # For additional images, just include them as-is
+                                final_image_paths.append(image_path)
+                        except Exception as e:
+                            app.error_logging(f"Error processing image {image_path} for row {idx}: {str(e)}")
+                            # If this image failed, just add the original path
+                            if image_path not in final_image_paths:
+                                final_image_paths.append(image_path)
                     
-                    try:
-                        # Crop and save the image
-                        cropped_image_path = crop_image(full_image_path, box_coords, output_path)
-                        final_image_paths = [cropped_image_path] # Store as a list
-                    except Exception as e:
-                        app.error_logging(f"Error cropping image for row {idx}: {str(e)}")
-                        final_image_paths = original_image_paths # Fallback to original paths list
+                    # If we couldn't process any images, fall back to original paths
+                    if not final_image_paths:
+                        final_image_paths = original_image_paths
                 else:
-                     final_image_paths = original_image_paths # Fallback if no ref path
+                    # No original images, nothing to process
+                    final_image_paths = []
             else:
                 # No box found or not processed, use the original image paths
                 final_image_paths = original_image_paths
@@ -693,31 +713,51 @@ def apply_document_separation_with_highlights(app):
 
             if processed_row_info and 'box_2d' in processed_row_info:
                 box_data = processed_row_info
-                # Use the first original image path for highlighting reference
-                image_path_for_highlighting = original_image_paths[0] if original_image_paths else None
-
-                if image_path_for_highlighting:
-                    full_image_path = image_path_for_highlighting
-                    if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
-                         full_image_path = app.get_full_path(full_image_path)
-
-                    # Generate a unique name for this document's highlighted image
-                    image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
-                    highlighted_image_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}_highlighted.jpg")
+                
+                # Process all images in the document
+                if original_image_paths:
+                    # First, try to process the primary image (for which we have bounding box data)
+                    primary_processed = False
+                    for i, image_path in enumerate(original_image_paths):
+                        try:
+                            if not image_path:
+                                continue
+                            
+                            full_image_path = image_path
+                            if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
+                                full_image_path = app.get_full_path(full_image_path)
+                            
+                            if not os.path.exists(full_image_path):
+                                continue
+                            
+                            # Generate unique output path for each image
+                            image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
+                            
+                            # For the first/primary image, use the bounding box data to highlight
+                            if not primary_processed:
+                                highlighted_image_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}_{i+1}_highlighted.jpg")
+                                highlight_image(full_image_path, box_data, highlighted_image_path)
+                                final_image_paths.append(highlighted_image_path)
+                                primary_processed = True
+                            else:
+                                # For additional images, just include them as-is
+                                final_image_paths.append(image_path)
+                        except Exception as e:
+                            app.error_logging(f"Error processing image {image_path} for row {idx}: {str(e)}")
+                            # If this image failed, just add the original path
+                            if image_path not in final_image_paths:
+                                final_image_paths.append(image_path)
                     
-                    try:
-                        # Create highlighted image
-                        highlight_image(full_image_path, box_data, highlighted_image_path)
-                        final_image_paths = [highlighted_image_path] # Store as a list
-                    except Exception as e:
-                        app.error_logging(f"Error highlighting image for row {idx}: {str(e)}")
-                        final_image_paths = original_image_paths # Fallback to original paths list
+                    # If we couldn't process any images, fall back to original paths
+                    if not final_image_paths:
+                        final_image_paths = original_image_paths
                 else:
-                     final_image_paths = original_image_paths # Fallback if no ref path
+                    # No original images, nothing to process
+                    final_image_paths = []
             else:
                 # No box found or not processed, use the original image paths
                 final_image_paths = original_image_paths
-                
+
             # Store the final list of image paths
             new_row['Image_Path'] = final_image_paths
             
@@ -983,28 +1023,47 @@ def apply_document_separation_with_boxes_by_row(app):
 
             if processed_row_info and 'box_2d' in processed_row_info:
                 box_data = processed_row_info
-                box_coords = box_data['box_2d']
-                # Use the first original image path for cropping reference
-                image_path_for_cropping = original_image_paths[0] if original_image_paths else None
-
-                if image_path_for_cropping:
-                    full_image_path = image_path_for_cropping
-                    if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
-                         full_image_path = app.get_full_path(full_image_path)
-
-                    # Generate output path for cropped image
-                    image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
-                    output_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}.jpg")
+                
+                # Process all images in the document
+                if original_image_paths:
+                    # First, try to process the primary image (for which we have bounding box data)
+                    primary_processed = False
+                    for i, image_path in enumerate(original_image_paths):
+                        try:
+                            if not image_path:
+                                continue
+                            
+                            full_image_path = image_path
+                            if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
+                                full_image_path = app.get_full_path(full_image_path)
+                            
+                            if not os.path.exists(full_image_path):
+                                continue
+                            
+                            # Generate unique output path for each image
+                            image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
+                            output_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}_{i+1}.jpg")
+                            
+                            # For the first/primary image, use the bounding box data to crop
+                            if not primary_processed:
+                                cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
+                                final_image_paths.append(cropped_image_path)
+                                primary_processed = True
+                            else:
+                                # For additional images, just include them as-is
+                                final_image_paths.append(image_path)
+                        except Exception as e:
+                            app.error_logging(f"Error processing image {image_path} for row {idx}: {str(e)}")
+                            # If this image failed, just add the original path
+                            if image_path not in final_image_paths:
+                                final_image_paths.append(image_path)
                     
-                    try:
-                        # Crop and save the image
-                        cropped_image_path = crop_image(full_image_path, box_coords, output_path)
-                        final_image_paths = [cropped_image_path] # Store as a list
-                    except Exception as e:
-                        app.error_logging(f"Error cropping image for row {idx}: {str(e)}")
-                        final_image_paths = original_image_paths # Fallback to original paths list
+                    # If we couldn't process any images, fall back to original paths
+                    if not final_image_paths:
+                        final_image_paths = original_image_paths
                 else:
-                     final_image_paths = original_image_paths # Fallback if no ref path
+                    # No original images, nothing to process
+                    final_image_paths = []
             else:
                 # No box found or not processed, use the original image paths
                 final_image_paths = original_image_paths
@@ -1190,31 +1249,51 @@ def apply_document_separation_with_highlights_by_row(app):
 
             if processed_row_info and 'box_2d' in processed_row_info:
                 box_data = processed_row_info
-                # Use the first original image path for highlighting reference
-                image_path_for_highlighting = original_image_paths[0] if original_image_paths else None
-
-                if image_path_for_highlighting:
-                    full_image_path = image_path_for_highlighting
-                    if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
-                         full_image_path = app.get_full_path(full_image_path)
-
-                    # Generate a unique name for this document's highlighted image
-                    image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
-                    highlighted_image_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}_highlighted.jpg")
+                
+                # Process all images in the document
+                if original_image_paths:
+                    # First, try to process the primary image (for which we have bounding box data)
+                    primary_processed = False
+                    for i, image_path in enumerate(original_image_paths):
+                        try:
+                            if not image_path:
+                                continue
+                            
+                            full_image_path = image_path
+                            if not os.path.isabs(full_image_path) and hasattr(app, 'get_full_path'):
+                                full_image_path = app.get_full_path(full_image_path)
+                            
+                            if not os.path.exists(full_image_path):
+                                continue
+                            
+                            # Generate unique output path for each image
+                            image_basename = os.path.splitext(os.path.basename(full_image_path))[0]
+                            
+                            # For the first/primary image, use the bounding box data to highlight
+                            if not primary_processed:
+                                highlighted_image_path = os.path.join(split_images_dir, f"{image_basename}_doc_{idx+1}_{i+1}_highlighted.jpg")
+                                highlight_image(full_image_path, box_data, highlighted_image_path)
+                                final_image_paths.append(highlighted_image_path)
+                                primary_processed = True
+                            else:
+                                # For additional images, just include them as-is
+                                final_image_paths.append(image_path)
+                        except Exception as e:
+                            app.error_logging(f"Error processing image {image_path} for row {idx}: {str(e)}")
+                            # If this image failed, just add the original path
+                            if image_path not in final_image_paths:
+                                final_image_paths.append(image_path)
                     
-                    try:
-                        # Create highlighted image
-                        highlight_image(full_image_path, box_data, highlighted_image_path)
-                        final_image_paths = [highlighted_image_path] # Store as a list
-                    except Exception as e:
-                        app.error_logging(f"Error highlighting image for row {idx}: {str(e)}")
-                        final_image_paths = original_image_paths # Fallback to original paths list
+                    # If we couldn't process any images, fall back to original paths
+                    if not final_image_paths:
+                        final_image_paths = original_image_paths
                 else:
-                     final_image_paths = original_image_paths # Fallback if no ref path
+                    # No original images, nothing to process
+                    final_image_paths = []
             else:
                 # No box found or not processed, use the original image paths
                 final_image_paths = original_image_paths
-                
+
             # Store the final list of image paths
             new_row['Image_Path'] = final_image_paths
             

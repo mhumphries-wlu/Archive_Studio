@@ -145,7 +145,7 @@ class AnalyzeDocuments:
                 all_indices.append(index)
                 all_images.append(rel_path if image_path else "")
 
-            # Rest of the code remains the same...
+            # Combine all text into a single string
             combined_text = " ".join(all_text)
             document_texts = [text.strip() for text in combined_text.split("*****") if text.strip()]
 

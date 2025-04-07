@@ -203,47 +203,123 @@ class ProjectIO:
         if not parent_directory:
             return  # User cancelled
         project_name = simpledialog.askstring("Project Name", "Enter a name for the new project:")
-        if not project_name:
+        if not project_name or not project_name.strip():
+            messagebox.showwarning("Invalid Name", "Project name cannot be empty.")
             return  # User cancelled or provided an empty name
 
         # Create the project directory and images subfolder.
         project_directory = os.path.join(parent_directory, project_name)
-        os.makedirs(project_directory, exist_ok=True)
         images_directory = os.path.join(project_directory, "images")
-        os.makedirs(images_directory, exist_ok=True)
+        try:
+            # Check if directory exists and is not empty (optional, but safer)
+            if os.path.exists(project_directory) and os.listdir(project_directory):
+                 if not messagebox.askyesno("Directory Exists", f"The directory '{project_name}' already exists and may contain files. Overwrite or merge? (Choosing 'No' cancels the operation)"):
+                     return # User chose not to overwrite/merge
+
+            os.makedirs(project_directory, exist_ok=True)
+            os.makedirs(images_directory, exist_ok=True)
+        except OSError as e:
+            messagebox.showerror("Error", f"Could not create project directories: {e}")
+            self.app.error_logging(f"Could not create project directories: {e}")
+            return
+
 
         # Path for the project file (CSV).
         project_file = os.path.join(project_directory, f"{project_name}.pbf")
 
-        # Iterate over each row in the DataFrame.
-        for index, row in self.app.main_df.iterrows():
-            new_image_filename = f"{index+1:04d}_p{index+1:03d}.jpg"
-            new_image_path = os.path.join(images_directory, new_image_filename)
-            self.app.resize_image(row['Image_Path'], new_image_path)
-            
-            # Do not create a text file; store text in the DataFrame.
-            new_text_path = ""  # No text file is created
-            
-            rel_image_path = os.path.relpath(new_image_path, project_directory)
-            rel_text_path = ""  # No text file path
+        try: # Add try/except around the processing loop and saving
+            # Create a copy of the DataFrame to modify paths before saving
+            save_df = self.app.main_df.copy()
 
-            self.app.main_df.at[index, 'Image_Path'] = rel_image_path
-            self.app.main_df.at[index, 'Text_Path'] = rel_text_path
+            # Iterate over each row in the DataFrame (use the copy's index)
+            for index in save_df.index: # Use index from the copy
+                row = save_df.loc[index] # Get row data from the copy
+                image_path_data = row['Image_Path'] # Get the path data (could be string or list)
 
-        # Save the DataFrame (project file) in the project directory.
-        self.app.main_df.to_csv(project_file, index=False, encoding='utf-8')
+                source_image_path_to_copy = None # Initialize the single source path we will copy
 
-        messagebox.showinfo("Success", f"Project saved successfully to {project_directory}")
-        
-        # Update the project directory references.
-        self.app.project_directory = project_directory
-        self.app.images_directory = images_directory
+                # --- Determine the single source image path to copy ---
+                if isinstance(image_path_data, list):
+                    if image_path_data: # Check if list is not empty
+                        # Take the first path from the list
+                        potential_path = image_path_data[0]
+                        # Ensure the path is a non-empty string
+                        if pd.notna(potential_path) and isinstance(potential_path, str) and potential_path.strip():
+                            source_image_path_to_copy = str(potential_path) # Ensure string
+                        else:
+                            self.app.error_logging(f"Warning: First element in Image_Path list for index {index} is invalid or empty. Skipping image copy for this row.", level="WARNING")
+                    else:
+                        self.app.error_logging(f"Warning: Image_Path list is empty for index {index}. Skipping image copy for this row.", level="WARNING")
+                elif pd.notna(image_path_data) and isinstance(image_path_data, str) and image_path_data.strip():
+                    # It's a valid single string path
+                    source_image_path_to_copy = image_path_data
+                else:
+                    # Handle NaN, None, empty strings, or unexpected types
+                    self.app.error_logging(f"Warning: Invalid or missing Image_Path for index {index}. Type: {type(image_path_data)}. Skipping image copy for this row.", level="WARNING")
+                # --- End source path determination ---
+
+                # Define the new image filename and absolute path in the target directory
+                new_image_filename = f"{index+1:04d}_p{index+1:03d}.jpg" # Use index from the loop
+                new_image_path_abs = os.path.join(images_directory, new_image_filename)
+                # Define the relative path to store in the CSV
+                rel_image_path_for_csv = os.path.relpath(new_image_path_abs, project_directory)
+
+                if source_image_path_to_copy:
+                    # Resolve the selected source path to absolute for reading
+                    source_image_path_abs = self.app.get_full_path(source_image_path_to_copy)
+
+                    if source_image_path_abs and os.path.exists(source_image_path_abs):
+                        try:
+                            # Resize/copy the *selected* source image to the *new* location with the new name
+                            # Use shutil.copy2 for simple copy if resize isn't strictly needed,
+                            # or keep resize_image if resizing is desired during save_as.
+                            # Using resize_image here as per original code:
+                            self.app.resize_image(source_image_path_abs, new_image_path_abs)
+                            # Update the Image_Path in the DataFrame being saved to the *new relative path*
+                            save_df.at[index, 'Image_Path'] = rel_image_path_for_csv
+                        except Exception as img_err:
+                            self.app.error_logging(f"Error processing image for index {index} from {source_image_path_abs} to {new_image_path_abs}: {img_err}", level="ERROR")
+                            # Save an empty path in the CSV if image processing fails
+                            save_df.at[index, 'Image_Path'] = ""
+                    else:
+                        self.app.error_logging(f"Warning: Source image file not found for index {index}: {source_image_path_abs}. Saving empty path.", level="WARNING")
+                        save_df.at[index, 'Image_Path'] = "" # Save empty path if source not found
+                else:
+                    # No valid source image path determined, save empty path in CSV
+                    save_df.at[index, 'Image_Path'] = ""
+
+                # Text_Path is generally empty/unused now, ensure it's empty in the saved file
+                if 'Text_Path' in save_df.columns:
+                    save_df.at[index, 'Text_Path'] = ""
+
+            # --- End Loop ---
+
+            # Save the modified DataFrame (now containing single, relative image paths)
+            save_df.to_csv(project_file, index=False, encoding='utf-8')
+
+            messagebox.showinfo("Success", f"Project saved successfully to {project_directory}")
+
+            # Update the app's current project directory references ONLY after successful save
+            self.app.project_directory = project_directory
+            self.app.images_directory = images_directory
+            # Optionally, refresh display if needed, though usually not required after save_as
+            # self.app.refresh_display()
+
+        except Exception as e: # Catch errors during the loop or saving
+            messagebox.showerror("Error", f"Failed to save project as: {e}")
+            self.app.error_logging(f"Failed to save project as: {e}")
+            # Clean up partially created project directory? Maybe too risky.
 
     def open_pdf(self, pdf_file=None):
         if pdf_file is None:
             pdf_file = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")])
         if not pdf_file:
             return
+
+        # Ensure images directory exists (might be temp if no project loaded)
+        if not hasattr(self.app, 'images_directory') or not self.app.images_directory:
+             self.app.images_directory = os.path.join(self.app.temp_directory, "images")
+        os.makedirs(self.app.images_directory, exist_ok=True)
 
         # Show progress bar immediately
         progress_window, progress_bar, progress_label = self.app.progress_bar.create_progress_window("Processing PDF")
@@ -257,52 +333,90 @@ class ProjectIO:
             start_index = len(self.app.main_df)
 
             # Update progress bar with actual total
-            self.app.progress_bar.update_progress(0, total_pages)
+            self.app.progress_bar.set_total_steps(total_pages) # Use set_total_steps
+            self.app.progress_bar.update_progress(0) # Update progress to 0
+
+            new_rows_list = [] # Collect new rows
 
             for page_num in range(total_pages):
-                self.app.progress_bar.update_progress(page_num + 1, total_pages)
-            
+                self.app.progress_bar.update_progress(page_num + 1)
+                progress_label.config(text=f"Processing page {page_num + 1} of {total_pages}")
+                self.app.update_idletasks() # Force UI update
+
                 page = pdf_document[page_num]
 
-                # Extract image at a lower resolution
-                pix = page.get_pixmap(matrix=fitz.Matrix(300/72, 300/72))
-                temp_image_path = os.path.join(self.app.temp_directory, f"temp_page_{page_num + 1}.jpg")
+                # Extract image at a suitable resolution
+                # Using 300 DPI: matrix=fitz.Matrix(300/72, 300/72)
+                # Using 150 DPI: matrix=fitz.Matrix(150/72, 150/72) - faster, smaller files
+                dpi = 150 # Choose desired DPI
+                mat = fitz.Matrix(dpi/72, dpi/72)
+                pix = page.get_pixmap(matrix=mat, alpha=False) # alpha=False for JPG
+
+                # Define paths using temp directory first
+                temp_image_path = os.path.join(self.app.temp_directory, f"temp_page_{start_index + page_num + 1}.png") # Save as PNG initially for quality
                 pix.save(temp_image_path)
 
                 # Calculate new index and page number
                 new_index = start_index + page_num
-                new_page_num = new_index + 1
+                new_page_num_str = f"{new_index+1:04d}_p{new_index+1:03d}"
 
-                # Resize and save the image using the existing resize_image method
-                image_filename = f"{new_page_num:04d}_p{new_page_num:03d}.jpg"
-                image_path = os.path.join(self.app.images_directory, image_filename)
-                self.app.resize_image(temp_image_path, image_path)
+                # Define final image path in images directory (could be temp or project)
+                image_filename = f"{new_page_num_str}.jpg" # Final is JPG
+                image_path_abs = os.path.join(self.app.images_directory, image_filename)
 
-                # Remove the temporary image
-                os.remove(temp_image_path)
+                # Resize/convert PNG temp image to JPG final image
+                self.app.resize_image(temp_image_path, image_path_abs) # resize_image handles conversion and saving as JPG
+
+                # Get relative path for storage (relative to project or temp base)
+                image_path_rel = self.app.get_relative_path(image_path_abs)
+
+                # Remove the temporary PNG image
+                try:
+                     if os.path.exists(temp_image_path):
+                         os.remove(temp_image_path)
+                except Exception as e_rem:
+                     self.app.error_logging(f"Could not remove temp PDF image {temp_image_path}: {e_rem}", level="WARNING")
 
                 # Extract text
-                text_content = page.get_text()
-                text_path = ""
+                text_content = page.get_text("text") # Use "text" for plain text extraction
+                text_path = "" # No separate text file needed
 
-                # Add to DataFrame
-                new_row = pd.DataFrame({
-                    "Index": [new_index],
-                    "Page": [f"{new_page_num:04d}_p{new_page_num:03d}"],
-                    "Original_Text": [text_content],
-                    "Corrected_Text": [""],
-                    "Formatted_Text": [""],
-                    "Separated_Text": [""],
-                    "Translation": [""],
-                    "Image_Path": [image_path],
-                    "Text_Path": [text_path],
-                    "Text_Toggle": ["Original_Text"],
-                    "Relevance": [""]
-                })
-                self.app.main_df = pd.concat([self.app.main_df, new_row], ignore_index=True)
+                # Prepare row data
+                new_row_data = {
+                    "Index": new_index,
+                    "Page": new_page_num_str,
+                    "Original_Text": text_content if pd.notna(text_content) else "",
+                    "Corrected_Text": "",
+                    "Formatted_Text": "",
+                    "Separated_Text": "",
+                    "Translation": "",
+                    "Image_Path": image_path_rel, # Store relative path
+                    "Text_Path": text_path,
+                    "Text_Toggle": "Original_Text" if text_content and text_content.strip() else "None",
+                    "Relevance": "",
+                     # Add other columns if they exist in main_df, initialized empty
+                     **{col: "" for col in self.app.main_df.columns if col not in [
+                        "Index", "Page", "Original_Text", "Corrected_Text", "Formatted_Text",
+                        "Separated_Text", "Translation", "Image_Path", "Text_Path",
+                        "Text_Toggle", "Relevance"
+                    ]}
+                }
+                new_rows_list.append(new_row_data)
 
             pdf_document.close()
-            self.app.refresh_display()
+
+            # Concatenate new rows at once
+            if new_rows_list:
+                 new_rows_df = pd.DataFrame(new_rows_list)
+                 self.app.main_df = pd.concat([self.app.main_df, new_rows_df], ignore_index=True)
+
+            # Navigate to the first newly added page
+            if total_pages > 0:
+                 self.app.page_counter = start_index
+            else: # If PDF was empty
+                 self.app.page_counter = max(0, len(self.app.main_df) - 1) # Go to last page or 0
+
+            self.app.refresh_display() # Refresh display for the new page
             self.app.progress_bar.close_progress_window()
             messagebox.showinfo("Success", f"PDF processed successfully. {total_pages} pages added.")
 
@@ -310,6 +424,12 @@ class ProjectIO:
             self.app.progress_bar.close_progress_window()
             messagebox.showerror("Error", f"An error occurred while processing the PDF: {str(e)}")
             self.app.error_logging(f"Error in open_pdf: {str(e)}")
+            traceback.print_exc() # Print detailed traceback for debugging
 
         finally:
+             # Clean up any remaining temp files (optional, be careful)
+             # for f in os.listdir(self.app.temp_directory):
+             #    if f.startswith("temp_page_") and (f.endswith(".png") or f.endswith(".jpg")):
+             #        try: os.remove(os.path.join(self.app.temp_directory, f))
+             #        except: pass
             self.app.enable_drag_and_drop()
