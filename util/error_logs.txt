@@ -14,3 +14,172 @@ Traceback (most recent call last):
 AttributeError: '_tkinter.tkapp' object has no attribute 'counter_update'
 
 2025-04-07 13:15:36 [ERROR]: Enabled relevance dropdown due to existing relevance data
+2025-04-07 14:46:37 [ERROR]: Enabled relevance dropdown due to existing relevance data
+2025-04-07 14:59:51 [ERROR]: Error processing image images\0001_p001.jpg for row 0: too many values to unpack (expected 4)
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
+    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
+    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
+    y_min, x_min, y_max, x_max = box_coords
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 4)
+
+2025-04-07 14:59:51 [ERROR]: Error processing image images\0002_p002.jpg for row 0: too many values to unpack (expected 4)
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
+    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
+    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
+    y_min, x_min, y_max, x_max = box_coords
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 4)
+
+2025-04-07 14:59:51 [ERROR]: Error processing image images\0003_p003.jpg for row 0: too many values to unpack (expected 4)
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
+    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
+    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
+    y_min, x_min, y_max, x_max = box_coords
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 4)
+
+2025-04-07 14:59:51 [ERROR]: Error processing image images\0003_p003.jpg for row 1: unsupported operand type(s) for /: 'str' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
+    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
+    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 203, in normalize_coordinates
+    x_min_px = int(x_min * img_width / 1000)
+                   ~~~~~~~~~~~~~~~~~~^~~~~~
+TypeError: unsupported operand type(s) for /: 'str' and 'int'
+
+2025-04-07 14:59:51 [ERROR]: Error processing image images\0004_p004.jpg for row 1: unsupported operand type(s) for /: 'str' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
+    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
+    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 203, in normalize_coordinates
+    x_min_px = int(x_min * img_width / 1000)
+                   ~~~~~~~~~~~~~~~~~~^~~~~~
+TypeError: unsupported operand type(s) for /: 'str' and 'int'
+
+2025-04-07 14:59:51 [ERROR]: Error processing image images\0005_p005.jpg for row 1: unsupported operand type(s) for /: 'str' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
+    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
+    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 203, in normalize_coordinates
+    x_min_px = int(x_min * img_width / 1000)
+                   ~~~~~~~~~~~~~~~~~~^~~~~~
+TypeError: unsupported operand type(s) for /: 'str' and 'int'
+
+2025-04-07 14:59:51 [ERROR]: Error processing image images\0006_p006.jpg for row 1: unsupported operand type(s) for /: 'str' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
+    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
+    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 203, in normalize_coordinates
+    x_min_px = int(x_min * img_width / 1000)
+                   ~~~~~~~~~~~~~~~~~~^~~~~~
+TypeError: unsupported operand type(s) for /: 'str' and 'int'
+
+2025-04-07 14:59:51 [ERROR]: Error processing image images\0006_p006.jpg for row 2: too many values to unpack (expected 4)
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
+    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
+    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
+    y_min, x_min, y_max, x_max = box_coords
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 4)
+
+2025-04-07 15:01:32 [ERROR]: Error processing image ..\..\..\TranscriptionPearl\util\temp\images\0001_p001.jpg for row 3: too many values to unpack (expected 4)
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
+    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
+    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
+    y_min, x_min, y_max, x_max = box_coords
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 4)
+
+2025-04-07 15:01:32 [ERROR]: Error processing image ..\..\..\TranscriptionPearl\util\temp\images\0001_p001.jpg for row 4: too many values to unpack (expected 4)
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
+    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
+    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
+    y_min, x_min, y_max, x_max = box_coords
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 4)
+
+2025-04-07 15:01:32 [ERROR]: Error processing image ..\..\..\TranscriptionPearl\util\temp\images\0001_p001.jpg for row 6: too many values to unpack (expected 4)
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
+    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
+    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
+    y_min, x_min, y_max, x_max = box_coords
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 4)
+
+2025-04-07 15:01:32 [ERROR]: Error processing image ..\..\..\TranscriptionPearl\util\temp\images\0001_p001.jpg for row 7: too many values to unpack (expected 4)
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
+    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
+    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
+    y_min, x_min, y_max, x_max = box_coords
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 4)
+

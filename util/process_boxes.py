@@ -6,7 +6,6 @@ import pandas as pd
 from PIL import Image
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
-from util.APIHandler import APIHandler
 
 def clean_json_string(json_str):
     """
@@ -66,7 +65,7 @@ def get_bounding_boxes_from_api(image_path, text_to_process, settings):
         uploaded_file = client.files.upload(file=image_path)
         
         # Get the Bounding_Boxes preset from settings for system instructions
-        system_instruction = "You draw bounding boxes on an image of historical documents to identify the location of specific text."
+        system_instruction = "You draw ONE single bounding box on an image to identify the location of a specific document. Create only ONE box that captures the entire text."
         for preset in settings.analysis_presets:
             if preset.get('name') == "Bounding_Boxes":
                 if preset.get('general_instructions'):
@@ -74,9 +73,11 @@ def get_bounding_boxes_from_api(image_path, text_to_process, settings):
                 break
         
         # Create the content structure with the uploaded image and text prompt
-        prompt_text = f"""In the accompanying image, identify bounding boxes for each section of the image that would surround the following text blocks. Make sure your boxes will capture all the text by providing generous margins: 
+        prompt_text = f"""In the accompanying image, identify ONLY ONE bounding box that would surround the ENTIRE text block below. Do not create separate boxes for different parts of the text - just ONE box that captures the entire document with generous margins:
 
-{text_to_process}"""
+{text_to_process}
+
+IMPORTANT: Return ONLY ONE bounding box that captures the entire document text. Do not split into multiple boxes."""
         
         contents = [
             types.Content(
@@ -120,7 +121,27 @@ def get_bounding_boxes_from_api(image_path, text_to_process, settings):
         try:
             bounding_boxes = json.loads(response_text)
             
-            # Convert the structure if needed
+            # If the response is an array but we want just one box, take the first one
+            if isinstance(bounding_boxes, list) and len(bounding_boxes) > 0:
+                # Take only the first box
+                box = bounding_boxes[0]
+                result = [{
+                    "box_2d": box["box_2d"],
+                    "label": box.get("text", box.get("label", text_to_process[:100]))
+                }]
+                print(f"Taking first bounding box from {len(bounding_boxes)} boxes")
+                return result
+            
+            # If the response is just one object
+            if isinstance(bounding_boxes, dict) and "box_2d" in bounding_boxes:
+                result = [{
+                    "box_2d": bounding_boxes["box_2d"],
+                    "label": bounding_boxes.get("text", bounding_boxes.get("label", text_to_process[:100]))
+                }]
+                print("Successfully processed single bounding box")
+                return result
+                
+            # Otherwise try to parse as before
             result = []
             for box in bounding_boxes:
                 # Convert the format if necessary
@@ -130,8 +151,16 @@ def get_bounding_boxes_from_api(image_path, text_to_process, settings):
                         "label": box.get("text", box.get("label", ""))
                     })
             
-            print(f"Successfully parsed {len(result)} bounding boxes from response")
-            return result
+            # Only return the first box if multiple were detected
+            if len(result) > 0:
+                print(f"Successfully parsed {len(result)} bounding boxes but returning only the first one")
+                return [result[0]]
+            else:
+                # If no valid boxes were found, create a default one
+                return [{
+                    'box_2d': [0, 0, 1000, 1000],  # Full image coordinates
+                    'label': text_to_process[:100]  # Use the first part of the text as label
+                }]
             
         except json.JSONDecodeError as e:
             print(f"JSON parsing error: {e}")
@@ -148,17 +177,16 @@ def get_bounding_boxes_from_api(image_path, text_to_process, settings):
                     cleaned_json = clean_json_string(json_str)
                     bounding_boxes = json.loads(cleaned_json)
                     
-                    # Convert the structure if needed
-                    result = []
-                    for box in bounding_boxes:
-                        if "box_2d" in box and ("text" in box or "label" in box):
-                            result.append({
+                    # Take only the first box if multiple were found
+                    if len(bounding_boxes) > 0:
+                        box = bounding_boxes[0]
+                        if "box_2d" in box:
+                            result = [{
                                 "box_2d": box["box_2d"],
-                                "label": box.get("text", box.get("label", ""))
-                            })
-                    
-                    print(f"Successfully parsed {len(result)} bounding boxes after regex extraction")
-                    return result
+                                "label": box.get("text", box.get("label", text_to_process[:100]))
+                            }]
+                            print(f"Successfully parsed first bounding box after regex extraction")
+                            return result
                 except Exception as inner_e:
                     print(f"Error in regex extraction: {inner_e}")
             
@@ -166,7 +194,7 @@ def get_bounding_boxes_from_api(image_path, text_to_process, settings):
             print("All JSON parsing attempts failed. Creating a single box for the entire image.")
             return [{
                 'box_2d': [0, 0, 1000, 1000],  # Full image coordinates
-                'label': text_to_process[:500]  # Use the first part of the text as label
+                'label': text_to_process[:100]  # Use the first part of the text as label
             }]
     
     except Exception as e:
@@ -174,7 +202,7 @@ def get_bounding_boxes_from_api(image_path, text_to_process, settings):
         # Return a default bounding box for the entire image in case of error
         return [{
             'box_2d': [0, 0, 1000, 1000],  # Full image coordinates
-            'label': text_to_process[:500]  # Use the first part of the text as label
+            'label': text_to_process[:100]  # Use the first part of the text as label
         }]
 
 # Keep the original function as a fallback with a different name in case we need it
@@ -613,4 +641,341 @@ async def process_rows_in_batches(image_paths, texts, row_indices, settings, app
                 results[row_idx] = None
     
     return results
+
+async def process_documents_in_parallel(documents, original_df, settings, app=None):
+    """
+    Process multiple documents in parallel, each document gets its own API call.
+    
+    Args:
+        documents: List of document dictionaries with 'Text', 'Document_No', and 'Original_Index' keys
+        original_df: Original dataframe with image paths
+        settings: Settings object containing API key and batch size
+        app: The application instance with project directory information
+        
+    Returns:
+        Dictionary mapping document indices to their bounding box results
+    """
+    
+    # Check if we need to prompt the user to save the project first
+    if app and (not hasattr(app, 'project_directory') or not app.project_directory):
+        from tkinter import messagebox
+        if messagebox.askyesno("Save Project", "To create cropped images, you need to save the project first. Would you like to save your project now?"):
+            app.project_io.save_project()
+            if not hasattr(app, 'project_directory') or not app.project_directory:
+                messagebox.showinfo("Operation Cancelled", "Could not save project.")
+                raise ValueError("Cannot proceed without saving the project first")
+        else:
+            raise ValueError("Cannot proceed without saving the project first")
+    
+    # Get batch size from settings (default to 4 if not specified)
+    batch_size = getattr(settings, 'batch_size', 4)
+    
+    # Create split_images directory in the appropriate location
+    split_images_dir = get_split_images_dir(app)
+    os.makedirs(split_images_dir, exist_ok=True)
+    
+    # Check if get_full_path method exists
+    has_get_full_path = hasattr(app, 'get_full_path') and callable(getattr(app, 'get_full_path'))
+    
+    # Prepare data for processing
+    documents_to_process = []
+    
+    for idx, doc in enumerate(documents):
+        # Get document text
+        document_text = doc['Text'] if 'Text' in doc and pd.notna(doc['Text']) else ""
+        if not document_text.strip():
+            continue
+            
+        # Get original indices
+        original_indices = doc['Original_Index']
+        
+        # Get image path from first original index
+        image_path = ""
+        if isinstance(original_indices, list) and original_indices:
+            for original_idx in original_indices:
+                if original_idx < len(original_df):
+                    path = original_df.loc[original_idx, 'Image_Path']
+                    if pd.notna(path) and path:
+                        image_path = path
+                        break
+        
+        # If no image path found, skip this document
+        if not image_path:
+            continue
+            
+        # Get full image path
+        full_image_path = image_path
+        if not os.path.isabs(full_image_path) and has_get_full_path:
+            full_image_path = app.get_full_path(full_image_path)
+        elif not os.path.isabs(full_image_path):
+            # Try common patterns
+            if app.project_directory and os.path.exists(app.project_directory):
+                full_image_path = os.path.join(app.project_directory, image_path)
+            else:
+                full_image_path = os.path.join(os.getcwd(), image_path)
+        
+        # Check if file exists
+        if not os.path.exists(full_image_path):
+            continue
+            
+        # Add to processing queue
+        documents_to_process.append({
+            'document_idx': idx,
+            'text': document_text,
+            'image_path': full_image_path,
+            'original_indices': original_indices
+        })
+    
+    # Process documents in batches
+    results = {}
+    
+    # Process in batches of batch_size
+    for i in range(0, len(documents_to_process), batch_size):
+        batch_docs = documents_to_process[i:i+batch_size]
+        
+        # Process batch in parallel
+        with ThreadPoolExecutor(max_workers=batch_size) as executor:
+            futures = []
+            for doc_info in batch_docs:
+                # Use the specialized function for getting a single box per document
+                future = executor.submit(
+                    get_single_document_box_from_api, 
+                    doc_info['image_path'], 
+                    doc_info['text'], 
+                    settings
+                )
+                futures.append((doc_info['document_idx'], doc_info['image_path'], future))
+            
+            # Collect results as they complete
+            for doc_idx, img_path, future in futures:
+                try:
+                    box_data = future.result()
+                    if box_data and 'box_2d' in box_data:
+                        # Add the box data directly (not in a list)
+                        results[doc_idx] = box_data
+                        print(f"Successfully processed document {doc_idx}")
+                    else:
+                        print(f"No valid box data for document {doc_idx}")
+                        results[doc_idx] = {
+                            'box_2d': [0, 0, 1000, 1000],
+                            'label': doc_info['text'][:100]
+                        }
+                except Exception as e:
+                    print(f"Error processing document {doc_idx}: {e}")
+                    results[doc_idx] = {
+                        'box_2d': [0, 0, 1000, 1000],
+                        'label': doc_info['text'][:100]
+                    }
+    
+    return results
+
+def process_separated_documents_batched(app):
+    """
+    Process separated documents in parallel batches.
+    First compiles documents based on ***** separators, then sends each document to the API.
+    
+    Args:
+        app: The main application object
+        
+    Returns:
+        Dictionary mapping document indices to their bounding box results
+    """
+    # Check if project directory exists
+    if not hasattr(app, 'project_directory') or not app.project_directory:
+        from tkinter import messagebox
+        if messagebox.askyesno("Save Project", "To create cropped images, you need to save the project first. Would you like to save your project now?"):
+            app.project_io.save_project()
+        else:
+            messagebox.showinfo("Operation Cancelled", "Document separation was cancelled.")
+            return {}
+            
+    # Check again after potential save
+    if not hasattr(app, 'project_directory') or not app.project_directory:
+        from tkinter import messagebox
+        messagebox.showinfo("Operation Cancelled", "Document separation was cancelled.")
+        return {}
+    
+    # Import AnalyzeDocuments
+    from util.AnalyzeDocuments import AnalyzeDocuments
+    analyzer = AnalyzeDocuments(app)
+    
+    # Get a copy of the original dataframe
+    original_df = app.main_df.copy()
+    
+    # Compile documents based on separators
+    compiled_df = analyzer.compile_documents(force_recompile=True)
+    
+    if compiled_df is None or compiled_df.empty:
+        from tkinter import messagebox
+        messagebox.showwarning("Warning", "No documents were found to process. Please check your separators.")
+        return {}
+    
+    # Convert DataFrame to list of dictionaries for parallel processing
+    documents = compiled_df.to_dict('records')
+    
+    # Create event loop and run parallel processing
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+    try:
+        # Process documents in parallel
+        results = loop.run_until_complete(
+            process_documents_in_parallel(documents, original_df, app.settings, app)
+        )
+    finally:
+        loop.close()
+    
+    return results
+
+def get_single_document_box_from_api(image_path, document_text, settings):
+    """
+    Call the Gemini API to get a SINGLE bounding box for an entire document.
+    This is a specialized version that is intended to get just one box for a document.
+    
+    Args:
+        image_path: Path to the image file
+        document_text: Text of the document to be processed
+        settings: Settings object containing API key
+        
+    Returns:
+        Dictionary with 'box_2d' and 'label' keys
+    """
+    
+    try:
+        # Import the Google Generative AI library
+        from google import genai
+        from google.genai import types
+        
+        # Initialize the Gemini client with the API key from settings
+        api_key = settings.google_api_key
+        if not api_key:
+            raise ValueError("Google API key is not set")
+            
+        client = genai.Client(api_key=api_key)
+        
+        # Upload the image file
+        uploaded_file = client.files.upload(file=image_path)
+        
+        # Very specific system instructions for a single box
+        system_instruction = """You are a document localization expert.
+Your ONLY task is to draw ONE bounding box on an image where the provided text appears.
+You must return a SINGLE JSON object with a 'box_2d' field containing [y_min, x_min, y_max, x_max] coordinates.
+NEVER return multiple boxes.
+Be precise in matching the text to its location on the page."""
+        
+        # Create a prompt specifically asking for one box
+        prompt_text = f"""Find the EXACT location of this document text in the image, and return ONE bounding box:
+
+```
+{document_text}
+```
+
+IMPORTANT INSTRUCTIONS:
+1. Return EXACTLY ONE bounding box that precisely locates this document text
+2. Include margins to capture the entire document
+3. Use coordinates in the range 0-1000 (normalized)
+4. Return a single JSON object in this format: {{\"box_2d\": [y_min, x_min, y_max, x_max]}}
+5. Do NOT include explanations or multiple boxes"""
+        
+        contents = [
+            types.Content(
+                role="user",
+                parts=[
+                    types.Part.from_uri(
+                        file_uri=uploaded_file.uri,
+                        mime_type=uploaded_file.mime_type,
+                    ),
+                    types.Part.from_text(text=prompt_text),
+                ],
+            ),
+        ]
+        
+        # Define the generation configuration
+        generate_content_config = types.GenerateContentConfig(
+            temperature=0,
+            top_p=0.95,
+            top_k=40,
+            max_output_tokens=4096,
+            response_mime_type="application/json",
+            system_instruction=[
+                types.Part.from_text(text=system_instruction),
+            ],
+        )
+        
+        # Make the API call
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=contents,
+            config=generate_content_config,
+        )
+        
+        # Extract the response text
+        response_text = response.text
+        print("\n========== GEMINI API RESPONSE (DOCUMENT BOX) ==========")
+        print(response_text)
+        print("=================================================\n")
+        
+        try:
+            # Try to parse as a single JSON object first
+            result = json.loads(response_text)
+            
+            # If it's a dictionary with box_2d field, use it directly
+            if isinstance(result, dict) and "box_2d" in result:
+                return {
+                    "box_2d": result["box_2d"],
+                    "label": document_text[:100]
+                }
+                
+            # If it's a list, take the first item
+            if isinstance(result, list) and len(result) > 0:
+                first_box = result[0]
+                if isinstance(first_box, dict) and "box_2d" in first_box:
+                    return {
+                        "box_2d": first_box["box_2d"],
+                        "label": document_text[:100]
+                    }
+            
+            # If we couldn't find a valid box, create a default one
+            print("No valid box format found in API response.")
+            return {
+                'box_2d': [0, 0, 1000, 1000],
+                'label': document_text[:100]
+            }
+            
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error: {e}")
+            
+            # Try to extract JSON using regex
+            import re
+            # Try to match a JSON object
+            json_pattern = r'\{[\s\S]*\}'
+            match = re.search(json_pattern, response_text)
+            
+            if match:
+                try:
+                    json_str = match.group(0)
+                    cleaned_json = clean_json_string(json_str)
+                    box_data = json.loads(cleaned_json)
+                    
+                    if "box_2d" in box_data:
+                        return {
+                            "box_2d": box_data["box_2d"],
+                            "label": document_text[:100]
+                        }
+                except Exception as inner_e:
+                    print(f"Error in regex extraction: {inner_e}")
+            
+            # If all parsing attempts fail, create a default box
+            print("All JSON parsing attempts failed. Creating a default box.")
+            return {
+                'box_2d': [0, 0, 1000, 1000],
+                'label': document_text[:100]
+            }
+    
+    except Exception as e:
+        print(f"ERROR in get_single_document_box_from_api: {str(e)}")
+        return {
+            'box_2d': [0, 0, 1000, 1000],
+            'label': document_text[:100]
+        }
 

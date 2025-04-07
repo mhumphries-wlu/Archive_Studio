@@ -371,38 +371,15 @@ def apply_document_separation_with_boxes(app):
         
         # Update progress
         app.progress_bar.update_progress(10, 100)
-        progress_label.config(text="Processing images with bounding boxes...")
-        
-        # Get the settings from the app
-        settings = app.settings
-        
-        # Process images in batches
-        image_to_boxes_map = {}
+        progress_label.config(text="Processing documents in parallel...")
         
         # Create split_images directory in the project directory
-        from util.process_boxes import get_split_images_dir
+        from util.process_boxes import get_split_images_dir, process_separated_documents_batched, crop_image
         split_images_dir = get_split_images_dir(app)
         os.makedirs(split_images_dir, exist_ok=True)
         
-        # Process all images in batches
-        try:
-            
-            # Process all images in parallel batches
-            batch_results = apply_separation_with_boxes_batched(app)
-            
-            # Convert the results to our expected format
-            for image_path, boxes in batch_results.items():
-                # Find the relative path version used in the dataframe
-                for img in original_df['Image_Path'].unique():
-                    if pd.notna(img) and img and (img in image_path or (hasattr(app, 'get_full_path') and app.get_full_path(img) == image_path)):
-                        image_to_boxes_map[img] = boxes
-                        break
-            
-            
-        except Exception as e:
-            app.error_logging(f"Error in batched processing: {str(e)}")
-            print(f"ERROR in batched processing: {str(e)}")
-            # Continue with compilation even if image processing failed
+        # Process all documents in parallel
+        batch_results = process_separated_documents_batched(app)
         
         # Update progress
         app.progress_bar.update_progress(40, 100)
@@ -461,7 +438,6 @@ def apply_document_separation_with_boxes(app):
 
             if processed_row_info and 'box_2d' in processed_row_info:
                 box_data = processed_row_info
-                box_coords = box_data['box_2d']
                 
                 # Process all images in the document
                 if original_image_paths:
@@ -485,7 +461,7 @@ def apply_document_separation_with_boxes(app):
                             
                             # For the first/primary image, use the bounding box data to crop
                             if not primary_processed:
-                                cropped_image_path = crop_image(full_image_path, box_coords, output_path)
+                                cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
                                 final_image_paths.append(cropped_image_path)
                                 primary_processed = True
                             else:
@@ -621,40 +597,15 @@ def apply_document_separation_with_highlights(app):
         
         # Update progress
         app.progress_bar.update_progress(10, 100)
-        progress_label.config(text="Processing images with highlighting...")
-        
-        # Get the settings from the app
-        settings = app.settings
-        
-        # Process images in batches
-        image_to_boxes_map = {}
+        progress_label.config(text="Processing documents in parallel...")
         
         # Create split_images directory in the project directory
+        from util.process_boxes import get_split_images_dir, process_separated_documents_batched
         split_images_dir = get_split_images_dir(app)
         os.makedirs(split_images_dir, exist_ok=True)
         
-        # Process all images in batches
-        try:
-            print(f"Starting batched processing of images...")
-            
-            # Process all images in parallel batches
-            batch_results = apply_separation_with_boxes_batched(app)
-            
-            # Convert the results to our expected format
-            for image_path, boxes in batch_results.items():
-                # Find the relative path version used in the dataframe
-                for img in original_df['Image_Path'].unique():
-                    if pd.notna(img) and img and (img in image_path or (hasattr(app, 'get_full_path') and app.get_full_path(img) == image_path)):
-                        image_to_boxes_map[img] = boxes
-                        print(f"Mapped {len(boxes)} boxes to image: {img}")
-                        break
-            
-            print(f"Completed batched processing: {len(image_to_boxes_map)} images with boxes")
-            
-        except Exception as e:
-            app.error_logging(f"Error in batched processing: {str(e)}")
-            print(f"ERROR in batched processing: {str(e)}")
-            # Continue with compilation even if image processing failed
+        # Process all documents in parallel
+        batch_results = process_separated_documents_batched(app)
         
         # Update progress
         app.progress_bar.update_progress(40, 100)
@@ -938,11 +889,11 @@ def apply_document_separation_with_boxes_by_row(app):
     
     # Confirm with user
     if not messagebox.askyesno("Confirm Separation", 
-                               "This will reorganize your documents based on ***** separators and create cropped images for each row. Continue?"):
+                               "This will reorganize your documents based on ***** separators and create cropped images for each document. Continue?"):
         return
     
     # Use progress bar
-    progress_window, progress_bar, progress_label = app.progress_bar.create_progress_window("Applying Document Separation with Row-Based Bounding Boxes")
+    progress_window, progress_bar, progress_label = app.progress_bar.create_progress_window("Applying Document Separation with Document-Based Bounding Boxes")
     app.progress_bar.update_progress(0, 100)
     
     try:
@@ -969,13 +920,13 @@ def apply_document_separation_with_boxes_by_row(app):
         
         # Update progress
         app.progress_bar.update_progress(30, 100)
-        progress_label.config(text="Processing rows in batches...")
+        progress_label.config(text="Processing documents in parallel...")
         
-        # Process all rows in batches
-        from util.process_boxes import apply_separation_with_boxes_by_row_batched, crop_image
+        # Process all documents in parallel
+        from util.process_boxes import process_separated_documents_batched, crop_image
         
-        # Get batch results - dictionary mapping row indices to bounding boxes
-        batch_results = apply_separation_with_boxes_by_row_batched(app, compiled_df, original_df)
+        # Get batch results - dictionary mapping document indices to bounding boxes
+        batch_results = process_separated_documents_batched(app)
         
         # Update progress
         app.progress_bar.update_progress(60, 100)
@@ -1098,12 +1049,12 @@ def apply_document_separation_with_boxes_by_row(app):
         app.progress_bar.update_progress(100, 100)
         
         # Show success message
-        messagebox.showinfo("Success", f"Documents have been separated into {len(app.main_df)} entries with cropped images for each row.")
+        messagebox.showinfo("Success", f"Documents have been separated into {len(app.main_df)} entries with cropped images for each document.")
         
     except Exception as e:
-        app.error_logging(f"Error applying document separation with row-based boxes: {str(e)}")
-        print(f"ERROR applying document separation with row-based boxes: {str(e)}")
-        messagebox.showerror("Error", f"Error applying document separation with row-based boxes: {str(e)}")
+        app.error_logging(f"Error applying document separation with document-based boxes: {str(e)}")
+        print(f"ERROR applying document separation with document-based boxes: {str(e)}")
+        messagebox.showerror("Error", f"Error applying document separation with document-based boxes: {str(e)}")
         
     finally:
         # Close progress bar
@@ -1164,11 +1115,11 @@ def apply_document_separation_with_highlights_by_row(app):
     
     # Confirm with user
     if not messagebox.askyesno("Confirm Separation", 
-                               "This will reorganize your documents based on ***** separators and create highlighted images for each row. Continue?"):
+                               "This will reorganize your documents based on ***** separators and create highlighted images for each document. Continue?"):
         return
     
     # Use progress bar
-    progress_window, progress_bar, progress_label = app.progress_bar.create_progress_window("Applying Document Separation with Row-Based Highlighting")
+    progress_window, progress_bar, progress_label = app.progress_bar.create_progress_window("Applying Document Separation with Document-Based Highlighting")
     app.progress_bar.update_progress(0, 100)
     
     try:
@@ -1181,6 +1132,18 @@ def apply_document_separation_with_highlights_by_row(app):
         
         # Update progress
         app.progress_bar.update_progress(10, 100)
+        progress_label.config(text="Processing documents in parallel...")
+        
+        # Create split_images directory in the project directory
+        from util.process_boxes import get_split_images_dir, process_separated_documents_batched
+        split_images_dir = get_split_images_dir(app)
+        os.makedirs(split_images_dir, exist_ok=True)
+        
+        # Process all documents in parallel
+        batch_results = process_separated_documents_batched(app)
+        
+        # Update progress
+        app.progress_bar.update_progress(40, 100)
         progress_label.config(text="Compiling documents with separators...")
         
         # Compile documents based on separators
@@ -1188,20 +1151,6 @@ def apply_document_separation_with_highlights_by_row(app):
         
         if compiled_df is None or compiled_df.empty:
             raise Exception("No documents were found after separation. Check that your separators are correct.")
-        
-        # Create split_images directory in the project directory
-        split_images_dir = get_split_images_dir(app)
-        os.makedirs(split_images_dir, exist_ok=True)
-        
-        # Update progress
-        app.progress_bar.update_progress(30, 100)
-        progress_label.config(text="Processing rows in batches...")
-        
-        # Process all rows in batches
-        from util.process_boxes import apply_separation_with_boxes_by_row_batched
-        
-        # Get batch results - dictionary mapping row indices to bounding boxes
-        batch_results = apply_separation_with_boxes_by_row_batched(app, compiled_df, original_df)
         
         # Update progress
         app.progress_bar.update_progress(60, 100)
@@ -1324,12 +1273,12 @@ def apply_document_separation_with_highlights_by_row(app):
         app.progress_bar.update_progress(100, 100)
         
         # Show success message
-        messagebox.showinfo("Success", f"Documents have been separated into {len(app.main_df)} entries with highlighted images for each row.")
+        messagebox.showinfo("Success", f"Documents have been separated into {len(app.main_df)} entries with highlighted images for each document.")
         
     except Exception as e:
-        app.error_logging(f"Error applying document separation with row-based highlighting: {str(e)}")
-        print(f"ERROR applying document separation with row-based highlighting: {str(e)}")
-        messagebox.showerror("Error", f"Error applying document separation with row-based highlighting: {str(e)}")
+        app.error_logging(f"Error applying document separation with document-based highlighting: {str(e)}")
+        print(f"ERROR applying document separation with document-based highlighting: {str(e)}")
+        messagebox.showerror("Error", f"Error applying document separation with document-based highlighting: {str(e)}")
         
     finally:
         # Close progress bar
