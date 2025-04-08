@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 import traceback
 
-# # Import Local Scripts
+# Import Local Scripts
 from util.subs.ImageSplitter import ImageSplitter
 from util.FindReplace import FindReplace
 from util.APIHandler import APIHandler
@@ -20,6 +20,7 @@ from util.ProjectIO import ProjectIO
 from util.ExportFunctions import ExportManager
 from util.AdvancedDiffHighlighting import highlight_text_differences
 from util.AIFunctions import AIFunctionsHandler
+from util.ErrorLogger import log_error
 
 class App(TkinterDnD.Tk):
 
@@ -131,7 +132,7 @@ class App(TkinterDnD.Tk):
         self.text_display = self.create_text_widget(self.main_frame, "File to Edit", state="normal")
 
         self.image_display = tk.Canvas(self.main_frame, borderwidth=2, relief="groove")
-        self.image_handler = ImageHandler(self.image_display)
+        self.image_handler = ImageHandler(self.image_display, self)
 
         self.main_frame.add(self.text_display)
         self.main_frame.add(self.image_display)
@@ -220,7 +221,8 @@ class App(TkinterDnD.Tk):
             main_df=self.main_df,
             navigate_callback=self.find_replace_navigate,  # Use a dedicated method
             get_page_counter=lambda: self.page_counter,
-            get_main_df_callback=lambda: self.main_df
+            get_main_df_callback=lambda: self.main_df,
+            text_display_var=self.text_display_var  # Pass the StringVar
         )
 
         # Initialize the API handler
@@ -1235,11 +1237,8 @@ class App(TkinterDnD.Tk):
             current_display_val = self.main_df.loc[self.page_counter, 'Text_Toggle']
             if current_display_val != "None":
                 text = self.clean_text(self.text_display.get("1.0", tk.END))
-                if current_display_val == "Original_Text": self.main_df.loc[self.page_counter, 'Original_Text'] = text
-                elif current_display_val == "Corrected_Text": self.main_df.loc[self.page_counter, 'Corrected_Text'] = text
-                elif current_display_val == "Formatted_Text": self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
-                elif current_display_val == "Translation": self.main_df.loc[self.page_counter, 'Translation'] = text
-                elif current_display_val == "Separated_Text": self.main_df.loc[self.page_counter, 'Separated_Text'] = text
+                if current_display_val in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
+                    self.main_df.loc[self.page_counter, current_display_val] = text
         # --- End Save ---
 
         # Store the current display type
@@ -1372,11 +1371,8 @@ class App(TkinterDnD.Tk):
                 current_display = self.main_df.loc[self.page_counter, 'Text_Toggle']
                 if current_display != "None":
                     text = self.clean_text(self.text_display.get("1.0", tk.END))
-                    if current_display == "Original_Text": self.main_df.loc[self.page_counter, 'Original_Text'] = text
-                    elif current_display == "Corrected_Text": self.main_df.loc[self.page_counter, 'Corrected_Text'] = text
-                    elif current_display == "Formatted_Text": self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
-                    elif current_display == "Translation": self.main_df.loc[self.page_counter, 'Translation'] = text
-                    elif current_display == "Separated_Text": self.main_df.loc[self.page_counter, 'Separated_Text'] = text
+                    if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
+                        self.main_df.loc[self.page_counter, current_display] = text
 
                 if hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
                      self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
@@ -1442,118 +1438,54 @@ class App(TkinterDnD.Tk):
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to navigate document page: {str(e)}")
                 self.error_logging(f"Document page navigation error: {str(e)}")
-                traceback.print_exc()
         # No need to reload text, as text corresponds to the main document (page_counter), not the sub-image
 
-# Image Functions
-
-    def resize_image(self, image_path, output_path, max_size=1980):
-        with Image.open(image_path) as img:
-
-            # Get the original image size
-            width, height = img.size
-
-            # Determine the larger dimension
-            larger_dimension = max(width, height)
-
-            # Calculate the scaling factor only if larger than max_size
-            scale = 1.0
-            if larger_dimension > max_size:
-                 scale = max_size / larger_dimension
-
-            # Calculate new dimensions
-            new_width = int(width * scale)
-            new_height = int(height * scale)
-
-            # Resize the image only if needed
-            if scale < 1.0:
-                img = img.resize((new_width, new_height), Image.LANCZOS)
-
-            img = ImageOps.exif_transpose(img)
-
-            # Save the image with high quality
-            img.save(output_path, "JPEG", quality=95)
+# Image Functions - refactored to use ImageHandler
 
     def process_new_images(self, source_paths):
-        successful_copies = 0
-        start_index = len(self.main_df) # Get index before adding new rows
-        new_rows_list = [] # Collect new rows here
+        try:
+            # Call the ImageHandler method
+            successful_copies, new_rows_list = self.image_handler.process_new_images(
+                source_paths, 
+                self.images_directory, 
+                self.project_directory, 
+                self.temp_directory, 
+                self.main_df,
+                lambda idx: setattr(self, 'page_counter', idx)
+            )
+            
+            if successful_copies > 0:
+                # Create a DataFrame from the list of dictionaries
+                new_rows_df = pd.DataFrame(new_rows_list)
+                # Concatenate with the main DataFrame
+                self.main_df = pd.concat([self.main_df, new_rows_df], ignore_index=True)
 
-        for idx, source_path in enumerate(source_paths):
-            new_index = start_index + idx # Calculate index based on start and loop index
-            file_extension = os.path.splitext(source_path)[1].lower()
-            new_file_name = f"{new_index+1:04d}_p{new_index+1:03d}{file_extension}"
-            dest_path = os.path.join(self.images_directory, new_file_name)
+                # Set text display to "None" before refreshing the display
+                self.text_display_var.set("None")
+                # Navigate to the first of the newly added images if appropriate
+                if len(self.main_df) == successful_copies:  # If this was the first import
+                    self.page_counter = 0
+                else:
+                    # Navigate to the first new image
+                    self.page_counter = len(self.main_df) - successful_copies
 
-            try:
-                # Instead of directly copying, resize and save the image
-                self.resize_image(source_path, dest_path)
-                # Store relative path
-                relative_dest_path = os.path.relpath(dest_path, self.project_directory or self.temp_directory)
+                self.refresh_display()
 
-                text_file_name = f"{new_index+1:04d}_p{new_index+1:03d}.txt"
-                text_file_path = os.path.join(self.images_directory, text_file_name)
-                # Store relative path
-                relative_text_path = os.path.relpath(text_file_path, self.project_directory or self.temp_directory)
+                # Add auto-rotation if enabled in settings using the handler
+                if hasattr(self, 'settings') and getattr(self.settings, 'check_orientation', False):
+                    # First rotation pass
+                    self.ai_functions_handler.ai_function(all_or_one_flag="All Pages", ai_job="Auto_Rotate")
 
-                with open(text_file_path, "w", encoding='utf-8') as f:
-                    f.write("")
+                    # Brief pause to ensure all rotations are complete
+                    self.after(1000)  # 1 second pause
 
-                new_row_data = {
-                    "Index": new_index,
-                    "Page": f"{new_index+1:04d}_p{new_index+1:03d}",
-                    "Original_Text": "",
-                    "Corrected_Text": "",
-                    "Formatted_Text": "",
-                    "Image_Path": relative_dest_path, # Use relative path
-                    "Text_Path": relative_text_path,   # Use relative path
-                    "Text_Toggle": "None",  # Changed from "Original_Text" to "None"
-                    # Initialize other relevant columns as empty strings
-                    "Translation": "", "Separated_Text": "", "People": "", "Places": "",
-                    "Errors": "", "Errors_Source": "", "Relevance": ""
-                }
-                # Ensure all DataFrame columns are present in the new row data
-                for col in self.main_df.columns:
-                    if col not in new_row_data:
-                         new_row_data[col] = ""
-
-                new_rows_list.append(new_row_data)
-                successful_copies += 1
-
-            except Exception as e:
-                self.error_logging(f"Error processing file {source_path}", f"{e}")
-                messagebox.showerror("Error", f"Failed to process the image {source_path}:\n{e}")
-
-        if successful_copies > 0:
-            # Create a DataFrame from the list of dictionaries
-            new_rows_df = pd.DataFrame(new_rows_list)
-            # Concatenate with the main DataFrame
-            self.main_df = pd.concat([self.main_df, new_rows_df], ignore_index=True)
-
-            # Set text display to "None" before refreshing the display
-            self.text_display_var.set("None")
-            # Navigate to the first of the newly added images if appropriate
-            if start_index == 0: # If this was the first import
-                self.page_counter = 0
+                    # Second rotation pass
+                    self.ai_functions_handler.ai_function(all_or_one_flag="All Pages", ai_job="Auto_Rotate")
             else:
-                # Optionally navigate to the first new image, or stay put
-                self.page_counter = start_index # Navigate to first new image
-
-            self.refresh_display()
-
-            # Add auto-rotation if enabled in settings using the handler
-            if hasattr(self, 'settings') and getattr(self.settings, 'check_orientation', False):
-                # First rotation pass
-                self.ai_functions_handler.ai_function(all_or_one_flag="All Pages", ai_job="Auto_Rotate")
-
-                # Brief pause to ensure all rotations are complete
-                self.after(1000)  # 1 second pause
-
-                # Second rotation pass
-                self.ai_functions_handler.ai_function(all_or_one_flag="All Pages", ai_job="Auto_Rotate")
-        else:
-            self.error_logging("No images were successfully processed", level="INFO")
-            messagebox.showinfo("Information", "No images were successfully processed")
+                messagebox.showinfo("Information", "No images were successfully processed")
+        except Exception as e:
+            self.error_logging(f"Error in process_new_images: {e}")
+            messagebox.showerror("Error", f"Failed to process images: {e}")
 
     def delete_current_image(self):
         if self.main_df.empty:
@@ -1566,24 +1498,17 @@ class App(TkinterDnD.Tk):
         try:
             current_index = self.page_counter
 
-            # Store the path of files to be deleted (resolve to full path)
+            # Get file paths (convert relative to absolute)
             image_to_delete_rel = self.main_df.loc[current_index, 'Image_Path']
             text_to_delete_rel = self.main_df.loc[current_index, 'Text_Path']
             image_to_delete_abs = self.get_full_path(image_to_delete_rel)
             text_to_delete_abs = self.get_full_path(text_to_delete_rel)
 
+            # Delete the files from disk using ImageHandler
+            self.image_handler.delete_image_files(image_to_delete_abs, text_to_delete_abs)
 
             # Remove the row from the DataFrame
             self.main_df = self.main_df.drop(current_index).reset_index(drop=True)
-
-            # Delete the actual files
-            try:
-                if image_to_delete_abs and os.path.exists(image_to_delete_abs):
-                    os.remove(image_to_delete_abs)
-                if text_to_delete_abs and os.path.exists(text_to_delete_abs):
-                    os.remove(text_to_delete_abs)
-            except Exception as e:
-                self.error_logging(f"Error deleting files: {str(e)}")
 
             # Renumber the remaining entries
             for idx in range(len(self.main_df)):
@@ -1625,7 +1550,6 @@ class App(TkinterDnD.Tk):
                     # Update path in DataFrame
                     self.main_df.at[idx, 'Text_Path'] = new_text_path_rel
 
-
             # Adjust page counter if necessary
             if current_index >= len(self.main_df) and not self.main_df.empty:
                 self.page_counter = len(self.main_df) - 1
@@ -1657,9 +1581,6 @@ class App(TkinterDnD.Tk):
         success, error_message = self.image_handler.rotate_image(direction, image_path_abs)
         if not success:
             messagebox.showerror("Error", error_message)
-        else:
-             # Reload the image in the canvas after successful rotation
-             self.image_handler.load_image(image_path_abs)
 
 # Project Save and Open Function Handlers
 
@@ -1667,80 +1588,47 @@ class App(TkinterDnD.Tk):
         self.project_io.create_new_project()
 
     def save_project(self):
-        # Save current changes before saving the project
+        # Save current text
         if not self.main_df.empty and self.page_counter < len(self.main_df):
             current_display = self.main_df.loc[self.page_counter, 'Text_Toggle']
             if current_display != "None":
-                # Get the current text from the text widget
                 text = self.clean_text(self.text_display.get("1.0", tk.END))
-
-                # Save the text to the appropriate column based on CURRENT display type
-                if current_display == "Original_Text":
-                    self.main_df.loc[self.page_counter, 'Original_Text'] = text
-                elif current_display == "Corrected_Text":
-                    self.main_df.loc[self.page_counter, 'Corrected_Text'] = text
-                elif current_display == "Formatted_Text":
-                    self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
-                elif current_display == "Translation":
-                    self.main_df.loc[self.page_counter, 'Translation'] = text
-                elif current_display == "Separated_Text":
-                    self.main_df.loc[self.page_counter, 'Separated_Text'] = text
-
-            # Save current relevance selection
+                if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
+                    self.main_df.loc[self.page_counter, current_display] = text
+            
+            # Save relevance
             if hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
                 self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
 
         self.project_io.save_project()
 
     def open_project(self):
-        # Save current changes before opening a new project
+        # Save current text before opening
         if not self.main_df.empty and self.page_counter < len(self.main_df):
             current_display = self.main_df.loc[self.page_counter, 'Text_Toggle']
             if current_display != "None":
-                # Get the current text from the text widget
                 text = self.clean_text(self.text_display.get("1.0", tk.END))
-
-                # Save the text to the appropriate column based on CURRENT display type
-                if current_display == "Original_Text":
-                    self.main_df.loc[self.page_counter, 'Original_Text'] = text
-                elif current_display == "Corrected_Text":
-                    self.main_df.loc[self.page_counter, 'Corrected_Text'] = text
-                elif current_display == "Formatted_Text":
-                    self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
-                elif current_display == "Translation":
-                    self.main_df.loc[self.page_counter, 'Translation'] = text
-                elif current_display == "Separated_Text":
-                    self.main_df.loc[self.page_counter, 'Separated_Text'] = text
-
-            # Save current relevance selection before opening
+                if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
+                    self.main_df.loc[self.page_counter, current_display] = text
+            
+            # Save relevance
             if hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
                 self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
 
         self.project_io.open_project()
 
     def save_project_as(self):
-        # Save current changes before saving as a new project
+        # Save current text before saving as
         if not self.main_df.empty and self.page_counter < len(self.main_df):
             current_display = self.main_df.loc[self.page_counter, 'Text_Toggle']
             if current_display != "None":
-                # Get the current text from the text widget
                 text = self.clean_text(self.text_display.get("1.0", tk.END))
-
-                # Save the text to the appropriate column based on CURRENT display type
-                if current_display == "Original_Text":
-                    self.main_df.loc[self.page_counter, 'Original_Text'] = text
-                elif current_display == "Corrected_Text":
-                    self.main_df.loc[self.page_counter, 'Corrected_Text'] = text
-                elif current_display == "Formatted_Text":
-                    self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
-                elif current_display == "Translation":
-                    self.main_df.loc[self.page_counter, 'Translation'] = text
-                elif current_display == "Separated_Text":
-                    self.main_df.loc[self.page_counter, 'Separated_Text'] = text
-
-            # Save current relevance selection before saving as
+                if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
+                    self.main_df.loc[self.page_counter, current_display] = text
+            
+            # Save relevance
             if hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
-                 self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
+                self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
 
         self.project_io.save_project_as()
 
@@ -1887,18 +1775,12 @@ class App(TkinterDnD.Tk):
         if not self.project_directory: # Check project_directory
              messagebox.showerror("Error", "No directory selected.")
              return
-
-        print(f"Looking for files in: {self.project_directory}")
-        print(f"Directory contents: {os.listdir(self.project_directory)}")
-
         # Reset the page counter (already done in open_folder)
         # self.page_counter = 0
 
         # Load image files from project_directory
         image_files = [file for file in os.listdir(self.project_directory)
                     if file.lower().endswith((".jpg", ".jpeg"))]
-
-        print(f"Found image files: {image_files}")
 
         if not image_files:
             messagebox.showinfo("No Files", "No image files found in the selected directory.")
@@ -2153,39 +2035,10 @@ class App(TkinterDnD.Tk):
             self.button5.config(state="normal")
 
     def error_logging(self, error_message, additional_info=None, level="ERROR"):
-        """
-        Log errors to the error log file.
-
-        Args:
-            error_message (str): The main error message to log
-            additional_info (str, optional): Additional information to include
-            level (str, optional): Log level ("ERROR", "WARNING", "INFO", "DEBUG")
-        """
-        # Check log level setting (assuming settings object exists)
-        log_level_setting = getattr(self.settings, 'log_level', 'ERROR').upper()
-        level_map = {"DEBUG": 0, "INFO": 1, "WARNING": 2, "ERROR": 3}
-
-        if level_map.get(level.upper(), 99) < level_map.get(log_level_setting, 3):
-            return # Skip logging if message level is below setting
-
-        try:
-            # Ensure the util directory exists
-            util_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "util")
-            os.makedirs(util_dir, exist_ok=True)
-            error_logs_path = os.path.join(util_dir, "error_logs.txt")
-
-            with open(error_logs_path, "a", encoding='utf-8') as file:
-                # Add stack trace for errors
-                stack = traceback.format_exc() if level.upper() == "ERROR" else None
-
-                log_message = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} [{level.upper()}]: {error_message}"
-                if additional_info:
-                    log_message += f" - Additional Info: {additional_info}"
-                if stack and stack != "NoneType: None\n":
-                    log_message += f"\nStack trace:\n{stack}"
-                file.write(log_message + "\n")
-        except Exception as e:
-            print(f"Error logging failed: {e}")
+        """Use the ErrorLogger module to log errors."""
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        log_level_setting = getattr(self.settings, 'log_level', 'ERROR')
+        log_error(base_dir, log_level_setting, error_message, additional_info, level)
 
     def drop(self, event):
         file_paths = event.data
@@ -2358,9 +2211,6 @@ class App(TkinterDnD.Tk):
             # Handle potential '\r\n' line endings as well
             lines = response_text.replace('\r\n', '\n').splitlines()
 
-            # Debug logging
-            self.error_logging(f"Parsing {len(lines)} lines from response", level="DEBUG")
-
             response_found = False
             current_correct = None # Keep track of the last correct term for multi-line variants
 
@@ -2398,8 +2248,6 @@ class App(TkinterDnD.Tk):
                         existing_variants = coll_dict.get(correct, [])
                         coll_dict[correct] = sorted(list(set(existing_variants + variations)), key=str.lower)
 
-                        self.error_logging(f"Parsed entry: {correct} = {variations}", level="DEBUG")
-
                 # Handle case where line might be a continuation (starts with '; ' or ', ')
                 elif response_found and current_correct and (ln.startswith(';') or ln.startswith(',')):
                      # This looks like a continuation line
@@ -2414,17 +2262,8 @@ class App(TkinterDnD.Tk):
                      if variations:
                          existing_variants = coll_dict.get(current_correct, [])
                          coll_dict[current_correct] = sorted(list(set(existing_variants + variations)), key=str.lower)
-                         self.error_logging(f"Added continuation line to {current_correct}: {variations}", level="DEBUG")
 
-                # Fallback: If a line doesn't match format but we have a current_correct, maybe add it as a variant?
-                # This is risky, might capture noise. Let's skip for now unless explicitly needed.
-                # elif response_found and current_correct and ln:
-                #     coll_dict.setdefault(current_correct, []).append(ln)
-                #     self.error_logging(f"Added unmatched line as variant to {current_correct}: {ln}", level="WARNING")
-
-            # Final debugging info
             total_variants = sum(len(variants) for variants in coll_dict.values())
-            self.error_logging(f"Parsed {len(coll_dict)} unique terms with {total_variants} total variants", level="DEBUG")
 
             return coll_dict
 
@@ -2491,28 +2330,13 @@ class App(TkinterDnD.Tk):
             if not self.main_df.empty and self.page_counter < len(self.main_df):
                 current_display = self.main_df.loc[self.page_counter, 'Text_Toggle']
                 if current_display != "None":
-                    # Get the current text from the text widget
                     text = self.clean_text(self.text_display.get("1.0", tk.END))
+                    if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
+                        self.main_df.loc[self.page_counter, current_display] = text
 
-                    # Save the text to the appropriate column based on CURRENT display type
-                    if current_display == "Original_Text":
-                        self.main_df.loc[self.page_counter, 'Original_Text'] = text
-                    elif current_display == "Corrected_Text":
-                        self.main_df.loc[self.page_counter, 'Corrected_Text'] = text
-                    elif current_display == "Formatted_Text":
-                        self.main_df.loc[self.page_counter, 'Formatted_Text'] = text
-                    elif current_display == "Translation":
-                        self.main_df.loc[self.page_counter, 'Translation'] = text
-                    elif current_display == "Separated_Text":
-                        self.main_df.loc[self.page_counter, 'Separated_Text'] = text
-
-            # Save relevance before quitting
-            if not self.main_df.empty and hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns and self.page_counter < len(self.main_df):
-                self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
-
-            # Optionally, attempt to save the project if changes were made
-            # if self.save_toggle: # Assuming save_toggle tracks unsaved changes
-            #     self.save_project()
+                # Save relevance before quitting
+                if hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
+                    self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
 
             self.quit()
             self.destroy() # Ensure window closes fully
@@ -2560,7 +2384,6 @@ class App(TkinterDnD.Tk):
             # or potentially have some validation text like "Line numbers: 4;15;27"
 
             line_numbers_str = line_numbers_response.strip()
-            self.error_logging(f"Parsing line numbers from response: '{line_numbers_str}'", level="DEBUG")
 
             # Try to isolate the number string if there's a prefix
             if ':' in line_numbers_str:
@@ -2568,19 +2391,13 @@ class App(TkinterDnD.Tk):
                  parts = line_numbers_str.rsplit(':', 1)
                  if len(parts) > 1:
                      line_numbers_str = parts[1].strip()
-                     self.error_logging(f"Isolated number string after colon: '{line_numbers_str}'", level="DEBUG")
-
 
             # Remove any remaining non-numeric/non-delimiter characters (except spaces for splitting)
             # Allow digits, semicolons, commas, and spaces
             cleaned_numbers_str = re.sub(r'[^\d;, ]', '', line_numbers_str)
-            self.error_logging(f"Cleaned number string: '{cleaned_numbers_str}'", level="DEBUG")
-
 
             # Split by common delimiters (semicolon, comma, space)
             number_strings = re.split(r'[;, ]+', cleaned_numbers_str)
-            self.error_logging(f"Split number strings: {number_strings}", level="DEBUG")
-
 
             line_numbers = []
             for num_str in number_strings:
@@ -2592,10 +2409,10 @@ class App(TkinterDnD.Tk):
                         if num in line_map:
                             line_numbers.append(num)
                         else:
-                            self.error_logging(f"Skipping invalid line number {num} (not in line_map)", level="WARNING")
+                            pass
 
                     except ValueError:
-                        # This shouldn't happen after isdigit check, but good practice
+                        # This shouldn't happen after isdigit check
                         self.error_logging(f"Skipping non-integer value: '{num_str_clean}'", level="WARNING")
                         continue
                 elif num_str_clean: # Log if non-empty but not digits
@@ -2608,8 +2425,6 @@ class App(TkinterDnD.Tk):
             if not line_numbers:
                 self.error_logging(f"No valid line numbers found in response: {line_numbers_response}", level="WARNING")
                 return original_text # Return original text if no valid numbers found
-
-            self.error_logging(f"Validated line numbers for insertion: {line_numbers}", level="DEBUG")
 
             # Insert separators
             lines = original_text.split('\n')
@@ -2627,7 +2442,6 @@ class App(TkinterDnD.Tk):
                          inserted_count += 1
                  result_lines.append(line)
 
-            self.error_logging(f"Inserted {inserted_count} separators.", level="INFO")
             return '\n'.join(result_lines)
 
         except Exception as e:
@@ -2712,12 +2526,9 @@ class App(TkinterDnD.Tk):
             else:
                 if image_path_to_display: # Only show error if there was supposed to be a path
                     messagebox.showerror("Error", f"Image file not found: {image_path_abs or image_path_to_display}")
-                else:
-                    self.error_logging(f"No valid image path found for index {self.page_counter}, sub-page {self.current_doc_page_index}", level="DEBUG")
                 self.image_display.delete("all") # Clear image if not found or path was bad
                 self.current_image_path = None
-            # --- End Load Image ---
-
+            # --- End Load Image --
             # --- Update Document Page Navigation Visibility and Counter ---
             if isinstance(self.current_image_path_list, list) and len(self.current_image_path_list) > 1:
                 self.show_page_nav.set(True)
@@ -2747,7 +2558,7 @@ class App(TkinterDnD.Tk):
 
             messagebox.showerror("Error", error_msg)
             self.error_logging(f"Refresh display error: {error_msg}", level="ERROR")
-            traceback.print_exc()
+
             # Attempt to clear displays gracefully on error
             self.image_display.delete("all")
             self.current_image_path = None
@@ -2772,16 +2583,8 @@ class App(TkinterDnD.Tk):
             text = self.clean_text(self.text_display.get("1.0", tk.END))
 
             # Save the text to the appropriate column based on CURRENT display type (not new one)
-            if current_display == "Original_Text":
-                self.main_df.loc[index, 'Original_Text'] = text
-            elif current_display == "Corrected_Text":
-                self.main_df.loc[index, 'Corrected_Text'] = text
-            elif current_display == "Formatted_Text":
-                self.main_df.loc[index, 'Formatted_Text'] = text
-            elif current_display == "Translation":
-                self.main_df.loc[index, 'Translation'] = text
-            elif current_display == "Separated_Text":
-                self.main_df.loc[index, 'Separated_Text'] = text
+            if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
+                self.main_df.loc[index, current_display] = text
 
         # Map display names to DataFrame values
         display_map = {
@@ -2830,16 +2633,8 @@ class App(TkinterDnD.Tk):
             text = self.clean_text(self.text_display.get("1.0", tk.END))
 
             # Save the text to the appropriate column based on CURRENT display type
-            if current_toggle == "Original_Text":
-                self.main_df.loc[index, 'Original_Text'] = text
-            elif current_toggle == "Corrected_Text":
-                self.main_df.loc[index, 'Corrected_Text'] = text
-            elif current_toggle == "Formatted_Text":
-                self.main_df.loc[index, 'Formatted_Text'] = text
-            elif current_toggle == "Translation":
-                self.main_df.loc[index, 'Translation'] = text
-            elif current_toggle == "Separated_Text":
-                self.main_df.loc[index, 'Separated_Text'] = text
+            if current_toggle in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
+                self.main_df.loc[index, current_toggle] = text
 
         # Determine available text types
         has_separated = pd.notna(row_data.get('Separated_Text')) and row_data.get('Separated_Text', "").strip()
@@ -2883,15 +2678,6 @@ class App(TkinterDnD.Tk):
 
     def toggle_highlight_options(self):
         """Update highlight display based on toggle states without mutual exclusivity"""
-        self.error_logging("Toggling highlight options",
-                          f"Names: {self.highlight_names_var.get()}, "
-                          f"Places: {self.highlight_places_var.get()}, "
-                          f"Changes: {self.highlight_changes_var.get()}, "
-                          f"Errors: {self.highlight_errors_var.get()}",
-                          level="DEBUG")
-
-        # No more mutual exclusivity between highlight types
-        # Just apply whatever is toggled, without disabling any other toggles
 
         # Apply highlighting
         self.highlight_text()
@@ -3019,10 +2805,7 @@ class App(TkinterDnD.Tk):
 
         # If neither highlighting option is selected, return early
         if not self.highlight_names_var.get() and not self.highlight_places_var.get():
-            self.error_logging("No highlighting options selected", level="DEBUG")
             return
-
-        self.error_logging(f"Highlight names: {self.highlight_names_var.get()}, Highlight places: {self.highlight_places_var.get()}", level="DEBUG")
 
         # Get current page index
         current_index = self.page_counter
@@ -3030,32 +2813,25 @@ class App(TkinterDnD.Tk):
              self.error_logging("Invalid index or empty DataFrame", level="WARNING")
              return
 
-        self.error_logging(f"Current page index: {current_index}", level="DEBUG")
-
         try:
             row_data = self.main_df.loc[current_index]
 
             def process_entities(entities_str, tag):
-                self.error_logging(f"Processing entities for {tag}: {entities_str}", level="DEBUG")
 
                 if pd.isna(entities_str) or not entities_str:
-                    self.error_logging(f"No {tag} data to highlight", level="DEBUG")
                     return
 
                 # Split, strip, and filter empty strings
                 entities = [entity.strip() for entity in entities_str.split(';') if entity.strip()]
                 # Sort by length descending to match longer names first
                 entities.sort(key=len, reverse=True)
-                self.error_logging(f"Entities to highlight (sorted): {entities}", level="DEBUG")
 
 
                 for entity in entities:
                     # Skip entries with square brackets (often indicating uncertainty or notes)
                     if '[' in entity or ']' in entity:
-                        self.error_logging(f"Skipping bracketed entity: '{entity}'", level="DEBUG")
                         continue
 
-                    self.error_logging(f"Highlighting entity: '{entity}'", level="DEBUG")
                     # First try to highlight the complete entity
                     self.highlight_term(entity, tag, exact_match=True) # Use exact_match=True for full phrases
 
@@ -3098,42 +2874,22 @@ class App(TkinterDnD.Tk):
                                 start_index = f"{start_line}.{start_char}"
                                 end_index = f"{end_line}.{end_char}"
 
-                                self.error_logging(f"Adding hyphenated tag from {start_index} to {end_index}", level="DEBUG")
                                 self.text_display.tag_add(tag, start_index, end_index)
-
-
-                    # # Optionally highlight individual words (consider if needed, can be noisy)
-                    # if tag == "name_highlight":  # Only for names, not places
-                    #     parts = entity.split()
-                    #     common_words = {'the', 'and', 'of', 'in', 'on', 'at', 'la', 'le', 'les', 'de', 'du', 'des', 'mr', 'mrs', 'miss', 'dr'}
-                    #     for part in parts:
-                    #         if len(part) > 2 and part.lower() not in common_words:
-                    #             self.error_logging(f"Highlighting name part: '{part}'", level="DEBUG")
-                    #             self.highlight_term(part, tag, exact_match=False) # Use exact_match=False for individual words
 
             # Process names if the highlight names option is checked
             if self.highlight_names_var.get():
-                self.error_logging(f"Getting names from index {current_index}", level="DEBUG")
                 names = row_data.get('People', "") # Use .get() for safety
-                self.error_logging(f"Names data: {names}", level="DEBUG")
                 if pd.notna(names) and names.strip():
                     process_entities(names, "name_highlight")
-                else:
-                    self.error_logging("No names data available", level="DEBUG")
 
             # Process places if the highlight places option is checked
             if self.highlight_places_var.get():
-                self.error_logging(f"Getting places from index {current_index}", level="DEBUG")
                 places = row_data.get('Places', "") # Use .get() for safety
-                self.error_logging(f"Places data: {places}", level="DEBUG")
                 if pd.notna(places) and places.strip():
                     process_entities(places, "place_highlight")
-                else:
-                    self.error_logging("No places data available", level="DEBUG")
 
         except Exception as e:
             self.error_logging(f"Error in highlight_names_or_places: {str(e)}")
-            traceback.print_exc() # Print traceback for debugging
 
     def _index_to_line_char(self, text, index):
         """Convert a flat string index to a Tkinter 'line.char' index."""
@@ -3145,13 +2901,11 @@ class App(TkinterDnD.Tk):
     def highlight_term(self, term, tag, exact_match=False):
         """Helper function to highlight a specific term in the text"""
         if not term or not isinstance(term, str) or len(term) < 1:
-            self.error_logging(f"Skipping empty or invalid term for tag '{tag}'", level="DEBUG")
             return
 
         text_widget = self.text_display
         start_index = "1.0"
 
-        self.error_logging(f"Highlighting term: '{term}' with tag '{tag}', exact_match={exact_match}", level="DEBUG")
 
         # Get full text content for searching
         full_text = text_widget.get("1.0", tk.END)
@@ -3170,16 +2924,13 @@ class App(TkinterDnD.Tk):
                 # Let's refine: use word boundaries unless the term itself starts/ends with non-word chars
                 if re.match(r'\w', escaped_term) and re.search(r'\w$', escaped_term):
                      pattern = re.compile(r'\b' + escaped_term + r'\b', re.IGNORECASE)
-                     self.error_logging(f"Using word boundaries for exact match: {pattern.pattern}", level="DEBUG")
                 else:
                      # If term has leading/trailing non-word chars, don't add boundaries there
                      pattern = re.compile(escaped_term, re.IGNORECASE)
-                     self.error_logging(f"Not using word boundaries for exact match: {pattern.pattern}", level="DEBUG")
 
             else:
                 # Standard word boundary match for individual words
                 pattern = re.compile(r'\b' + escaped_term + r'\b', re.IGNORECASE)
-                self.error_logging(f"Using word boundaries for partial match: {pattern.pattern}", level="DEBUG")
 
 
             # Find all matches using the compiled pattern
@@ -3197,11 +2948,6 @@ class App(TkinterDnD.Tk):
                 # Add the tag to the matched range
                 text_widget.tag_add(tag, start_tk_index, end_tk_index)
                 found_count += 1
-
-            if found_count > 0:
-                 self.error_logging(f"Found and highlighted {found_count} instances of '{term}'", level="DEBUG")
-            # else:
-            #      self.error_logging(f"Term '{term}' not found.", level="DEBUG")
 
         except re.error as regex_error:
              self.error_logging(f"Regex error highlighting term '{term}' with pattern '{pattern.pattern}': {regex_error}", level="ERROR")
@@ -3255,8 +3001,6 @@ class App(TkinterDnD.Tk):
                      # or if no specific source is recorded (for backward compatibility)
                      if not errors_source or errors_source == current_display:
                          self.highlight_errors()
-                     else:
-                         self.error_logging(f"Not highlighting errors because current display ({current_display}) doesn't match errors source ({errors_source})", level="DEBUG")
                  else:
                      # For backward compatibility or if Errors_Source column doesn't exist
                      self.highlight_errors()
@@ -3319,7 +3063,6 @@ class App(TkinterDnD.Tk):
         # Use the advanced highlighting function
         try:
              highlight_text_differences(self.text_display, current_text, previous_text)
-             self.error_logging(f"Highlighted changes between {current_toggle} and its previous version.", level="DEBUG")
         except Exception as e:
              self.error_logging(f"Error during advanced diff highlighting: {e}")
              # Simple fallback (less precise) - maybe just highlight the whole text?
@@ -3331,31 +3074,24 @@ class App(TkinterDnD.Tk):
              return
 
         try:
-            self.error_logging("In highlight_errors function", level="DEBUG")
 
             # Get current page index and data
             index = self.page_counter
             row_data = self.main_df.loc[index]
-            self.error_logging(f"Current page index: {index}", level="DEBUG")
 
             # Get the current text display mode
             selected_display = self.text_display_var.get()
-            self.error_logging(f"Current text display mode: {selected_display}", level="DEBUG")
 
             # Get the text version the errors apply to
             errors_source = row_data.get('Errors_Source', "")
-            self.error_logging(f"Errors source from DF: {errors_source}", level="DEBUG")
 
             # Check again if we should highlight based on source (redundant but safe)
             if errors_source and errors_source != selected_display:
-                self.error_logging(f"Not highlighting errors because current display ({selected_display}) doesn't match errors source ({errors_source})", level="DEBUG")
                 return
 
             # Get errors for current page
             errors_str = row_data.get('Errors', "")
-            self.error_logging(f"Errors from DataFrame: {errors_str}", level="DEBUG")
             if pd.isna(errors_str) or not errors_str.strip():
-                self.error_logging("No errors found in DataFrame for this page", level="DEBUG")
                 return
 
             # Process and highlight errors
@@ -3366,7 +3102,6 @@ class App(TkinterDnD.Tk):
                 error_terms = [term.strip() for term in errors_data.split(';') if term.strip()]
                 # Sort by length descending to catch longer phrases first
                 error_terms.sort(key=len, reverse=True)
-                self.error_logging(f"Error terms to highlight: {error_terms}", level="DEBUG")
                 for term in error_terms:
                     self.highlight_term(term, "error_highlight", exact_match=True) # Use exact_match=True
 
@@ -3374,42 +3109,24 @@ class App(TkinterDnD.Tk):
 
         except Exception as e:
             self.error_logging(f"Error highlighting errors: {str(e)}")
-            traceback.print_exc()
 
-# GUI and DF Update Functions (update_df might be redundant if saving happens on navigation/close)
+
+# GUI and DF Update Functions
 
     def update_df(self):
-
         """Explicitly save the currently displayed text to the correct DF column."""
-        if self.main_df.empty or self.page_counter >= len(self.main_df):
-             return
-
         self.save_toggle = False # Assuming this flag indicates unsaved changes
-
-        current_selection = self.text_display_var.get()
-        # Don't save anything if current display is "None"
-        if current_selection == "None":
-            return
-
-        # Get the text from the Text widget and clean it
-        text = self.clean_text(self.text_display.get("1.0", tk.END))
-
-        index = self.page_counter
-
-        # Save to the column corresponding to the current dropdown selection
-        if current_selection == "Original_Text":
-            self.main_df.loc[index, 'Original_Text'] = text
-        elif current_selection == "Corrected_Text":
-            self.main_df.loc[index, 'Corrected_Text'] = text
-        elif current_selection == "Formatted_Text":
-            self.main_df.loc[index, 'Formatted_Text'] = text
-        elif current_selection == "Translation":
-            self.main_df.loc[index, 'Translation'] = text
-        elif current_selection == "Separated_Text":
-            self.main_df.loc[index, 'Separated_Text'] = text
-
-        # Ensure the Text_Toggle column reflects the saved state
-        self.main_df.loc[index, 'Text_Toggle'] = current_selection
+        
+        if not self.main_df.empty and self.page_counter < len(self.main_df):
+            current_display = self.text_display_var.get()
+            if current_display != "None":
+                text = self.clean_text(self.text_display.get("1.0", tk.END))
+                if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
+                    self.main_df.loc[self.page_counter, current_display] = text
+            
+            # Save relevance
+            if hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
+                self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
 
     def update_df_with_ai_job_response(self, ai_job, index, response):
         """Update the DataFrame with the AI job response"""
@@ -3451,7 +3168,7 @@ class App(TkinterDnD.Tk):
                  target_column = 'Separated_Text'
                  new_toggle = "Separated_Text"
             elif ai_job == "Get_Names_and_Places":
-                print(f"\nProcessing Names and Places response for index {index}: {cleaned_response}")
+
                 # Ensure columns exist
                 if 'People' not in self.main_df.columns: self.main_df['People'] = ""
                 if 'Places' not in self.main_df.columns: self.main_df['Places'] = ""
@@ -3460,7 +3177,7 @@ class App(TkinterDnD.Tk):
                 names, places = self._parse_names_places_response(cleaned_response)
                 self.main_df.loc[index, 'People'] = names
                 self.main_df.loc[index, 'Places'] = places
-                print(f"Updated DF - People: '{names}', Places: '{places}'")
+
                 if names.strip() or places.strip():
                     highlight_names_places = True
             elif ai_job == "Metadata":
@@ -3471,20 +3188,20 @@ class App(TkinterDnD.Tk):
                 # Rotation is handled separately by update_image_rotation called within ai_function
                 pass
             elif ai_job == "Identify_Errors":
-                print(f"\nProcessing Identify_Errors response for index {index}: {cleaned_response}")
+
                 # Take just the first line if multiple lines exist
                 errors = cleaned_response.split('\n')[0].strip()
                 # Remove any potential prefix like "Errors:"
                 if errors.lower().startswith("errors:"):
                      errors = errors[7:].strip()
-                print(f"Extracted errors: {errors}")
+
 
                 self.main_df.loc[index, 'Errors'] = errors
 
                 # Store which version of text the errors apply to
                 selected_source = getattr(self.ai_functions_handler, 'temp_selected_source', self.text_display_var.get())
                 self.main_df.loc[index, 'Errors_Source'] = selected_source
-                print(f"Errors apply to text version: {selected_source}")
+
 
                 if errors:
                     highlight_errors_flag = True
@@ -3513,7 +3230,6 @@ class App(TkinterDnD.Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update DataFrame for index {index}: {str(e)}")
             self.error_logging(f"Failed to update DataFrame for index {index}: {str(e)}")
-            traceback.print_exc()
 
     def _parse_names_places_response(self, response):
         """Helper to parse Names/Places responses robustly."""
@@ -3597,7 +3313,6 @@ class App(TkinterDnD.Tk):
 
         # Clean up the response string
         response_clean = str(response).strip().lower().replace("degrees", "").replace("°", "").strip()
-        print(f"\nCleaned Rotation Response for index {index}: '{response_clean}'")
 
         # Find the correction angle
         correction_angle = None
@@ -3605,21 +3320,17 @@ class App(TkinterDnD.Tk):
              # Use "in" for flexibility, e.g., "image is rotated 90 clockwise"
              if key in response_clean:
                  correction_angle = angle
-                 print(f"Matched key '{key}', applying correction angle: {correction_angle}")
                  break # Take the first match
 
         # If no match found, log error and return
         if correction_angle is None:
-            print(f"ERROR: Could not parse rotation angle from response: {response}")
             self.error_logging(f"Could not parse rotation angle from response at index {index}: {response}")
             return
 
         # If no rotation needed, just log and return
         if correction_angle == 0:
-            print(f"No rotation needed for page index {index}.")
             return
 
-        print(f"Applying correction angle: {correction_angle} degrees for index {index}")
 
         try:
             # Open, rotate, and save the image file
@@ -3635,9 +3346,7 @@ class App(TkinterDnD.Tk):
             if index == self.page_counter:
                 self.image_handler.load_image(image_path_abs)
 
-            print(f"Corrected orientation for page index {index}")
         except Exception as e:
-            print(f"Error rotating image at index {index}: {e}")
             self.error_logging(f"Error rotating image at index {index} ({image_path_abs}): {e}")
 
     def revert_current_page(self):
@@ -3730,9 +3439,6 @@ class App(TkinterDnD.Tk):
         # Update the 'Relevance' column in the DataFrame for the current row
         if 'Relevance' in self.main_df.columns:
             self.main_df.loc[index, 'Relevance'] = selected_relevance
-            print(f"Updated Relevance for index {index} to: {selected_relevance}") # Debug print
-        else:
-            print(f"Warning: 'Relevance' column not found in main_df.") # Debug print
 
 # Function Handlers
 
@@ -3795,7 +3501,6 @@ class App(TkinterDnD.Tk):
                 messagebox.showinfo("Cancelled", "Image editing discarded.")
 
         except Exception as e:
-            print(f"Error in edit_single_image: {str(e)}")
             messagebox.showerror("Error", f"An error occurred while editing the image: {str(e)}")
             self.error_logging(f"Error in edit_single_image: {str(e)}")
 
@@ -3938,10 +3643,8 @@ class App(TkinterDnD.Tk):
                 messagebox.showinfo("Cancelled", "Image editing was cancelled. No changes were made.")
 
         except Exception as e:
-            print(f"Error in edit_all_images: {str(e)}")
             messagebox.showerror("Error", f"An error occurred while editing the images: {str(e)}")
             self.error_logging(f"Error in edit_all_images: {str(e)}")
-            traceback.print_exc()
         finally:
             # Clean up the main temp directory for this process
             if os.path.exists(all_temp_dir):
@@ -3979,7 +3682,8 @@ class App(TkinterDnD.Tk):
                         if os.path.isfile(file_path):
                             os.unlink(file_path)
                 except Exception as e:
-                    print(f"Warning: Failed to clean up pass_images directory: {e}")
+                    # Log error with correct level
+                    self.log_error(f"Error cleaning up pass_images directory: {e}", level="ERROR")
                 return # Exit without changing DataFrame
 
             current_df_index = self.page_counter # The index in the DF being replaced/inserted after
@@ -4098,7 +3802,7 @@ class App(TkinterDnD.Tk):
                     if os.path.isfile(file_path):
                         os.unlink(file_path)
             except Exception as e:
-                print(f"Warning: Failed to clean up some temporary files: {e}")
+                self.log_error(f"Error cleaning up pass_images directory: {e}", level="ERROR")
 
             # Refresh display to show the first inserted image
             self.page_counter = current_df_index # Stay at the start of the inserted block
@@ -4107,7 +3811,6 @@ class App(TkinterDnD.Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to process edited images: {str(e)}")
             self.error_logging(f"Process edited image error: {str(e)}")
-            traceback.print_exc()
 
     def apply_document_separation(self):
         """Apply document separation based on ***** markers and replace main_df with the compiled documents."""
@@ -4147,7 +3850,6 @@ class App(TkinterDnD.Tk):
         """
         self.apply_document_separation()
 
-
 if __name__ == "__main__":
     try:
         app = App()
@@ -4155,7 +3857,6 @@ if __name__ == "__main__":
     except Exception as e:
         # Log the error
         error_message = f"Critical error in main application scope: {str(e)}"
-        print(error_message)
         # Try to write to error log if possible
         try:
             # Ensure util directory exists

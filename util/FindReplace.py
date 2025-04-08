@@ -14,7 +14,7 @@ class FindReplace:
     - Highlighting matched text
     """
 
-    def __init__(self, parent, text_display, main_df, navigate_callback, get_page_counter, get_main_df_callback):
+    def __init__(self, parent, text_display, main_df, navigate_callback, get_page_counter, get_main_df_callback, text_display_var):
         """
         Initialize the FindReplace window and its functionality.
         
@@ -25,6 +25,7 @@ class FindReplace:
             navigate_callback: Callback function for navigation
             get_page_counter: Function to get current page number
             get_main_df_callback: Function to get updated DataFrame
+            text_display_var: StringVar holding the currently selected text type in the main app
         """
         self.parent = parent
         self.text_display = text_display
@@ -35,6 +36,7 @@ class FindReplace:
         self.navigate_callback = navigate_callback
         self.get_page_counter = get_page_counter
         self.get_main_df = get_main_df_callback
+        self.text_display_var = text_display_var
         self.case_sensitive = tk.BooleanVar(value=False)
         self.current_match_position = 0
 
@@ -240,12 +242,16 @@ class FindReplace:
 
     def get_active_text_column(self, row_index):
         """Get the active text column based on Text_Toggle value."""
+        # --- THIS METHOD IS NO LONGER USED ---
+        # Kept for reference during transition, will be removed later.
         try:
             text_toggle = self.main_df.loc[row_index, 'Text_Toggle']
             column_map = {
                 "Original_Text": "Original_Text",
                 "Corrected_Text": "Corrected_Text",
                 "Formatted_Text": "Formatted_Text",
+                "Translation": "Translation", # Added Translation
+                "Separated_Text": "Separated_Text", # Added Separated_Text
                 "None": None
             }
             return column_map.get(text_toggle)
@@ -291,10 +297,25 @@ class FindReplace:
             matches = []
             match_counter = 0
 
+            # Get the column name from the main app's dropdown selection
+            active_column = self.text_display_var.get()
+
+            # If "None" is selected or the column doesn't exist, don't search
+            if active_column == "None" or active_column not in self.main_df.columns:
+                 messagebox.showinfo("No Searchable Text", f"No text selected or column '{active_column}' not found.")
+                 self.disable_navigation_buttons()
+                 self.find_replace_matches_df = pd.DataFrame(columns=["Index", "Page", "Match_Number"])
+                 self.current_match_position = 0
+                 self.update_matches_counter()
+                 return # Exit the function
+
             for index, row in self.main_df.iterrows():
-                active_column = self.get_active_text_column(index)
-                if not active_column:
-                    continue
+                # No longer need get_active_text_column per row
+                # active_column is determined once from the dropdown
+
+                # Check if the determined column exists for safety (might be redundant now)
+                if active_column not in row:
+                     continue
 
                 text = row[active_column]
                 if pd.notna(text) and isinstance(text, str):
@@ -356,10 +377,16 @@ class FindReplace:
             self.text_display.insert("1.0", new_text)
             
             current_page = self.get_page_counter()
-            active_column = self.get_active_text_column(current_page)
-            if active_column:
+            # Get the column name from the main app's dropdown selection
+            active_column = self.text_display_var.get()
+            # Only update DataFrame if a valid text type is selected
+            if active_column != "None" and active_column in self.main_df.columns:
                 self.main_df.loc[current_page, active_column] = new_text.strip()
-            
+            elif active_column == "None":
+                 messagebox.showwarning("Warning", "Cannot save replacement. No text type selected in the main window dropdown.")
+            else: # Column not found (should be rare if dropdown is synced)
+                 messagebox.showerror("Error", f"Cannot save replacement. Column '{active_column}' not found in data.")
+
             self.find_matches()
 
         except Exception as e:
@@ -386,16 +413,27 @@ class FindReplace:
             flags = re.IGNORECASE if not self.case_sensitive.get() else 0
             pattern = re.compile(re.escape(search_term), flags)
 
+            # Get the column name from the main app's dropdown selection ONE time
+            active_column = self.text_display_var.get()
+
+            # If "None" is selected or the column doesn't exist, don't replace
+            if active_column == "None":
+                 messagebox.showwarning("Warning", "Cannot perform Replace All. No text type selected in the main window dropdown.")
+                 return
+            if active_column not in self.main_df.columns:
+                 messagebox.showerror("Error", f"Cannot perform Replace All. Column '{active_column}' not found in data.")
+                 return
+
             for index, row in self.main_df.iterrows():
-                active_column = self.get_active_text_column(index)
-                if not active_column:
-                    continue
+                # Use the globally determined active_column
+                if active_column not in row: # Safety check
+                     continue
 
                 text = row[active_column]
                 if pd.notna(text) and isinstance(text, str):
                     # Count occurrences using the same pattern
                     occurrences = len(pattern.findall(text))
-                    
+
                     if occurrences > 0:
                         # Use the same pattern for replacement
                         new_text = pattern.sub(replace_term, text)
@@ -404,11 +442,10 @@ class FindReplace:
                         pages_affected.add(index)
 
             current_page = self.get_page_counter()
-            if current_page in pages_affected:
-                active_column = self.get_active_text_column(current_page)
-                if active_column:
-                    self.text_display.delete("1.0", tk.END)
-                    self.text_display.insert("1.0", self.main_df.loc[current_page, active_column])
+            # Update the text display IF the current page was affected AND the active_column is valid
+            if current_page in pages_affected and active_column != "None" and active_column in self.main_df.columns:
+                 self.text_display.delete("1.0", tk.END)
+                 self.text_display.insert("1.0", self.main_df.loc[current_page, active_column])
 
             self.text_display.tag_remove("highlight", "1.0", tk.END)
             self.find_replace_matches_df = pd.DataFrame(columns=["Index", "Page", "Match_Number"])

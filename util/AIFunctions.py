@@ -24,7 +24,6 @@ class AIFunctionsHandler:
         self.temp_selected_source = None
         self.temp_format_preset = None
 
-
     async def process_api_request(self, system_prompt, user_prompt, temp, image_data,
                                     text_to_process, val_text, engine, index,
                                     is_base64=True, ai_job=None, job_params=None):
@@ -54,7 +53,6 @@ class AIFunctionsHandler:
             # Optionally print traceback for detailed debugging
             traceback.print_exc()
             return "Error", index
-
 
     def ai_function(self, all_or_one_flag="All Pages", ai_job="HTR", batch_size=None):
         """ Main function to orchestrate AI jobs """
@@ -492,7 +490,6 @@ class AIFunctionsHandler:
                      messagebox.showinfo("Processing Complete", f"Successfully processed {processed_rows}/{total_rows} applicable pages.")
                 # If total_rows was 0 initially, the 'No Work Needed' message was already shown.
 
-
     def setup_job_parameters(self, ai_job):
         """Set up parameters for different AI jobs based on settings"""
         self.app.error_logging(f"Setting up job parameters for {ai_job}", level="DEBUG")
@@ -624,7 +621,6 @@ class AIFunctionsHandler:
              traceback.print_exc()
              return params # Return defaults on error
 
-
     def get_images_for_job(self, ai_job, index, row_data, job_params):
         """
         Get and prepare images for AI job processing. Returns a list suitable for APIHandler.
@@ -684,7 +680,6 @@ class AIFunctionsHandler:
             self.app.error_logging(f"Critical error in get_images_for_job at index {index}: {str(e)}", level="ERROR")
             traceback.print_exc()
             return []  # Return empty list as safe fallback
-
 
     def collate_names_and_places(self):
         """
@@ -855,7 +850,6 @@ class AIFunctionsHandler:
             except Exception as e_progress:
                 self.app.error_logging(f"Error closing progress window: {e_progress}", level="WARNING")
 
-
     def process_chunk_text(self, batch_df, all_or_one_flag, ai_job_type):
         """
         Process text chunking for the standard text fields (Corrected_Text or Original_Text etc.)
@@ -997,7 +991,6 @@ class AIFunctionsHandler:
 
             # Refresh display handled by main ai_function finally block
             # Buttons re-enabled by main ai_function finally block
-
 
     def process_translation_chunks(self, translation_df, all_or_one_flag):
         """
@@ -1142,7 +1135,6 @@ class AIFunctionsHandler:
 
             # Refresh handled by main ai_function finally block
 
-
     def extract_metadata_from_response(self, index, response):
         """
         Extract metadata from an AI response and update the DataFrame columns.
@@ -1279,7 +1271,6 @@ class AIFunctionsHandler:
             traceback.print_exc()
             return False
 
-
     def process_ai_with_selected_source(self, all_or_one_flag, ai_job):
         """
         Sets temporary attributes based on the source/preset selection window,
@@ -1318,7 +1309,6 @@ class AIFunctionsHandler:
             if hasattr(self, 'temp_selected_source'): delattr(self, 'temp_selected_source')
             if hasattr(self, 'temp_format_preset'): delattr(self, 'temp_format_preset')
 
-
     def update_df_with_chunk_result(self, index, separated_text, source_text_type):
         """
         Update the DataFrame with the chunked text result (text with separators).
@@ -1351,7 +1341,6 @@ class AIFunctionsHandler:
         except Exception as e:
             self.app.error_logging(f"Error updating DataFrame with chunk result for index {index}: {str(e)}", level="ERROR")
             traceback.print_exc()
-
 
     def process_relevance_search(self, criteria_text, selected_source, mode):
         """Process the relevance search using AI and update the DataFrame"""

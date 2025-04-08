@@ -183,3 +183,93 @@ Traceback (most recent call last):
     ^^^^^^^^^^^^^^^^^^^^^^^^^^
 ValueError: too many values to unpack (expected 4)
 
+2025-04-07 19:41:29 [ERROR]: Critical error in main application scope: '_tkinter.tkapp' object has no attribute 'settings'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 49, in __init__
+    self.iconbitmap(os.path.join(self.base_dir, "util", "pb.ico"))
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2156, in wm_iconbitmap
+    return self.tk.call('wm', 'iconbitmap', self._w, bitmap)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_tkinter.TclError: bitmap "d:\TranscriptionPearl\util\pb.ico" not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2424, in <module>
+    app = App()
+          ^^^^^
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 51, in __init__
+    self.log_app_error("Icon file 'util/pb.ico' not found or invalid.", level="WARNING")
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 1159, in log_app_error
+    log_level_setting=getattr(self.settings, 'log_level', 'ERROR'),
+                              ^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'settings'
+2025-04-07 19:43:00 [ERROR]: Critical error in main application scope: unknown option "-weight"
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2424, in <module>
+    app = App()
+          ^^^^^
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 89, in __init__
+    self._setup_main_paned_window()
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 170, in _setup_main_paned_window
+    self.main_frame.add(self.text_display, weight=1) # Give text display initial weight
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 4487, in add
+    self.tk.call((self._w, 'add', child) + self._options(kw))
+_tkinter.TclError: unknown option "-weight"
+2025-04-07 19:43:19 [ERROR]: Critical error in main application scope: unknown option "-weight"
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2429, in <module>
+    app = App()
+          ^^^^^
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 89, in __init__
+    self._setup_main_paned_window()
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 170, in _setup_main_paned_window
+    self.main_frame.add(self.text_display, weight=1) # Give text display initial weight
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 4487, in add
+    self.tk.call((self._w, 'add', child) + self._options(kw))
+_tkinter.TclError: unknown option "-weight"
+2025-04-07 20:40:21.322905: CRITICAL: Critical error in main application scope: ImageHandler.__init__() takes 2 positional arguments but 3 were given
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 3872, in <module>
+    app = App()
+          ^^^^^
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 135, in __init__
+    self.image_handler = ImageHandler(self.image_display, self)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ImageHandler.__init__() takes 2 positional arguments but 3 were given
+
+2025-04-07 20:42:02 [ERROR]: Error in process_new_images: 'ImageHandler' object has no attribute 'process_new_images'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 1448, in process_new_images
+    successful_copies, new_rows_list = self.image_handler.process_new_images(
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ImageHandler' object has no attribute 'process_new_images'
+2025-04-08 10:46:30 [ERROR]: Error processing future result for index 0, job HTR: '_tkinter.tkapp' object has no attribute 'update_df_with_ai_job_response'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\AIFunctions.py", line 441, in ai_function
+    self.app.update_df_with_ai_job_response(ai_job, index, response)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'update_df_with_ai_job_response'
+2025-04-08 10:46:53 [ERROR]: Error processing future result for index 0, job HTR: '_tkinter.tkapp' object has no attribute 'update_df_with_ai_job_response'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\AIFunctions.py", line 441, in ai_function
+    self.app.update_df_with_ai_job_response(ai_job, index, response)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'update_df_with_ai_job_response'
