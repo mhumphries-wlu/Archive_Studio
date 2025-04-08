@@ -21,6 +21,7 @@ from util.ExportFunctions import ExportManager
 from util.AdvancedDiffHighlighting import highlight_text_differences
 from util.AIFunctions import AIFunctionsHandler
 from util.ErrorLogger import log_error
+from util.NamesAndPlaces import NamesAndPlacesHandler
 
 class App(TkinterDnD.Tk):
 
@@ -245,6 +246,9 @@ class App(TkinterDnD.Tk):
         # Initialize the AI Functions Handler <<<<<<<<<<<<<<<<<<<< NEW
         self.ai_functions_handler = AIFunctionsHandler(self)
 
+        # Initialize the Names and Places Handler <<<<<<<<<<<<<<<< NEW
+        self.names_places_handler = NamesAndPlacesHandler(self)
+
         # Configure highlight tags
         self.text_display.tag_config("name_highlight", background="lightblue")
         self.text_display.tag_config("place_highlight", background="wheat1")
@@ -272,6 +276,7 @@ class App(TkinterDnD.Tk):
         self.config(menu=self.menubar)
 
         # File menu
+
         self.file_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="File", menu=self.file_menu)
         self.file_menu.add_command(label="New Project", command=self.create_new_project)
@@ -279,7 +284,6 @@ class App(TkinterDnD.Tk):
         self.file_menu.add_command(label="Save Project", command=self.save_project)
         self.file_menu.add_command(label="Save Project As", command=self.save_project_as)
         self.file_menu.add_separator()
-        # Add import options
         self.file_menu.add_command(label="Import PDF...", command=self.import_pdf)
         self.file_menu.add_command(label="Import Images from Folder...", command=lambda: self.open_folder("Images without Text"))
         self.file_menu.add_command(label="Import Text and Images...", command=lambda: self.open_folder("With Text"))
@@ -295,7 +299,6 @@ class App(TkinterDnD.Tk):
 
         self.edit_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Edit", menu=self.edit_menu)
-
         self.edit_menu.add_command(label="Find and Replace", command=self.find_and_replace)
         self.edit_menu.add_separator()
         self.edit_menu.add_command(label="Undo", command=self.undo)
@@ -310,7 +313,6 @@ class App(TkinterDnD.Tk):
         self.edit_menu.add_separator()
         self.edit_menu.add_command(label="Rotate Image Clockwise", command=lambda: self.rotate_image("clockwise"))
         self.edit_menu.add_command(label="Rotate Image Counter-clockwise", command=lambda: self.rotate_image("counter-clockwise"))
-        # Updated calls to use ai_functions_handler
         self.edit_menu.add_command(label="Auto-get Rotation (Current Page)", command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag="Current Page", ai_job="Auto_Rotate"))
         self.edit_menu.add_command(label="Auto-get Rotation (All Pages)", command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag="All Pages", ai_job="Auto_Rotate"))
         self.edit_menu.add_separator()
@@ -323,8 +325,6 @@ class App(TkinterDnD.Tk):
 
         self.process_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Process", menu=self.process_menu)
-
-        # Add process mode toggle (Current Page vs All Pages)
         self.process_mode = tk.StringVar(value="All Pages")  # Default to All Pages
 
         # Mode selection submenu
@@ -333,11 +333,9 @@ class App(TkinterDnD.Tk):
         # Page mode options
         mode_menu.add_radiobutton(label="Current Page", variable=self.process_mode, value="Current Page")
         mode_menu.add_radiobutton(label="All Pages", variable=self.process_mode, value="All Pages")
-
-        # Add separator in the submenu
         mode_menu.add_separator()
 
-        # Add Skip/Redo toggle as checkbutton
+        # Skip/Redo toggle as checkbutton
         mode_menu.add_checkbutton(
             label="Skip Completed Pages",
             variable=self.skip_completed_pages,
@@ -345,41 +343,29 @@ class App(TkinterDnD.Tk):
             offvalue=False
         )
 
+
+        # Process Menu
+
         self.process_menu.add_cascade(label="Processing Mode", menu=mode_menu)
-
         self.process_menu.add_separator()
-
-        # Add simplified processing commands that use the selected mode
-        # Updated calls to use ai_functions_handler
         self.process_menu.add_command(label="Recognize Text",
                                      command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="HTR"))
-
         self.process_menu.add_command(label="Correct Text",
                                      command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Correct_Text"))
-
         self.process_menu.add_command(label="Format Text",
                                      command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Format_Text"))
-
         self.process_menu.add_separator()
-
         self.process_menu.add_command(label="Translate Text",
                                      command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Translation"))
-
         self.process_menu.add_separator()
-
         self.process_menu.add_command(label="Get Names and Places",
                                      command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Get_Names_and_Places"))
-
         self.process_menu.add_separator()
-
         self.process_menu.add_command(label="Identify Document Separators",
                                      command=lambda: self.create_chunk_text_window(self.process_mode.get()))
-
         self.process_menu.add_command(label="Apply Document Separation",
                                      command=self.apply_document_separation)
-
         self.process_menu.add_separator()
-
         self.process_menu.add_command(label="Find Errors",
                                      command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Identify_Errors"))
 
@@ -387,14 +373,11 @@ class App(TkinterDnD.Tk):
 
         self.document_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Highlights", menu=self.document_menu)
-
         self.document_menu.add_separator()
-
         self.highlight_names_var = tk.BooleanVar()
         self.highlight_places_var = tk.BooleanVar()
         self.highlight_changes_var = tk.BooleanVar()
         self.highlight_errors_var = tk.BooleanVar()
-
         self.document_menu.add_checkbutton(label="Highlight Names",
                                         variable=self.highlight_names_var,
                                         command=self.toggle_highlight_options)
@@ -412,13 +395,12 @@ class App(TkinterDnD.Tk):
 
         self.tools_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Tools", menu=self.tools_menu)
-
         self.tools_menu.add_command(label="Edit Current Image", command=self.edit_single_image)
         self.tools_menu.add_command(label="Edit All Images", command=self.edit_all_images)
         self.tools_menu.add_separator()
         self.tools_menu.add_command(
-            label="Collate Names & Places",
-            command=self.run_collation_and_open_window  # <-- uses ai_functions_handler internally
+            label="Edit Names & Places",
+            command=self.run_collation_and_open_window  # Keep this command pointing here
         )
         self.tools_menu.add_separator()
         self.tools_menu.add_command(
@@ -492,24 +474,6 @@ class App(TkinterDnD.Tk):
         # Document Page Navigation Bindings (Example - adjust as needed)
         self.bind("<Alt-Left>", lambda event: self.document_page_nav(-1))
         self.bind("<Alt-Right>", lambda event: self.document_page_nav(1))
-
-    def replace_names_button(self):
-        """
-        Parse the user-edited names from self.names_textbox,
-        then do the find-and-replace in the active text.
-        """
-        raw = self.names_textbox.get("1.0", tk.END)
-        collated_dict = self.parse_collation_response(raw)
-        self.apply_collation_dict(collated_dict, is_names=True)
-
-    def replace_places_button(self):
-        """
-        Parse the user-edited places from self.places_textbox,
-        then do the find-and-replace in the active text.
-        """
-        raw = self.places_textbox.get("1.0", tk.END)
-        collated_dict = self.parse_collation_response(raw)
-        self.apply_collation_dict(collated_dict, is_names=False)
 
     def create_image_widget(self, frame, image_path, state):
         # Load the image
@@ -728,6 +692,24 @@ class App(TkinterDnD.Tk):
 
         btn_cancel = tk.Button(btn_frame, text="Cancel", command=window.destroy)
         btn_cancel.pack(side="left", padx=10)
+
+    def replace_names_button(self):
+        """
+        Parse the user-edited names from self.names_textbox,
+        then do the find-and-replace in the active text.
+        """
+        raw = self.names_textbox.get("1.0", tk.END)
+        collated_dict = self.parse_collation_response(raw)
+        self.apply_collation_dict(collated_dict, is_names=True)
+
+    def replace_places_button(self):
+        """
+        Parse the user-edited places from self.places_textbox,
+        then do the find-and-replace in the active text.
+        """
+        raw = self.places_textbox.get("1.0", tk.END)
+        collated_dict = self.parse_collation_response(raw)
+        self.apply_collation_dict(collated_dict, is_names=False)
 
     def create_text_source_window(self, all_or_one_flag, ai_job):
         """
@@ -1943,6 +1925,54 @@ class App(TkinterDnD.Tk):
         except tk.TclError:
             pass
 
+    def parse_names_places_response(self, response):
+        """Helper to parse Names/Places responses robustly."""
+        names_list = []
+        places_list = []
+        in_names_section = False
+        in_places_section = False
+
+        # Handle potential '\r\n' line endings
+        lines = response.replace('\r\n', '\n').split('\n')
+
+        for line in lines:
+            line_strip = line.strip()
+            if not line_strip: continue
+
+            line_lower = line_strip.lower()
+
+            # Check for section headers (allow variations)
+            if line_lower.startswith("names:") or line_lower == "names":
+                in_names_section = True
+                in_places_section = False
+                # Extract data if it's on the same line as the header
+                if line_lower.startswith("names:") and len(line_strip) > 6:
+                    data = line_strip[6:].strip()
+                    if data: names_list.extend([n.strip() for n in data.split(';') if n.strip()])
+                continue # Move to next line after header
+
+            if line_lower.startswith("places:") or line_lower == "places":
+                in_places_section = True
+                in_names_section = False
+                 # Extract data if it's on the same line as the header
+                if line_lower.startswith("places:") and len(line_strip) > 7:
+                    data = line_strip[7:].strip()
+                    if data: places_list.extend([p.strip() for p in data.split(';') if p.strip()])
+                continue # Move to next line after header
+
+            # If we are in a section, add the line content
+            if in_names_section:
+                # Split potentially semi-colon separated items on the line
+                names_list.extend([n.strip() for n in line_strip.split(';') if n.strip()])
+            elif in_places_section:
+                places_list.extend([p.strip() for p in line_strip.split(';') if p.strip()])
+
+        # Deduplicate and join
+        names = "; ".join(sorted(list(set(names_list)), key=str.lower))
+        places = "; ".join(sorted(list(set(places_list)), key=str.lower))
+
+        return names, places
+
     def clean_text(self, text):
         """Clean text by replacing curly braces with parentheses and handling special cases"""
         if not isinstance(text, str):
@@ -2454,11 +2484,8 @@ class App(TkinterDnD.Tk):
         """
         First collects names and places from the LLM, then shows the GUI for user editing.
         """
-        # 1) Collect suggestions from the LLM automatically using the handler
-        self.ai_functions_handler.collate_names_and_places()
-
-        # 2) Now show the user a GUI with the raw lines
-        self.create_collate_names_places_window()
+        # Call the handler method to manage the process
+        self.names_places_handler.initiate_collation_and_show_window()
 
     def refresh_display(self):
         """Refresh the current image and text display, handling single and multi-image paths."""
@@ -3174,7 +3201,7 @@ class App(TkinterDnD.Tk):
                 if 'Places' not in self.main_df.columns: self.main_df['Places'] = ""
 
                 # Use robust parsing
-                names, places = self._parse_names_places_response(cleaned_response)
+                names, places = self.parse_names_places_response(cleaned_response)
                 self.main_df.loc[index, 'People'] = names
                 self.main_df.loc[index, 'Places'] = places
 
@@ -3230,54 +3257,6 @@ class App(TkinterDnD.Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update DataFrame for index {index}: {str(e)}")
             self.error_logging(f"Failed to update DataFrame for index {index}: {str(e)}")
-
-    def _parse_names_places_response(self, response):
-        """Helper to parse Names/Places responses robustly."""
-        names_list = []
-        places_list = []
-        in_names_section = False
-        in_places_section = False
-
-        # Handle potential '\r\n' line endings
-        lines = response.replace('\r\n', '\n').split('\n')
-
-        for line in lines:
-            line_strip = line.strip()
-            if not line_strip: continue
-
-            line_lower = line_strip.lower()
-
-            # Check for section headers (allow variations)
-            if line_lower.startswith("names:") or line_lower == "names":
-                in_names_section = True
-                in_places_section = False
-                # Extract data if it's on the same line as the header
-                if line_lower.startswith("names:") and len(line_strip) > 6:
-                    data = line_strip[6:].strip()
-                    if data: names_list.extend([n.strip() for n in data.split(';') if n.strip()])
-                continue # Move to next line after header
-
-            if line_lower.startswith("places:") or line_lower == "places":
-                in_places_section = True
-                in_names_section = False
-                 # Extract data if it's on the same line as the header
-                if line_lower.startswith("places:") and len(line_strip) > 7:
-                    data = line_strip[7:].strip()
-                    if data: places_list.extend([p.strip() for p in data.split(';') if p.strip()])
-                continue # Move to next line after header
-
-            # If we are in a section, add the line content
-            if in_names_section:
-                # Split potentially semi-colon separated items on the line
-                names_list.extend([n.strip() for n in line_strip.split(';') if n.strip()])
-            elif in_places_section:
-                places_list.extend([p.strip() for p in line_strip.split(';') if p.strip()])
-
-        # Deduplicate and join
-        names = "; ".join(sorted(list(set(names_list)), key=str.lower))
-        places = "; ".join(sorted(list(set(places_list)), key=str.lower))
-
-        return names, places
 
     def update_image_rotation(self, index, response):
         if self.main_df.empty or index >= len(self.main_df):
