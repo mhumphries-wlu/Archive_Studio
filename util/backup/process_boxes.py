@@ -795,9 +795,9 @@ def process_separated_documents_batched(app):
         messagebox.showinfo("Operation Cancelled", "Document separation was cancelled.")
         return {}
     
-    # Import AnalyzeDocuments
-    from util.AnalyzeDocuments import AnalyzeDocuments
-    analyzer = AnalyzeDocuments(app)
+    # Import CompileDocuments
+    from util.CompileDocuments import CompileDocuments
+    analyzer = CompileDocuments(app)
     
     # Get a copy of the original dataframe
     original_df = app.main_df.copy()

@@ -1,3 +1,8 @@
+# util/APIHandler.py
+
+# This file contains the APIHandler class, which is used to handle
+# the API calls for the application.
+
 import asyncio
 import base64
 import os
@@ -235,6 +240,8 @@ class APIHandler:
                     if hasattr(chunk, 'text') and chunk.text is not None:
                         response_text += chunk.text
                 
+                print(response_text)
+
                 validation_result = self._validate_response(response_text, val_text, index, job_type, required_headers)
                 
                 if validation_result[0] == "Error" and retries < max_retries - 1:

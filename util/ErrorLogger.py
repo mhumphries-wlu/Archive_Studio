@@ -1,3 +1,8 @@
+# util/ErrorLogger.py
+
+# This file contains the ErrorLogger class, which is used to handle
+# the error logging for the application.
+
 import os
 import traceback
 from datetime import datetime

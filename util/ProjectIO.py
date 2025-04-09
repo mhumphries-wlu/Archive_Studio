@@ -1,3 +1,8 @@
+# util/ProjectIO.py
+
+# This file contains the ProjectIO class, which is used to handle
+# the project save and open functionality for the application.  
+
 import os
 import pandas as pd
 import fitz  # PyMuPDF
@@ -18,6 +23,8 @@ class ProjectIO:
         self.app.enable_drag_and_drop()
 
     def save_project(self):
+        # ADD: Save current text using DataOperations
+        self.app.data_operations.update_df()
         # If no project directory exists, call save_project_as.
         if not hasattr(self.app, 'project_directory') or not self.app.project_directory:
             self.save_project_as()
@@ -49,6 +56,8 @@ class ProjectIO:
             self.app.error_logging(f"Failed to save project: {e}")
 
     def open_project(self):
+        # ADD: Save current text before opening using DataOperations
+        self.app.data_operations.update_df()
         project_directory = filedialog.askdirectory(title="Select Project Directory")
         if not project_directory:
             return
@@ -63,44 +72,48 @@ class ProjectIO:
 
         try:
             # Read and process the project CSV file
-            self.app.main_df = pd.read_csv(project_file, encoding='utf-8')
-            
+            # Use na_filter=False to prevent pandas from interpreting empty strings as NaN
+            # Keep_default_na=False might also be useful depending on CSV content
+            self.app.main_df = pd.read_csv(project_file, encoding='utf-8', na_filter=False, keep_default_na=False)
+
             # Ensure required text columns exist...
-            for col in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text", "Text_Toggle", "Relevance"]:
+            for col in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text", "Text_Toggle", "Relevance", "Image_Path"]: # Ensure Image_Path is checked
                 if col not in self.app.main_df.columns:
                     self.app.main_df[col] = ""
                 else:
-                    self.app.main_df[col] = self.app.main_df[col].astype('object')
+                    # Explicitly convert columns that should be string/object, handling potential non-string data gracefully
+                    if col in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text", "Text_Toggle", "Relevance", "Image_Path"]:
+                        self.app.main_df[col] = self.app.main_df[col].astype('object').fillna('') # Use object and fillna
 
             # Set project directory before resolving paths
             self.app.project_directory = project_directory
             self.app.images_directory = images_directory
-            
+
             # Update Text_Toggle for each row to show the highest level of populated text
             for idx, row in self.app.main_df.iterrows():
                 # Check text columns in order of priority (highest to lowest)
-                if pd.notna(row['Separated_Text']) and row['Separated_Text'].strip():
+                if pd.notna(row['Separated_Text']) and str(row['Separated_Text']).strip():
                     self.app.main_df.at[idx, 'Text_Toggle'] = "Separated_Text"
-                elif pd.notna(row['Translation']) and row['Translation'].strip():
+                elif pd.notna(row['Translation']) and str(row['Translation']).strip():
                     self.app.main_df.at[idx, 'Text_Toggle'] = "Translation"
-                elif pd.notna(row['Formatted_Text']) and row['Formatted_Text'].strip():
+                elif pd.notna(row['Formatted_Text']) and str(row['Formatted_Text']).strip():
                     self.app.main_df.at[idx, 'Text_Toggle'] = "Formatted_Text"
-                elif pd.notna(row['Corrected_Text']) and row['Corrected_Text'].strip():
+                elif pd.notna(row['Corrected_Text']) and str(row['Corrected_Text']).strip():
                     self.app.main_df.at[idx, 'Text_Toggle'] = "Corrected_Text"
-                elif pd.notna(row['Original_Text']) and row['Original_Text'].strip():
+                elif pd.notna(row['Original_Text']) and str(row['Original_Text']).strip():
                     self.app.main_df.at[idx, 'Text_Toggle'] = "Original_Text"
                 else:
                     self.app.main_df.at[idx, 'Text_Toggle'] = "None"
 
             # Initialize highlight toggles based on data presence
             self.initialize_highlight_toggles()
-            
+
             # Check if any rows have relevance data and show the relevance dropdown if needed
             if 'Relevance' in self.app.main_df.columns:
                 has_relevance = self.app.main_df['Relevance'].apply(
                     lambda x: pd.notna(x) and str(x).strip() != ""
                 ).any()
-                
+
                 if has_relevance:
                     self.app.show_relevance.set(True)
                     self.app.toggle_relevance_visibility()
@@ -109,25 +122,59 @@ class ProjectIO:
             # Reset page counter and load the first image and text.
             self.app.page_counter = 0
             if not self.app.main_df.empty:
-                # Use get_full_path to resolve the relative path
-                image_path = self.app.main_df.loc[0, 'Image_Path']
-                self.app.current_image_path = self.app.get_full_path(image_path)
-                self.app.image_handler.load_image(self.app.current_image_path)
-                
+                # --- Modified Image Loading ---
+                image_path_rel = self.app.main_df.loc[0, 'Image_Path']
+
+                # Check if image_path_rel is a valid, non-empty string
+                if isinstance(image_path_rel, str) and image_path_rel.strip():
+                    self.app.current_image_path = self.app.get_full_path(image_path_rel)
+                    # Check if the resolved absolute path exists
+                    if self.app.current_image_path and os.path.exists(self.app.current_image_path):
+                        try:
+                            self.app.image_handler.load_image(self.app.current_image_path)
+                        except Exception as img_load_err:
+                             # Catch potential errors during image loading itself (e.g., corrupted file)
+                             messagebox.showerror("Image Load Error", f"Failed to load image for first page:\n{img_load_err}")
+                             self.app.error_logging(f"Error loading first page image {self.app.current_image_path}: {img_load_err}", level="ERROR")
+                             self.app.image_display.delete("all") # Clear image display
+                             self.app.current_image_path = None
+                    else:
+                        # Handle case where path is valid string but file doesn't exist
+                        self.app.error_logging(f"Image path invalid or file not found for first page: {self.app.current_image_path}", level="WARNING")
+                        messagebox.showwarning("File Not Found", f"Image file not found for the first page:\n{self.app.current_image_path}")
+                        self.app.image_display.delete("all") # Clear image display
+                        self.app.current_image_path = None
+                else:
+                    # Handle case where Image_Path is empty, NaN, float, or other invalid type
+                    self.app.error_logging(f"No valid image path found for the first page in the project. Value was: {image_path_rel} (Type: {type(image_path_rel)})", level="WARNING")
+                    self.app.image_display.delete("all") # Clear image display
+                    self.app.current_image_path = None
+                # --- End Modified Image Loading ---
+
                 # Set text_display_var to match the Text_Toggle for the first page
                 if 0 in self.app.main_df.index:
                     current_toggle = self.app.main_df.loc[0, 'Text_Toggle']
-                    self.app.text_display_var.set(current_toggle)
-                
-                self.app.load_text()
+                    # Ensure current_toggle is a string before setting
+                    self.app.text_display_var.set(str(current_toggle) if pd.notna(current_toggle) else "None")
+
+                self.app.load_text() # Load text regardless of image success
+            else:
+                # Handle case where DataFrame is empty after loading project file
+                self.app.error_logging("Project file loaded, but DataFrame is empty.", level="WARNING")
+                self.app.image_display.delete("all")
+                self.app.text_display.delete("1.0", tk.END)
+                self.app.current_image_path = None
+
             self.app.counter_update()
 
             messagebox.showinfo("Success", "Project loaded successfully.")
-            
+
         except Exception as e:
+            # Detailed error logging including traceback
+            tb_str = traceback.format_exc()
             messagebox.showerror("Error", f"Failed to open project: {e}")
-            self.app.error_logging("Failed to open project", str(e))
-    
+            self.app.error_logging(f"Failed to open project: {e}\nTraceback:\n{tb_str}", level="CRITICAL")
+
     def initialize_highlight_toggles(self):
         """Check for existing data in the DataFrame and set highlight toggles accordingly"""
         try:
@@ -198,6 +245,8 @@ class ProjectIO:
             self.app.error_logging(f"Error initializing highlight toggles: {e}")
     
     def save_project_as(self):
+        # ADD: Save current text before saving as using DataOperations
+        self.app.data_operations.update_df()
         # Ask the user to select a parent directory and project name.
         parent_directory = filedialog.askdirectory(title="Select Directory for New Project")
         if not parent_directory:
@@ -270,11 +319,8 @@ class ProjectIO:
 
                     if source_image_path_abs and os.path.exists(source_image_path_abs):
                         try:
-                            # Resize/copy the *selected* source image to the *new* location with the new name
-                            # Use shutil.copy2 for simple copy if resize isn't strictly needed,
-                            # or keep resize_image if resizing is desired during save_as.
-                            # Using resize_image here as per original code:
-                            self.app.resize_image(source_image_path_abs, new_image_path_abs)
+                            # Call via image handler instead:
+                            self.app.image_handler.resize_image(source_image_path_abs, new_image_path_abs)
                             # Update the Image_Path in the DataFrame being saved to the *new relative path*
                             save_df.at[index, 'Image_Path'] = rel_image_path_for_csv
                         except Exception as img_err:
@@ -365,7 +411,9 @@ class ProjectIO:
                 image_path_abs = os.path.join(self.app.images_directory, image_filename)
 
                 # Resize/convert PNG temp image to JPG final image
-                self.app.resize_image(temp_image_path, image_path_abs) # resize_image handles conversion and saving as JPG
+                # self.app.resize_image(temp_image_path, image_path_abs) # resize_image handles conversion and saving as JPG
+                # Call via image handler instead:
+                self.app.image_handler.resize_image(temp_image_path, image_path_abs)
 
                 # Get relative path for storage (relative to project or temp base)
                 image_path_rel = self.app.get_relative_path(image_path_abs)

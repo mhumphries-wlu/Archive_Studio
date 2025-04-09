@@ -1,3 +1,8 @@
+# util/Settings.py
+
+# This file contains the Settings class, which is used to handle
+# the settings for the application.
+
 import json, os, shutil
 
 class Settings:

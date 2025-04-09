@@ -1,3 +1,9 @@
+# AdvancedDiffHighlighting.py
+# This file contains the AdvancedDiffHighlighter class, which is used to highlight
+# specific differences between text versions.
+# Instead of highlighting entire lines, this identifies and highlights
+# specific characters that have changed.
+
 import difflib
 import tkinter as tk
 import re
@@ -197,7 +203,6 @@ class AdvancedDiffHighlighter:
             
         return tokens
 
-
 def highlight_text_differences(text_widget, current_level, previous_level):
     """
     Highlight differences between two text levels in the text widget.
@@ -212,7 +217,6 @@ def highlight_text_differences(text_widget, current_level, previous_level):
     
     # Apply highlighting
     highlighter.highlight_differences(previous_level, current_level)
-
 
 # Function that could be integrated into the main application
 def highlight_text_changes(self):

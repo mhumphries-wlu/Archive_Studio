@@ -22,6 +22,8 @@ from util.AdvancedDiffHighlighting import highlight_text_differences
 from util.AIFunctions import AIFunctionsHandler
 from util.ErrorLogger import log_error
 from util.NamesAndPlaces import NamesAndPlacesHandler
+from util.Highlights import HighlightHandler # <--- Added Import
+from util.DataOperations import DataOperations
 
 class App(TkinterDnD.Tk):
 
@@ -59,6 +61,14 @@ class App(TkinterDnD.Tk):
         self.skip_completed_pages = tk.BooleanVar(value=True)  # Default to skipping completed pages
         self.relevance_var = tk.StringVar() # Added for relevance dropdown
 
+        # Initialize settings early
+        self.settings = Settings()
+        
+        # Initialize data operations early - BEFORE initializing main_df
+        self.data_operations = DataOperations(self)
+        # Initialize main_df using DataOperations
+        self.data_operations.initialize_main_df()
+        
         # Control visibility of bottom bar elements
         self.show_relevance = tk.BooleanVar(value=False)
         self.show_page_nav = tk.BooleanVar(value=False)
@@ -168,13 +178,12 @@ class App(TkinterDnD.Tk):
         self.relevance_dropdown.pack(side="left", padx=2)
         self.relevance_dropdown.bind('<<ComboboxSelected>>', self.on_relevance_change)
 
-        # --- Add Relevance Navigation Buttons ---
+        # Relevance Navigation Buttons 
         self.relevant_back_button = tk.Button(bottom_left_group, text="Previous", command=lambda: self.navigate_relevant(-1)) # Changed text
         self.relevant_back_button.pack(side="left", padx=(5, 2)) # Add padding to separate from dropdown
 
         self.relevant_forward_button = tk.Button(bottom_left_group, text="Next", command=lambda: self.navigate_relevant(1)) # Changed text
         self.relevant_forward_button.pack(side="left", padx=2)
-        # --- End Add Relevance Navigation Buttons ---
 
         # Bottom Right group elements (Document Page Navigation)
         self.doc_page_label = tk.Label(bottom_right_group, text="Document Page:") # Made instance variable
@@ -197,18 +206,11 @@ class App(TkinterDnD.Tk):
         self.doc_button5 = tk.Button(bottom_right_group, text=">>", command=lambda: self.document_page_nav(2))
         self.doc_button5.pack(side="left", padx=2)
 
-        # --- Continue with Existing Initialization ---
         self.initialize_temp_directory()
         if not hasattr(self, 'project_directory') or not self.project_directory:
             self.project_directory = self.temp_directory
 
-        # Initialize settings now (after the top frame is created)
-        self.settings = Settings()
-
-        # Initialize the main DataFrame
-        self.initialize_main_df()
-
-        # --- Update Chunking Dropdown with Actual Presets ---
+        # Update Chunking Dropdown with Actual Presets
         preset_names = [p['name'] for p in self.settings.chunk_text_presets] if self.settings.chunk_text_presets else []
         if preset_names:
             self.chunking_strategy_var.set(preset_names[0])
@@ -249,6 +251,9 @@ class App(TkinterDnD.Tk):
         # Initialize the Names and Places Handler <<<<<<<<<<<<<<<< NEW
         self.names_places_handler = NamesAndPlacesHandler(self)
 
+        # Initialize the Highlight Handler <<<<<<<<<<<<<<<<<<<<<< NEW
+        self.highlight_handler = HighlightHandler(self)
+
         # Configure highlight tags
         self.text_display.tag_config("name_highlight", background="lightblue")
         self.text_display.tag_config("place_highlight", background="wheat1")
@@ -268,6 +273,9 @@ class App(TkinterDnD.Tk):
         self.toggle_page_nav_visibility()
         # self.toggle_relevance_nav_visibility() # REMOVED
 
+        # Add initialization of data_operations after other handlers are initialized
+        self.data_operations = DataOperations(self)
+
 # GUI Setup
 
     def create_menus(self):
@@ -279,10 +287,10 @@ class App(TkinterDnD.Tk):
 
         self.file_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="File", menu=self.file_menu)
-        self.file_menu.add_command(label="New Project", command=self.create_new_project)
-        self.file_menu.add_command(label="Open Project", command=self.open_project)
-        self.file_menu.add_command(label="Save Project", command=self.save_project)
-        self.file_menu.add_command(label="Save Project As", command=self.save_project_as)
+        self.file_menu.add_command(label="New Project", command=self.project_io.create_new_project)
+        self.file_menu.add_command(label="Open Project", command=self.project_io.open_project)
+        self.file_menu.add_command(label="Save Project", command=self.project_io.save_project)
+        self.file_menu.add_command(label="Save Project As", command=self.project_io.save_project_as)
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Import PDF...", command=self.import_pdf)
         self.file_menu.add_command(label="Import Images from Folder...", command=lambda: self.open_folder("Images without Text"))
@@ -316,10 +324,10 @@ class App(TkinterDnD.Tk):
         self.edit_menu.add_command(label="Auto-get Rotation (Current Page)", command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag="Current Page", ai_job="Auto_Rotate"))
         self.edit_menu.add_command(label="Auto-get Rotation (All Pages)", command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag="All Pages", ai_job="Auto_Rotate"))
         self.edit_menu.add_separator()
-        self.edit_menu.add_command(label="Revert Current Page", command=self.revert_current_page)
-        self.edit_menu.add_command(label="Revert All Pages", command=self.revert_all_pages)
+        self.edit_menu.add_command(label="Revert Current Page", command=self.data_operations.revert_current_page)
+        self.edit_menu.add_command(label="Revert All Pages", command=self.data_operations.revert_all_pages)
         self.edit_menu.add_separator()
-        self.edit_menu.add_command(label="Delete Current Image", command=self.delete_current_image)
+        self.edit_menu.add_command(label="Delete Current Image", command=self.data_operations.delete_current_image)
 
         # Process Menu
 
@@ -400,7 +408,7 @@ class App(TkinterDnD.Tk):
         self.tools_menu.add_separator()
         self.tools_menu.add_command(
             label="Edit Names & Places",
-            command=self.run_collation_and_open_window  # Keep this command pointing here
+            command=self.names_places_handler.initiate_collation_and_show_window
         )
         self.tools_menu.add_separator()
         self.tools_menu.add_command(
@@ -420,9 +428,9 @@ class App(TkinterDnD.Tk):
         self.bind("<Control-bracketleft>", lambda event: self.rotate_image("counter-clockwise"))
 
         # Project management bindings
-        self.bind("<Control-n>", lambda event: self.create_new_project())
-        self.bind("<Control-s>", lambda event: self.save_project())
-        self.bind("<Control-o>", lambda event: self.open_project())
+        self.bind("<Control-n>", lambda event: self.project_io.create_new_project())
+        self.bind("<Control-o>", lambda event: self.project_io.open_project())
+        self.bind("<Control-s>", lambda event: self.project_io.save_project())
 
         # Edit bindings
         self.bind("<Control-z>", self.undo)
@@ -432,14 +440,15 @@ class App(TkinterDnD.Tk):
         self.bind("<Control-f>", lambda event: self.find_and_replace())
 
         # Revert bindings
-        self.bind("<Control-r>", lambda event: self.revert_current_page())
-        self.bind("<Control-Shift-r>", lambda event: self.revert_all_pages())
+        self.bind("<Control-r>", lambda event: self.data_operations.revert_current_page()
+)
+        self.bind("<Control-Shift-r>", lambda event: self.data_operations.revert_all_pages())
 
         # Text display toggle binding
         self.bind("<Control-Tab>", lambda event: self.toggle_text())
 
         # Image management bindings
-        self.bind("<Control-d>", lambda event: self.delete_current_image())
+        self.bind("<Control-d>", lambda event: self.data_operations.delete_current_image())
         self.bind("<Control-i>", lambda event: self.edit_single_image())
         self.bind("<Control-Shift-i>", lambda event: self.edit_all_images())
 
@@ -645,71 +654,6 @@ class App(TkinterDnD.Tk):
 
         # Wait for the window to be closed
         self.wait_window(relevance_window)
-
-    def create_collate_names_places_window(self):
-        """
-        A larger window with two text boxes for the collated lines from the LLM.
-        The user can manually edit or remove lines before applying replacements.
-        """
-        window = tk.Toplevel(self)
-        window.title("Collate Names & Places")
-        window.geometry("600x500")
-        window.grab_set()
-
-        # Frame for labels
-        lbl_frame = tk.Frame(window)
-        lbl_frame.pack(side="top", fill="x", pady=5)
-
-        names_label = tk.Label(lbl_frame, text="Collated Names (edit as needed):")
-        names_label.pack(anchor="w", padx=5)
-
-        # Text display for Names
-        self.names_textbox = tk.Text(window, wrap="word", height=10)
-        self.names_textbox.pack(fill="both", expand=True, padx=5, pady=(0,10))
-        # Access collated data via the handler
-        self.names_textbox.insert("1.0", getattr(self.ai_functions_handler, 'collated_names_raw', ""))
-
-
-        places_label = tk.Label(window, text="Collated Places (edit as needed):")
-        places_label.pack(anchor="w", padx=5)
-
-        # Text display for Places
-        self.places_textbox = tk.Text(window, wrap="word", height=10)
-        self.places_textbox.pack(fill="both", expand=True, padx=5, pady=(0,10))
-        # Access collated data via the handler
-        self.places_textbox.insert("1.0", getattr(self.ai_functions_handler, 'collated_places_raw', ""))
-
-
-        # Buttons at bottom
-        btn_frame = tk.Frame(window)
-        btn_frame.pack(side="bottom", pady=10)
-
-        btn_names = tk.Button(btn_frame, text="Replace Names", command=self.replace_names_button)
-        btn_names.pack(side="left", padx=10)
-
-        btn_places = tk.Button(btn_frame, text="Replace Places", command=self.replace_places_button)
-        btn_places.pack(side="left", padx=10)
-
-        btn_cancel = tk.Button(btn_frame, text="Cancel", command=window.destroy)
-        btn_cancel.pack(side="left", padx=10)
-
-    def replace_names_button(self):
-        """
-        Parse the user-edited names from self.names_textbox,
-        then do the find-and-replace in the active text.
-        """
-        raw = self.names_textbox.get("1.0", tk.END)
-        collated_dict = self.parse_collation_response(raw)
-        self.apply_collation_dict(collated_dict, is_names=True)
-
-    def replace_places_button(self):
-        """
-        Parse the user-edited places from self.places_textbox,
-        then do the find-and-replace in the active text.
-        """
-        raw = self.places_textbox.get("1.0", tk.END)
-        collated_dict = self.parse_collation_response(raw)
-        self.apply_collation_dict(collated_dict, is_names=False)
 
     def create_text_source_window(self, all_or_one_flag, ai_job):
         """
@@ -1025,8 +969,8 @@ class App(TkinterDnD.Tk):
 # Initialize Settings Functions
 
     def reset_application(self):
-        # Clear the main DataFrame
-        self.initialize_main_df()
+        # Clear the main DataFrame using DataOperations
+        self.data_operations.initialize_main_df()
 
         # Reset Flags, Toggles, and Variables
         self.save_toggle = False
@@ -1070,17 +1014,13 @@ class App(TkinterDnD.Tk):
         # Reset counter
         self.counter_update()
 
-        # Reset contingent menu items
-        # Remove the reference to the non-existent "Remove Pagination" menu item
-        # self.document_menu.entryconfig("Remove Pagination", state="disabled")
-
         # Ensure Apply Separation menu item is enabled
         self.update_separation_menu_state("normal")
 
         # Clear project and image directories
         self.initialize_temp_directory()
-        # self.initialize_settings # Already called within initialize_temp_directory -> initialize_main_df chain? No, need it here if initialize_temp doesn't call it.
-        # Let's check initialize_temp_directory structure again. It calls initialize_main_df. initialize_settings is called in __init__. Okay, no need to call it here.
+        # Reset the page counter
+        self.page_counter = 0
 
         # Clear the find and replace matches DataFrame
         if hasattr(self, 'find_replace'): # Ensure find_replace exists
@@ -1102,24 +1042,20 @@ class App(TkinterDnD.Tk):
         # Define settings file path
         self.settings_file_path = os.path.join(app_data, 'settings.json')
 
-        # In initialize_temp_directory method, modify the DataFrame creation:
-        self.initialize_main_df()
+        # Initialize the DataFrame using DataOperations
+        self.data_operations.initialize_main_df()
 
         # Initilize the dataframe to store metadata
         self.compiled_df = pd.DataFrame(columns=["Index", "Document_No", "Document_Type", "Text", "Translation", "Document_Page", "Citation", "Image_Path", "Author", "Correspondent", "Creation_Place", "Correspondent_Place:", "Date", "Places", "People", "Summary", "Temp_Data_Analysis", "Data_Analysis", "Query_Data", "Query_Memory", "Relevance", "Notes"])
 
         # First set default values
-        self.restore_defaults() # Assume this method exists in Settings or App
+        self.settings.restore_defaults()
+        # Update API handler if keys changed
+        self.update_api_handler()
 
         # Check if settings file exists and load it
         if os.path.exists(self.settings_file_path):
             self.settings.load_settings() # Call load_settings on the Settings instance
-
-    def restore_defaults(self):
-        # This should likely call a method in the Settings class
-        self.settings.restore_defaults()
-        # Update API handler if keys changed
-        self.update_api_handler()
 
     def initialize_temp_directory(self):
         """Initialize and manage temporary directories"""
@@ -1146,62 +1082,26 @@ class App(TkinterDnD.Tk):
             messagebox.showerror("Error", f"Failed to create temp directories: {e}")
             self.error_logging(f"Failed to create temp directories: {e}")
 
-        # Reset the main DataFrame
-        self.initialize_main_df()
+        # Reset the main DataFrame using DataOperations
+        self.data_operations.initialize_main_df()
         self.page_counter = 0
-
-    def initialize_main_df(self):
-        self.main_df = pd.DataFrame(columns=[
-            # Basic columns
-            "Index",
-            "Page",
-            "Original_Text",
-            "Corrected_Text",
-            "Formatted_Text",
-            "Translation",
-            "Separated_Text",
-            "Image_Path",
-            "Text_Path",
-            "Text_Toggle",
-            # Names and Places columns
-            "People",
-            "Places",
-            # Error tracking
-            "Errors",
-            "Errors_Source",
-            # Relevance tracking
-            "Relevance", # Added Relevance column
-            # Additional Metadata columns (Ensure these are consistent with extract_metadata_from_response)
-            "Document_Type", "Author", "Correspondent", "Correspondent_Place", "Date", "Creation_Place", "Summary",
-            # Add other potential metadata headers here as columns if needed
-        ])
-
-        # Initialize all text columns as empty strings instead of NaN
-        text_columns = [
-            "Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text",
-            "People", "Places", "Errors", "Errors_Source", "Relevance", # Added Relevance
-            "Document_Type", "Author", "Correspondent", "Correspondent_Place", "Date", "Creation_Place", "Summary"
-        ]
-        for col in text_columns:
-            if col not in self.main_df.columns: # Add column if missing
-                 self.main_df[col] = ""
-            self.main_df[col] = self.main_df[col].astype(str) # Ensure string type
-
-        # Initialize numeric columns
-        self.main_df["Index"] = pd.Series(dtype=int)
-
-        # Initialize date column (handle potential missing Date column)
-        if "Date" in self.main_df.columns:
-            # Try converting to datetime, handle errors gracefully
-            try:
-                self.main_df["Date"] = pd.to_datetime(self.main_df["Date"], errors='coerce')
-            except Exception as e:
-                 self.error_logging(f"Could not convert 'Date' column to datetime: {e}")
-                 self.main_df["Date"] = pd.Series(dtype=str) # Fallback to string if conversion fails
 
     def create_settings_window(self):
         self.toggle_button_state()
         settings_window = SettingsWindow(self, mode="T_PEARL")
+        
+    def create_settings_window_to_tab(self, tab_name):
+        """Create settings window and open to a specific tab"""
+        self.toggle_button_state()
+        settings_window = SettingsWindow(self, mode="T_PEARL")
+        
+        # Force window to take focus
+        settings_window.settings_window.attributes('-topmost', True)
+        settings_window.settings_window.focus_force()
+        
+        # Show the specified tab
+        settings_window.show_settings(tab_name)
+        return settings_window
 
     def enable_drag_and_drop(self):
         self.drop_target_register(DND_FILES)
@@ -1422,7 +1322,7 @@ class App(TkinterDnD.Tk):
                 self.error_logging(f"Document page navigation error: {str(e)}")
         # No need to reload text, as text corresponds to the main document (page_counter), not the sub-image
 
-# Image Functions - refactored to use ImageHandler
+# Image Functions
 
     def process_new_images(self, source_paths):
         try:
@@ -1467,93 +1367,7 @@ class App(TkinterDnD.Tk):
                 messagebox.showinfo("Information", "No images were successfully processed")
         except Exception as e:
             self.error_logging(f"Error in process_new_images: {e}")
-            messagebox.showerror("Error", f"Failed to process images: {e}")
-
-    def delete_current_image(self):
-        if self.main_df.empty:
-            messagebox.showinfo("No Images", "No images to delete.")
-            return
-
-        if not messagebox.askyesno("Confirm Delete", "Are you sure you want to delete the current image? This action cannot be undone."):
-            return
-
-        try:
-            current_index = self.page_counter
-
-            # Get file paths (convert relative to absolute)
-            image_to_delete_rel = self.main_df.loc[current_index, 'Image_Path']
-            text_to_delete_rel = self.main_df.loc[current_index, 'Text_Path']
-            image_to_delete_abs = self.get_full_path(image_to_delete_rel)
-            text_to_delete_abs = self.get_full_path(text_to_delete_rel)
-
-            # Delete the files from disk using ImageHandler
-            self.image_handler.delete_image_files(image_to_delete_abs, text_to_delete_abs)
-
-            # Remove the row from the DataFrame
-            self.main_df = self.main_df.drop(current_index).reset_index(drop=True)
-
-            # Renumber the remaining entries
-            for idx in range(len(self.main_df)):
-                # Update Index
-                self.main_df.at[idx, 'Index'] = idx
-
-                # Create new page number
-                new_page = f"{idx+1:04d}_p{idx+1:03d}"
-                self.main_df.at[idx, 'Page'] = new_page
-
-                # Get old file paths (relative)
-                old_image_path_rel = self.main_df.loc[idx, 'Image_Path']
-                old_text_path_rel = self.main_df.loc[idx, 'Text_Path']
-
-                # Resolve to absolute for renaming
-                old_image_path_abs = self.get_full_path(old_image_path_rel)
-                old_text_path_abs = self.get_full_path(old_text_path_rel)
-
-                # Create new file paths (absolute for renaming, then get relative for storage)
-                if old_image_path_abs: # Check if path exists
-                    image_dir = os.path.dirname(old_image_path_abs)
-                    new_image_name = f"{idx+1:04d}_p{idx+1:03d}{os.path.splitext(old_image_path_abs)[1]}"
-                    new_image_path_abs = os.path.join(image_dir, new_image_name)
-                    new_image_path_rel = self.get_relative_path(new_image_path_abs)
-                    # Rename file
-                    if os.path.exists(old_image_path_abs) and old_image_path_abs != new_image_path_abs:
-                        os.rename(old_image_path_abs, new_image_path_abs)
-                    # Update path in DataFrame
-                    self.main_df.at[idx, 'Image_Path'] = new_image_path_rel
-
-                if old_text_path_abs: # Check if path exists
-                    text_dir = os.path.dirname(old_text_path_abs)
-                    new_text_name = f"{idx+1:04d}_p{idx+1:03d}.txt"
-                    new_text_path_abs = os.path.join(text_dir, new_text_name)
-                    new_text_path_rel = self.get_relative_path(new_text_path_abs)
-                    # Rename file
-                    if os.path.exists(old_text_path_abs) and old_text_path_abs != new_text_path_abs:
-                        os.rename(old_text_path_abs, new_text_path_abs)
-                    # Update path in DataFrame
-                    self.main_df.at[idx, 'Text_Path'] = new_text_path_rel
-
-            # Adjust page counter if necessary
-            if current_index >= len(self.main_df) and not self.main_df.empty:
-                self.page_counter = len(self.main_df) - 1
-            elif self.main_df.empty:
-                 self.page_counter = 0
-
-            # Refresh display
-            if not self.main_df.empty:
-                # Load the image using image handler
-                self.image_handler.load_image(self.get_full_path(self.main_df.loc[self.page_counter, 'Image_Path']))
-                self.load_text()
-            else:
-                # Clear displays if no images remain
-                self.text_display.delete("1.0", tk.END)
-                self.image_display.delete("all")
-                self.current_image_path = None
-
-            self.counter_update()
-
-        except Exception as e:
-            messagebox.showerror("Error", f"An error occurred while deleting the image: {str(e)}")
-            self.error_logging(f"Error in delete_current_image: {str(e)}")
+            messagebox.showerror("Error", f"Failed to process images: {e}")        
 
     def rotate_image(self, direction):
         if self.main_df.empty or self.page_counter >= len(self.main_df):
@@ -1564,58 +1378,7 @@ class App(TkinterDnD.Tk):
         if not success:
             messagebox.showerror("Error", error_message)
 
-# Project Save and Open Function Handlers
-
-    def create_new_project(self):
-        self.project_io.create_new_project()
-
-    def save_project(self):
-        # Save current text
-        if not self.main_df.empty and self.page_counter < len(self.main_df):
-            current_display = self.main_df.loc[self.page_counter, 'Text_Toggle']
-            if current_display != "None":
-                text = self.clean_text(self.text_display.get("1.0", tk.END))
-                if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
-                    self.main_df.loc[self.page_counter, current_display] = text
-            
-            # Save relevance
-            if hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
-                self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
-
-        self.project_io.save_project()
-
-    def open_project(self):
-        # Save current text before opening
-        if not self.main_df.empty and self.page_counter < len(self.main_df):
-            current_display = self.main_df.loc[self.page_counter, 'Text_Toggle']
-            if current_display != "None":
-                text = self.clean_text(self.text_display.get("1.0", tk.END))
-                if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
-                    self.main_df.loc[self.page_counter, current_display] = text
-            
-            # Save relevance
-            if hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
-                self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
-
-        self.project_io.open_project()
-
-    def save_project_as(self):
-        # Save current text before saving as
-        if not self.main_df.empty and self.page_counter < len(self.main_df):
-            current_display = self.main_df.loc[self.page_counter, 'Text_Toggle']
-            if current_display != "None":
-                text = self.clean_text(self.text_display.get("1.0", tk.END))
-                if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
-                    self.main_df.loc[self.page_counter, current_display] = text
-            
-            # Save relevance
-            if hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
-                self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
-
-        self.project_io.save_project_as()
-
-    def open_pdf(self, pdf_file=None):
-        self.project_io.open_pdf(pdf_file)
+# Project Save and Open Handlers
 
     def import_pdf(self):
         """Opens a file dialog to select a PDF file and imports it"""
@@ -1650,10 +1413,6 @@ class App(TkinterDnD.Tk):
         if not self.project_directory: # Check project_directory now
             messagebox.showerror("Error", "No directory selected.")
             return
-
-        # Reset DataFrame and page counter (already done in open_folder).
-        # self.initialize_main_df() # Not needed here
-        # self.page_counter = 0      # Not needed here
 
         # Get lists of image and text files from the project_directory.
         image_files = [f for f in os.listdir(self.project_directory) if f.lower().endswith((".jpg", ".jpeg"))]
@@ -1904,7 +1663,7 @@ class App(TkinterDnD.Tk):
             self.find_replace.highlight_text()
 
         # Apply any active highlighting (names, places, changes, errors)
-        self.highlight_text()
+        self.highlight_handler.highlight_text() # <-- Use handler
 
         # Update menu states based on data availability
         self.update_highlight_menu_states()
@@ -1924,54 +1683,6 @@ class App(TkinterDnD.Tk):
             self.text_display.edit_redo()
         except tk.TclError:
             pass
-
-    def parse_names_places_response(self, response):
-        """Helper to parse Names/Places responses robustly."""
-        names_list = []
-        places_list = []
-        in_names_section = False
-        in_places_section = False
-
-        # Handle potential '\r\n' line endings
-        lines = response.replace('\r\n', '\n').split('\n')
-
-        for line in lines:
-            line_strip = line.strip()
-            if not line_strip: continue
-
-            line_lower = line_strip.lower()
-
-            # Check for section headers (allow variations)
-            if line_lower.startswith("names:") or line_lower == "names":
-                in_names_section = True
-                in_places_section = False
-                # Extract data if it's on the same line as the header
-                if line_lower.startswith("names:") and len(line_strip) > 6:
-                    data = line_strip[6:].strip()
-                    if data: names_list.extend([n.strip() for n in data.split(';') if n.strip()])
-                continue # Move to next line after header
-
-            if line_lower.startswith("places:") or line_lower == "places":
-                in_places_section = True
-                in_names_section = False
-                 # Extract data if it's on the same line as the header
-                if line_lower.startswith("places:") and len(line_strip) > 7:
-                    data = line_strip[7:].strip()
-                    if data: places_list.extend([p.strip() for p in data.split(';') if p.strip()])
-                continue # Move to next line after header
-
-            # If we are in a section, add the line content
-            if in_names_section:
-                # Split potentially semi-colon separated items on the line
-                names_list.extend([n.strip() for n in line_strip.split(';') if n.strip()])
-            elif in_places_section:
-                places_list.extend([p.strip() for p in line_strip.split(';') if p.strip()])
-
-        # Deduplicate and join
-        names = "; ".join(sorted(list(set(names_list)), key=str.lower))
-        places = "; ".join(sorted(list(set(places_list)), key=str.lower))
-
-        return names, places
 
     def clean_text(self, text):
         """Clean text by replacing curly braces with parentheses and handling special cases"""
@@ -2000,7 +1711,8 @@ class App(TkinterDnD.Tk):
         for old, new in replacements.items():
             text = text.replace(old, new)
 
-        return text
+        # Added: remove trailing newlines/whitespace
+        return text.rstrip()
 
     def find_right_text(self, index_no):
         """ Finds the most relevant text for a given index, prioritizing specific columns. """
@@ -2049,20 +1761,6 @@ class App(TkinterDnD.Tk):
         # If neither is available, return empty string
         else:
             return "", has_translation
-
-    def toggle_button_state(self):
-
-        if self.button1['state'] == "normal" and self.button2['state'] == "normal" and self.button4['state'] == "normal" and self.button5['state'] == "normal":
-            self.button1.config(state="disabled")
-            self.button2.config(state="disabled")
-            self.button4.config(state="disabled")
-            self.button5.config(state="disabled")
-
-        else:
-            self.button1.config(state="normal")
-            self.button2.config(state="normal")
-            self.button4.config(state="normal")
-            self.button5.config(state="normal")
 
     def error_logging(self, error_message, additional_info=None, level="ERROR"):
         """Use the ErrorLogger module to log errors."""
@@ -2199,10 +1897,6 @@ class App(TkinterDnD.Tk):
         # Ensure path is absolute before attempting to make it relative
         abs_path = os.path.abspath(path)
 
-        # If the path is already relative (unlikely after abspath, but check anyway), return it
-        # if not os.path.isabs(abs_path): # This check is redundant after os.path.abspath
-        #     return abs_path
-
         # Use project_directory as base_path if not provided
         if base_path is None:
             base_path = getattr(self, 'project_directory', None) or getattr(self, 'temp_directory', None)
@@ -2224,149 +1918,63 @@ class App(TkinterDnD.Tk):
             # In this case, we cannot create a relative path, so return the absolute path.
             return abs_path
 
-    def parse_collation_response(self, response_text):
-        """
-        Parse lines like:
-        Response:
-        correct_spelling = variant1; variant2...
-        ...
-        Return a dict: { correct_spelling: [variant1, variant2...] }
-        """
-        try:
-            if not response_text or not isinstance(response_text, str):
-                self.error_logging("Empty or invalid response text", level="WARNING")
-                return {}
+    # def apply_collation_dict(self, coll_dict, is_names=True):
+    #     """
+    #     For each row, find-and-replace all variations in the active text column.
+    #     If is_names=True, we're applying name variants; else place variants.
+    #     """
+    #     if not coll_dict:
+    #          messagebox.showinfo("Info", f"No {'names' if is_names else 'places'} found to replace.")
+    #          return
 
-            coll_dict = {}
-            # Handle potential '\r\n' line endings as well
-            lines = response_text.replace('\r\n', '\n').splitlines()
+    #     modified_count = 0
+    #     for idx, row in self.main_df.iterrows():
+    #         active_col = row.get('Text_Toggle', None)
+    #         if active_col not in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
+    #             continue # Skip if no active text or if it's 'None'
 
-            response_found = False
-            current_correct = None # Keep track of the last correct term for multi-line variants
+    #         old_text = row.get(active_col, "") # Use .get for safety
+    #         if not isinstance(old_text, str) or not old_text.strip():
+    #             continue # Skip if text is empty or not a string
 
-            for ln in lines:
-                ln = ln.strip()
-                if not ln:
-                    continue
+    #         new_text = old_text
+    #         # For each correct spelling => list of variants
+    #         for correct_term, variants in coll_dict.items():
+    #             # Create a pattern that matches any of the variants (case-insensitive, whole words)
+    #             # Ensure variants don't contain problematic regex characters or handle them
+    #             escaped_variants = [re.escape(var) for var in variants if var] # Escape variants
+    #             if not escaped_variants: continue # Skip if no valid variants
 
-                # Check for "Response:" header and skip it
-                # Make the check case-insensitive and allow variations
-                if ln.lower().startswith("response:") or ln.lower().startswith("collated names:") or ln.lower().startswith("collated places:"):
-                    response_found = True
-                    current_correct = None # Reset when a new header is found
-                    continue
+    #             # Build regex pattern: \b(var1|var2|var3)\b
+    #             # Use word boundaries (\b) to avoid partial matches within words.
+    #             # Sort variants by length descending to match longer variants first
+    #             escaped_variants.sort(key=len, reverse=True)
+    #             pattern_str = r'\b(' + '|'.join(escaped_variants) + r')\b'
+    #             pattern = re.compile(pattern_str, re.IGNORECASE)
 
-                # Handle various formatting possibilities
-                if '=' in ln:
-                    # Standard format: correct = variant1; variant2
-                    parts = ln.split('=', 1)
-                    correct = parts[0].strip()
-                    variations_text = parts[1].strip()
-                    current_correct = correct # Update the current correct term
+    #             # Replace all occurrences of any variant with the correct term
+    #             new_text = pattern.sub(correct_term, new_text)
 
-                    # Handle different delimiter styles (semicolon first, then comma)
-                    if ';' in variations_text:
-                        variations = [v.strip() for v in variations_text.split(';') if v.strip()]
-                    elif ',' in variations_text:
-                        variations = [v.strip() for v in variations_text.split(',') if v.strip()]
-                    else:
-                        # If no delimiter, assume it's a single variant
-                        variations = [variations_text] if variations_text else []
+    #         # Update DataFrame only if text changed
+    #         if new_text != old_text:
+    #             self.main_df.at[idx, active_col] = new_text
+    #             modified_count += 1
 
-                    if correct and variations:
-                        # If the correct term already exists, merge the variations
-                        existing_variants = coll_dict.get(correct, [])
-                        coll_dict[correct] = sorted(list(set(existing_variants + variations)), key=str.lower)
+    #     # Refresh text display if the current page was modified
+    #     if self.page_counter in self.main_df.index: # Check if index is valid
+    #         current_page_active_col = self.main_df.loc[self.page_counter].get('Text_Toggle', None)
+    #         # Find if current page index was modified
+    #         if self.page_counter in self.main_df[self.main_df[current_page_active_col] != self.text_display.get("1.0", tk.END).strip()].index:
+    #              self.load_text() # Reload text only if current page changed
+    #              self.counter_update()
 
-                # Handle case where line might be a continuation (starts with '; ' or ', ')
-                elif response_found and current_correct and (ln.startswith(';') or ln.startswith(',')):
-                     # This looks like a continuation line
-                     continuation_text = ln[1:].strip() # Remove the leading delimiter
-                     if ';' in continuation_text:
-                         variations = [v.strip() for v in continuation_text.split(';') if v.strip()]
-                     elif ',' in continuation_text:
-                          variations = [v.strip() for v in continuation_text.split(',') if v.strip()]
-                     else:
-                          variations = [continuation_text] if continuation_text else []
-
-                     if variations:
-                         existing_variants = coll_dict.get(current_correct, [])
-                         coll_dict[current_correct] = sorted(list(set(existing_variants + variations)), key=str.lower)
-
-            total_variants = sum(len(variants) for variants in coll_dict.values())
-
-            return coll_dict
-
-        except Exception as e:
-            self.error_logging(f"Error parsing collation response: {str(e)}")
-            return {}
-
-    def apply_collation_dict(self, coll_dict, is_names=True):
-        """
-        For each row, find-and-replace all variations in the active text column.
-        If is_names=True, we're applying name variants; else place variants.
-        """
-        if not coll_dict:
-             messagebox.showinfo("Info", f"No {'names' if is_names else 'places'} found to replace.")
-             return
-
-        modified_count = 0
-        for idx, row in self.main_df.iterrows():
-            active_col = row.get('Text_Toggle', None)
-            if active_col not in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
-                continue # Skip if no active text or if it's 'None'
-
-            old_text = row.get(active_col, "") # Use .get for safety
-            if not isinstance(old_text, str) or not old_text.strip():
-                continue # Skip if text is empty or not a string
-
-            new_text = old_text
-            # For each correct spelling => list of variants
-            for correct_term, variants in coll_dict.items():
-                # Create a pattern that matches any of the variants (case-insensitive, whole words)
-                # Ensure variants don't contain problematic regex characters or handle them
-                escaped_variants = [re.escape(var) for var in variants if var] # Escape variants
-                if not escaped_variants: continue # Skip if no valid variants
-
-                # Build regex pattern: \b(var1|var2|var3)\b
-                # Use word boundaries (\b) to avoid partial matches within words.
-                # Sort variants by length descending to match longer variants first
-                escaped_variants.sort(key=len, reverse=True)
-                pattern_str = r'\b(' + '|'.join(escaped_variants) + r')\b'
-                pattern = re.compile(pattern_str, re.IGNORECASE)
-
-                # Replace all occurrences of any variant with the correct term
-                new_text = pattern.sub(correct_term, new_text)
-
-            # Update DataFrame only if text changed
-            if new_text != old_text:
-                self.main_df.at[idx, active_col] = new_text
-                modified_count += 1
-
-        # Refresh text display if the current page was modified
-        if self.page_counter in self.main_df.index: # Check if index is valid
-            current_page_active_col = self.main_df.loc[self.page_counter].get('Text_Toggle', None)
-            # Find if current page index was modified
-            if self.page_counter in self.main_df[self.main_df[current_page_active_col] != self.text_display.get("1.0", tk.END).strip()].index:
-                 self.load_text() # Reload text only if current page changed
-                 self.counter_update()
-
-        messagebox.showinfo("Replacement Complete", f"Replaced variations in {modified_count} page(s).")
+    #     messagebox.showinfo("Replacement Complete", f"Replaced variations in {modified_count} page(s).")
 
     def on_closing(self):
         """Handle application closing"""
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
-            # Save any pending changes before quitting
-            if not self.main_df.empty and self.page_counter < len(self.main_df):
-                current_display = self.main_df.loc[self.page_counter, 'Text_Toggle']
-                if current_display != "None":
-                    text = self.clean_text(self.text_display.get("1.0", tk.END))
-                    if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
-                        self.main_df.loc[self.page_counter, current_display] = text
-
-                # Save relevance before quitting
-                if hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
-                    self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
+            # Save any pending changes before quitting using DataOperations
+            self.data_operations.update_df()
 
             self.quit()
             self.destroy() # Ensure window closes fully
@@ -2480,13 +2088,6 @@ class App(TkinterDnD.Tk):
 
 # GUI Actions / Toggles
 
-    def run_collation_and_open_window(self):
-        """
-        First collects names and places from the LLM, then shows the GUI for user editing.
-        """
-        # Call the handler method to manage the process
-        self.names_places_handler.initiate_collation_and_show_window()
-
     def refresh_display(self):
         """Refresh the current image and text display, handling single and multi-image paths."""
         if self.main_df.empty:
@@ -2599,19 +2200,12 @@ class App(TkinterDnD.Tk):
         if self.main_df.empty or self.page_counter >= len(self.main_df):
             return
 
-        # Get the current and new display modes
+        # Update the DataFrame with current text before switching
+        self.data_operations.update_df()
+
+        # Get new selection and update toggle
         index = self.page_counter
-        current_display = self.main_df.loc[index, 'Text_Toggle']
         selected = self.text_display_var.get()
-
-        # Only update if we're switching to a different mode and not from None
-        if current_display != "None" and current_display != selected:
-            # Get the current text from the text widget
-            text = self.clean_text(self.text_display.get("1.0", tk.END))
-
-            # Save the text to the appropriate column based on CURRENT display type (not new one)
-            if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
-                self.main_df.loc[index, current_display] = text
 
         # Map display names to DataFrame values
         display_map = {
@@ -2644,6 +2238,20 @@ class App(TkinterDnD.Tk):
 
         # Apply highlighting based on current settings - called within load_text
         # self.highlight_text()
+
+    def toggle_button_state(self):
+
+        if self.button1['state'] == "normal" and self.button2['state'] == "normal" and self.button4['state'] == "normal" and self.button5['state'] == "normal":
+            self.button1.config(state="disabled")
+            self.button2.config(state="disabled")
+            self.button4.config(state="disabled")
+            self.button5.config(state="disabled")
+
+        else:
+            self.button1.config(state="normal")
+            self.button2.config(state="normal")
+            self.button4.config(state="normal")
+            self.button5.config(state="normal")
 
     def toggle_text(self):
         if self.main_df.empty or self.page_counter >= len(self.main_df):
@@ -2693,6 +2301,14 @@ class App(TkinterDnD.Tk):
         self.main_df.loc[index, 'Text_Toggle'] = next_toggle
         self.load_text()
 
+        # Apply highlighting based on toggle states without mutual exclusivity
+
+        # Apply highlighting
+        self.highlight_handler.highlight_text() # <-- Use handler
+
+        # Update menu item states
+        self.update_highlight_menu_states()
+
     def toggle_relevance_display(self, event=None):
          """Toggle the visibility of the entire relevance section (dropdown and buttons)"""
          self.show_relevance.set(not self.show_relevance.get())
@@ -2707,7 +2323,7 @@ class App(TkinterDnD.Tk):
         """Update highlight display based on toggle states without mutual exclusivity"""
 
         # Apply highlighting
-        self.highlight_text()
+        self.highlight_handler.highlight_text() # <-- Use handler
 
         # Update menu item states
         self.update_highlight_menu_states()
@@ -2822,441 +2438,12 @@ class App(TkinterDnD.Tk):
         # Always keep the Apply Document Separation menu item enabled
         self.process_menu.entryconfig("Apply Document Separation", state="normal")
 
-# Highlighting Functions
-
-    def highlight_names_or_places(self):
-        """Highlight names and/or places in the text based on DataFrame data"""
-        # Clear existing highlights first
-        self.text_display.tag_remove("name_highlight", "1.0", tk.END)
-        self.text_display.tag_remove("place_highlight", "1.0", tk.END)
-
-        # If neither highlighting option is selected, return early
-        if not self.highlight_names_var.get() and not self.highlight_places_var.get():
-            return
-
-        # Get current page index
-        current_index = self.page_counter
-        if self.main_df.empty or current_index >= len(self.main_df):
-             self.error_logging("Invalid index or empty DataFrame", level="WARNING")
-             return
-
-        try:
-            row_data = self.main_df.loc[current_index]
-
-            def process_entities(entities_str, tag):
-
-                if pd.isna(entities_str) or not entities_str:
-                    return
-
-                # Split, strip, and filter empty strings
-                entities = [entity.strip() for entity in entities_str.split(';') if entity.strip()]
-                # Sort by length descending to match longer names first
-                entities.sort(key=len, reverse=True)
-
-
-                for entity in entities:
-                    # Skip entries with square brackets (often indicating uncertainty or notes)
-                    if '[' in entity or ']' in entity:
-                        continue
-
-                    # First try to highlight the complete entity
-                    self.highlight_term(entity, tag, exact_match=True) # Use exact_match=True for full phrases
-
-                    # Handle hyphenated words only if the exact match didn't cover it already
-                    # Check if the term was already tagged
-                    # This check is complex with Tkinter tags, maybe rely on highlight_term logic
-
-                    # Get all text content
-                    full_text = self.text_display.get("1.0", tk.END)
-
-                    # Handle hyphenated words across lines
-                    if '-' in entity:
-                        # Split the entity into parts
-                        parts = entity.split('-')
-
-                        # Look for parts separated by newline
-                        for i in range(len(parts)-1):
-                            part1 = parts[i].strip()
-                            part2 = parts[i+1].strip()
-
-                            # Create pattern to match part1 at end of line, optional hyphen, newline(s), and part2 at start of next line
-                            # Use re.escape on parts
-                            pattern = rf"{re.escape(part1)}-?\n+\s*{re.escape(part2)}" # Allow spaces after newline
-                            try:
-                                matches = re.finditer(pattern, full_text, re.IGNORECASE)
-                            except re.error as re_err:
-                                self.error_logging(f"Regex error for pattern '{pattern}': {re_err}", level="ERROR")
-                                continue # Skip this pattern if invalid
-
-                            for match in matches:
-                                # Convert string index to line.char format
-                                match_start = match.start()
-                                match_end = match.end()
-
-                                # Find the line and character position for start and end
-                                start_line, start_char = self._index_to_line_char(full_text, match_start)
-                                end_line, end_char = self._index_to_line_char(full_text, match_end)
-
-                                # Add tags to both parts (highlight the whole matched span)
-                                start_index = f"{start_line}.{start_char}"
-                                end_index = f"{end_line}.{end_char}"
-
-                                self.text_display.tag_add(tag, start_index, end_index)
-
-            # Process names if the highlight names option is checked
-            if self.highlight_names_var.get():
-                names = row_data.get('People', "") # Use .get() for safety
-                if pd.notna(names) and names.strip():
-                    process_entities(names, "name_highlight")
-
-            # Process places if the highlight places option is checked
-            if self.highlight_places_var.get():
-                places = row_data.get('Places', "") # Use .get() for safety
-                if pd.notna(places) and places.strip():
-                    process_entities(places, "place_highlight")
-
-        except Exception as e:
-            self.error_logging(f"Error in highlight_names_or_places: {str(e)}")
-
-    def _index_to_line_char(self, text, index):
-        """Convert a flat string index to a Tkinter 'line.char' index."""
-        lines_before = text[:index].count('\n')
-        line_start_index = text.rfind('\n', 0, index) + 1 if lines_before > 0 else 0
-        char_index = index - line_start_index
-        return lines_before + 1, char_index
-
-    def highlight_term(self, term, tag, exact_match=False):
-        """Helper function to highlight a specific term in the text"""
-        if not term or not isinstance(term, str) or len(term) < 1:
-            return
-
-        text_widget = self.text_display
-        start_index = "1.0"
-
-
-        # Get full text content for searching
-        full_text = text_widget.get("1.0", tk.END)
-        if not full_text.strip(): # Skip if text widget is empty
-            return
-
-        # Escape special regex characters in the search term
-        escaped_term = re.escape(term)
-
-        found_count = 0
-        try:
-            # Define regex pattern based on exact_match flag
-            if exact_match:
-                # Look for the term anywhere (might match parts of words if not careful)
-                # It's usually better to use boundaries even for "exact" phrase matching
-                # Let's refine: use word boundaries unless the term itself starts/ends with non-word chars
-                if re.match(r'\w', escaped_term) and re.search(r'\w$', escaped_term):
-                     pattern = re.compile(r'\b' + escaped_term + r'\b', re.IGNORECASE)
-                else:
-                     # If term has leading/trailing non-word chars, don't add boundaries there
-                     pattern = re.compile(escaped_term, re.IGNORECASE)
-
-            else:
-                # Standard word boundary match for individual words
-                pattern = re.compile(r'\b' + escaped_term + r'\b', re.IGNORECASE)
-
-
-            # Find all matches using the compiled pattern
-            for match in pattern.finditer(full_text):
-                match_start = match.start()
-                match_end = match.end()
-
-                # Convert flat indices to Tkinter line.char format
-                start_line, start_char = self._index_to_line_char(full_text, match_start)
-                end_line, end_char = self._index_to_line_char(full_text, match_end)
-
-                start_tk_index = f"{start_line}.{start_char}"
-                end_tk_index = f"{end_line}.{end_char}"
-
-                # Add the tag to the matched range
-                text_widget.tag_add(tag, start_tk_index, end_tk_index)
-                found_count += 1
-
-        except re.error as regex_error:
-             self.error_logging(f"Regex error highlighting term '{term}' with pattern '{pattern.pattern}': {regex_error}", level="ERROR")
-        except Exception as e:
-            self.error_logging(f"Error highlighting term '{term}': {str(e)}", level="ERROR")
-            # Fallback using simple text search (less accurate boundaries)
-            try:
-                current_idx = "1.0"
-                fallback_count = 0
-                while True:
-                    current_idx = text_widget.search(term, current_idx, tk.END, nocase=True, exact=exact_match) # Use exact flag
-                    if not current_idx:
-                        break
-                    end_idx = f"{current_idx}+{len(term)}c"
-                    text_widget.tag_add(tag, current_idx, end_idx)
-                    current_idx = end_idx
-                    fallback_count += 1
-                if fallback_count > 0:
-                    self.error_logging(f"Highlighted {fallback_count} instances using fallback search.", level="WARNING")
-
-            except Exception as inner_e:
-                self.error_logging(f"Fallback highlighting also failed for '{term}': {str(inner_e)}", level="ERROR")
-
-    def highlight_text(self):
-        """Apply all selected types of highlighting based on toggle states"""
-        # Clear all existing highlights first
-        self.text_display.tag_remove("name_highlight", "1.0", tk.END)
-        self.text_display.tag_remove("place_highlight", "1.0", tk.END)
-        self.text_display.tag_remove("change_highlight", "1.0", tk.END)
-        self.text_display.tag_remove("word_change_highlight", "1.0", tk.END) # Assuming this is from advanced diff
-        self.text_display.tag_remove("error_highlight", "1.0", tk.END)
-
-        # Apply each highlight type if its toggle is on
-        if self.highlight_names_var.get() or self.highlight_places_var.get():
-            self.highlight_names_or_places()
-
-        if self.highlight_changes_var.get():
-            self.highlight_changes()
-
-        if self.highlight_errors_var.get():
-             # Check if we're viewing the text version that the errors apply to
-             if not self.main_df.empty and self.page_counter < len(self.main_df):
-                 current_display = self.text_display_var.get()
-                 index = self.page_counter
-                 row_data = self.main_df.loc[index]
-
-                 if 'Errors_Source' in self.main_df.columns:
-                     errors_source = row_data.get('Errors_Source', "")
-
-                     # Only apply error highlights if viewing the correct text version
-                     # or if no specific source is recorded (for backward compatibility)
-                     if not errors_source or errors_source == current_display:
-                         self.highlight_errors()
-                 else:
-                     # For backward compatibility or if Errors_Source column doesn't exist
-                     self.highlight_errors()
-             else:
-                 # No data or invalid index, don't highlight errors
-                 pass
-
-    def highlight_changes(self):
-        """
-        Highlight differences between the current text level and the previous level:
-        - When viewing Corrected_Text, highlight changes from Original_Text
-        - When viewing Formatted_Text, highlight changes from Corrected_Text (or Original if Corrected empty)
-        - When viewing Translation, highlight changes from Formatted_Text (or Corrected/Original if others empty)
-        """
-        if self.main_df.empty or self.page_counter >= len(self.main_df):
-             return
-
-        index = self.page_counter
-        row_data = self.main_df.loc[index]
-        current_toggle = row_data.get('Text_Toggle', "None")
-
-        current_text = row_data.get(current_toggle, "") if current_toggle != "None" else ""
-        previous_text = ""
-
-        # Determine which texts to compare based on current level
-        if current_toggle == "Corrected_Text":
-            previous_text = row_data.get('Original_Text', "")
-        elif current_toggle == "Formatted_Text":
-            # Compare Formatted_Text with Corrected_Text first
-            previous_text = row_data.get('Corrected_Text', "")
-            # If Corrected_Text is empty, compare with Original_Text instead
-            if not previous_text or pd.isna(previous_text) or not previous_text.strip():
-                previous_text = row_data.get('Original_Text', "")
-        elif current_toggle == "Translation":
-             # Compare Translation with Formatted_Text first
-             previous_text = row_data.get('Formatted_Text', "")
-             if not previous_text or pd.isna(previous_text) or not previous_text.strip():
-                 previous_text = row_data.get('Corrected_Text', "")
-             if not previous_text or pd.isna(previous_text) or not previous_text.strip():
-                  previous_text = row_data.get('Original_Text', "")
-        elif current_toggle == "Separated_Text":
-             # Compare Separated_Text with Formatted_Text first
-             previous_text = row_data.get('Formatted_Text', "")
-             if not previous_text or pd.isna(previous_text) or not previous_text.strip():
-                 previous_text = row_data.get('Corrected_Text', "")
-             if not previous_text or pd.isna(previous_text) or not previous_text.strip():
-                  previous_text = row_data.get('Original_Text', "")
-        else:
-            # Cannot compare if Original_Text, None, or unrecognized toggle
-            return
-
-        # Ensure texts are strings and not NaN
-        current_text = current_text if pd.notna(current_text) else ""
-        previous_text = previous_text if pd.notna(previous_text) else ""
-
-        # Skip if either text is effectively empty or they are identical
-        if not current_text.strip() or not previous_text.strip() or current_text == previous_text:
-            return
-
-        # Use the advanced highlighting function
-        try:
-             highlight_text_differences(self.text_display, current_text, previous_text)
-        except Exception as e:
-             self.error_logging(f"Error during advanced diff highlighting: {e}")
-             # Simple fallback (less precise) - maybe just highlight the whole text?
-             # self.text_display.tag_add("change_highlight", "1.0", tk.END)
-
-    def highlight_errors(self):
-        """Highlight error terms from the Errors column"""
-        if self.main_df.empty or self.page_counter >= len(self.main_df):
-             return
-
-        try:
-
-            # Get current page index and data
-            index = self.page_counter
-            row_data = self.main_df.loc[index]
-
-            # Get the current text display mode
-            selected_display = self.text_display_var.get()
-
-            # Get the text version the errors apply to
-            errors_source = row_data.get('Errors_Source', "")
-
-            # Check again if we should highlight based on source (redundant but safe)
-            if errors_source and errors_source != selected_display:
-                return
-
-            # Get errors for current page
-            errors_str = row_data.get('Errors', "")
-            if pd.isna(errors_str) or not errors_str.strip():
-                return
-
-            # Process and highlight errors
-            def process_errors(errors_data):
-                if not errors_data:
-                    return
-                # Split errors by semicolon and strip whitespace, filter empty
-                error_terms = [term.strip() for term in errors_data.split(';') if term.strip()]
-                # Sort by length descending to catch longer phrases first
-                error_terms.sort(key=len, reverse=True)
-                for term in error_terms:
-                    self.highlight_term(term, "error_highlight", exact_match=True) # Use exact_match=True
-
-            process_errors(errors_str)
-
-        except Exception as e:
-            self.error_logging(f"Error highlighting errors: {str(e)}")
-
-
 # GUI and DF Update Functions
 
     def update_df(self):
         """Explicitly save the currently displayed text to the correct DF column."""
-        self.save_toggle = False # Assuming this flag indicates unsaved changes
-        
-        if not self.main_df.empty and self.page_counter < len(self.main_df):
-            current_display = self.text_display_var.get()
-            if current_display != "None":
-                text = self.clean_text(self.text_display.get("1.0", tk.END))
-                if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
-                    self.main_df.loc[self.page_counter, current_display] = text
-            
-            # Save relevance
-            if hasattr(self, 'relevance_var') and 'Relevance' in self.main_df.columns:
-                self.main_df.loc[self.page_counter, 'Relevance'] = self.relevance_var.get()
-
-    def update_df_with_ai_job_response(self, ai_job, index, response):
-        """Update the DataFrame with the AI job response"""
-        if self.main_df.empty or index >= len(self.main_df):
-             self.error_logging(f"Skipping DF update for invalid index {index}", level="WARNING")
-             return
-
-        try:
-            if response == "Error" or pd.isna(response): # Handle potential None/NaN response
-                self.error_logging(f"Received error or empty response for job {ai_job} index {index}", level="WARNING")
-                return
-
-            # Clean the response text
-            cleaned_response = self.clean_text(str(response)) # Ensure it's a string
-
-            # Update based on job type
-            target_column = None
-            new_toggle = None
-            highlight_changes = False
-            highlight_names_places = False
-            highlight_errors_flag = False
-
-            if ai_job == "HTR":
-                target_column = 'Original_Text'
-                new_toggle = "Original_Text"
-            elif ai_job == "Correct_Text":
-                target_column = 'Corrected_Text'
-                new_toggle = "Corrected_Text"
-                highlight_changes = True
-            elif ai_job == "Format_Text":
-                 target_column = 'Formatted_Text'
-                 new_toggle = "Formatted_Text"
-                 highlight_changes = True
-            elif ai_job == "Translation":
-                 target_column = 'Translation'
-                 new_toggle = "Translation"
-                 highlight_changes = True
-            elif ai_job == "Separated_Text" or ai_job == "Chunk_Text": # Handle chunking results
-                 target_column = 'Separated_Text'
-                 new_toggle = "Separated_Text"
-            elif ai_job == "Get_Names_and_Places":
-
-                # Ensure columns exist
-                if 'People' not in self.main_df.columns: self.main_df['People'] = ""
-                if 'Places' not in self.main_df.columns: self.main_df['Places'] = ""
-
-                # Use robust parsing
-                names, places = self.parse_names_places_response(cleaned_response)
-                self.main_df.loc[index, 'People'] = names
-                self.main_df.loc[index, 'Places'] = places
-
-                if names.strip() or places.strip():
-                    highlight_names_places = True
-            elif ai_job == "Metadata":
-                # Metadata extraction now handled by its own function for complexity
-                self.ai_functions_handler.extract_metadata_from_response(index, cleaned_response)
-                # No direct text toggle change, but may update other columns
-            elif ai_job == "Auto_Rotate":
-                # Rotation is handled separately by update_image_rotation called within ai_function
-                pass
-            elif ai_job == "Identify_Errors":
-
-                # Take just the first line if multiple lines exist
-                errors = cleaned_response.split('\n')[0].strip()
-                # Remove any potential prefix like "Errors:"
-                if errors.lower().startswith("errors:"):
-                     errors = errors[7:].strip()
-
-
-                self.main_df.loc[index, 'Errors'] = errors
-
-                # Store which version of text the errors apply to
-                selected_source = getattr(self.ai_functions_handler, 'temp_selected_source', self.text_display_var.get())
-                self.main_df.loc[index, 'Errors_Source'] = selected_source
-
-
-                if errors:
-                    highlight_errors_flag = True
-
-            # Update the target column and toggle if defined
-            if target_column:
-                self.main_df.loc[index, target_column] = cleaned_response
-            if new_toggle:
-                 self.main_df.loc[index, 'Text_Toggle'] = new_toggle
-                 # Update display dropdown if this is the current page
-                 if index == self.page_counter:
-                     self.text_display_var.set(new_toggle)
-
-            # Set highlight flags
-            if highlight_changes: self.highlight_changes_var.set(True)
-            if highlight_names_places:
-                self.highlight_names_var.set(bool(self.main_df.loc[index, 'People'].strip()))
-                self.highlight_places_var.set(bool(self.main_df.loc[index, 'Places'].strip()))
-            if highlight_errors_flag: self.highlight_errors_var.set(True)
-
-
-            # Refresh the display ONLY if the current page was updated
-            if index == self.page_counter:
-                self.load_text() # This will re-apply highlights and update menus
-
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to update DataFrame for index {index}: {str(e)}")
-            self.error_logging(f"Failed to update DataFrame for index {index}: {str(e)}")
+        # Delegate to DataOperations
+        self.data_operations.update_df()
 
     def update_image_rotation(self, index, response):
         if self.main_df.empty or index >= len(self.main_df):
@@ -3328,83 +2515,6 @@ class App(TkinterDnD.Tk):
         except Exception as e:
             self.error_logging(f"Error rotating image at index {index} ({image_path_abs}): {e}")
 
-    def revert_current_page(self):
-        if self.main_df.empty or self.page_counter >= len(self.main_df):
-             return
-
-        index = self.page_counter
-        current_selection = self.text_display_var.get()
-
-        revert_options = {
-            "Separated_Text": ("Translation", "Remove the separated text and view the Translation?"),
-            "Translation": ("Formatted_Text", "Remove the Translation and view the Formatted Text?"),
-            "Formatted_Text": ("Corrected_Text", "Remove the Formatted Text and view the Corrected Text?"),
-            "Corrected_Text": ("Original_Text", "Remove the Corrected Text and view the Original Text?")
-        }
-
-        if current_selection in revert_options:
-            target_version, confirmation_msg = revert_options[current_selection]
-
-            if messagebox.askyesno("Revert Text", confirmation_msg):
-                # Clear the current version's text
-                self.main_df.loc[index, current_selection] = ""
-
-                # Find the next best version to display
-                fallback_order = ["Separated_Text", "Translation", "Formatted_Text", "Corrected_Text", "Original_Text"]
-                next_best_version = "None"
-                # Start checking from the target version downwards
-                try:
-                     start_checking_idx = fallback_order.index(target_version)
-                except ValueError:
-                     start_checking_idx = len(fallback_order) -1 # Start from Original if target invalid
-
-                for version in fallback_order[start_checking_idx:]:
-                     if version in self.main_df.columns and pd.notna(self.main_df.loc[index, version]) and self.main_df.loc[index, version].strip():
-                          next_best_version = version
-                          break
-
-                # Set the new toggle and variable
-                self.text_display_var.set(next_best_version)
-                self.main_df.loc[index, 'Text_Toggle'] = next_best_version
-                self.load_text() # Reload the display
-            else:
-                # User cancelled
-                return
-        elif current_selection == "Original_Text":
-            messagebox.showinfo("Original Text",
-                            "You are already viewing the Original Text version. Cannot revert further.")
-            return
-        elif current_selection == "None":
-             messagebox.showinfo("No Text", "No text is currently displayed.")
-             return
-        else:
-            # Should not happen if dropdown is managed correctly
-             messagebox.showerror("Error", f"Unknown text type selected: {current_selection}")
-             return
-
-    def revert_all_pages(self):
-        if messagebox.askyesno("Confirm Revert All",
-                            "Are you sure you want to revert ALL pages to their Original Text?\n\n"
-                            "This will permanently remove ALL content in the 'Corrected_Text', 'Formatted_Text', 'Translation', and 'Separated_Text' columns for every page. "
-                            "This action cannot be undone."):
-
-            reverted_cols = ['Corrected_Text', 'Formatted_Text', 'Translation', 'Separated_Text']
-            for col in reverted_cols:
-                 if col in self.main_df.columns:
-                     self.main_df[col] = "" # Clear the entire column
-
-            # Set toggle for all rows to Original_Text if it exists, otherwise None
-            if 'Original_Text' in self.main_df.columns:
-                 self.main_df['Text_Toggle'] = "Original_Text"
-                 self.text_display_var.set("Original_Text")
-            else:
-                 self.main_df['Text_Toggle'] = "None"
-                 self.text_display_var.set("None")
-
-            self.load_text() # Reload current page display
-            self.counter_update()
-            messagebox.showinfo("Revert Complete", "All pages have been reverted to Original Text.")
-
 # Callbacks
 
     def on_relevance_change(self, event=None):
@@ -3475,7 +2585,8 @@ class App(TkinterDnD.Tk):
 
             if image_splitter.status == "saved":
                 # Pass the original RELATIVE path for context if needed
-                self.process_edited_single_image(current_image_path_rel)
+                # Call the method now located in DataOperations
+                self.data_operations.process_edited_single_image(current_image_path_rel)
             elif image_splitter.status == "discarded":
                 messagebox.showinfo("Cancelled", "Image editing discarded.")
 
@@ -3635,162 +2746,6 @@ class App(TkinterDnD.Tk):
             self.deiconify()
             self.lift() # Bring window to front
 
-# Functions Manipulating the DF
-
-    def process_edited_single_image(self, original_image_path_rel):
-        try:
-            pass_images_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                        "util", "subs", "pass_images")
-
-            if not os.path.exists(pass_images_dir):
-                raise FileNotFoundError(f"pass_images directory not found at: {pass_images_dir}")
-
-            # Get edited images and sort them naturally
-            edited_images = sorted(
-                [f for f in os.listdir(pass_images_dir) if f.lower().endswith((".jpg", ".jpeg"))],
-                 key=natural_sort_key # Use natural sort key
-            )
-
-            if not edited_images:
-                # This might happen if the user saved without making changes or splits
-                messagebox.showinfo("No Changes", "No new image parts were created.")
-                # Clean up pass_images directory anyway
-                try:
-                    for file in os.listdir(pass_images_dir):
-                        file_path = os.path.join(pass_images_dir, file)
-                        if os.path.isfile(file_path):
-                            os.unlink(file_path)
-                except Exception as e:
-                    # Log error with correct level
-                    self.log_error(f"Error cleaning up pass_images directory: {e}", level="ERROR")
-                return # Exit without changing DataFrame
-
-            current_df_index = self.page_counter # The index in the DF being replaced/inserted after
-            num_new_images = len(edited_images)
-
-            # --- Prepare New Rows ---
-            new_rows = []
-            for i, img_file in enumerate(edited_images):
-                edited_image_path_abs = os.path.join(pass_images_dir, img_file)
-
-                # Determine the new index in the potentially expanded DataFrame
-                # All new rows will be inserted starting at current_df_index
-                new_df_index = current_df_index + i
-
-                # Create new sequential filename based on its future position in the DataFrame
-                # Note: This assumes the DF will be re-indexed later.
-                # Let's use a temporary naming scheme first, then rename after re-indexing.
-                temp_new_image_name = f"temp_{current_df_index}_{i}.jpg"
-                new_image_target_abs = os.path.join(self.images_directory, temp_new_image_name)
-
-                # Copy image with temporary name
-                shutil.copy2(edited_image_path_abs, new_image_target_abs)
-                new_image_target_rel = self.get_relative_path(new_image_target_abs)
-
-
-                # Create new row data - Index/Page will be updated after insertion
-                new_row = {
-                    "Index": -1, # Placeholder index
-                    "Page": "",  # Placeholder page
-                    "Original_Text": "", "Corrected_Text": "", "Formatted_Text": "",
-                    "Translation": "", "Separated_Text": "",
-                    "Image_Path": new_image_target_rel, # Relative path to temp named file
-                    "Text_Path": "",
-                    "Text_Toggle": "None",
-                    "People": "", "Places": "", "Errors": "", "Errors_Source": "", "Relevance": ""
-                    # Add other columns initialized as empty
-                }
-                # Ensure all DF columns exist
-                for col in self.main_df.columns:
-                     if col not in new_row:
-                          new_row[col] = ""
-                new_rows.append(new_row)
-
-            # --- Update DataFrame ---
-            # Get rows before and after the insertion point
-            df_before = self.main_df.iloc[:current_df_index]
-            df_after = self.main_df.iloc[current_df_index+1:] # Skip the row being replaced
-
-            # Concatenate the parts with the new rows
-            self.main_df = pd.concat([
-                df_before,
-                pd.DataFrame(new_rows),
-                df_after
-            ]).reset_index(drop=True) # Reset index immediately
-
-            # --- Rename Files and Update Paths ---
-            # Now that the DataFrame index is final, rename files and update paths
-            for i in range(num_new_images):
-                 new_final_index = current_df_index + i
-                 row_to_update = self.main_df.loc[new_final_index]
-
-                 old_temp_path_rel = row_to_update['Image_Path']
-                 old_temp_path_abs = self.get_full_path(old_temp_path_rel)
-
-                 # Define final name and path
-                 final_image_name = f"{new_final_index+1:04d}_p{new_final_index+1:03d}.jpg"
-                 final_image_path_abs = os.path.join(self.images_directory, final_image_name)
-                 final_image_path_rel = self.get_relative_path(final_image_path_abs)
-
-                 # Rename the image file
-                 if os.path.exists(old_temp_path_abs):
-                     os.rename(old_temp_path_abs, final_image_path_abs)
-                 else:
-                      self.error_logging(f"Temporary image file not found for renaming: {old_temp_path_abs}", level="WARNING")
-
-
-                 # Update the DataFrame with final info
-                 self.main_df.at[new_final_index, 'Index'] = new_final_index
-                 self.main_df.at[new_final_index, 'Page'] = f"{new_final_index+1:04d}_p{new_final_index+1:03d}"
-                 self.main_df.at[new_final_index, 'Image_Path'] = final_image_path_rel
-
-
-            # Re-number indices and pages for rows *after* the inserted block
-            for idx in range(current_df_index + num_new_images, len(self.main_df)):
-                 old_page_parts = self.main_df.loc[idx, 'Page'].split('_p')
-                 old_doc_num = int(old_page_parts[0])
-                 # Only update index/page if it's different
-                 if self.main_df.loc[idx, 'Index'] != idx:
-                      self.main_df.at[idx, 'Index'] = idx
-                      # Update page numbering based on new index
-                      new_page_num = f"{idx+1:04d}_p{idx+1:03d}"
-                      self.main_df.at[idx, 'Page'] = new_page_num
-
-                      # Rename associated image file if needed
-                      old_img_path_rel = self.main_df.loc[idx, 'Image_Path']
-                      old_img_path_abs = self.get_full_path(old_img_path_rel)
-                      if old_img_path_abs and os.path.exists(old_img_path_abs):
-                          img_dir = os.path.dirname(old_img_path_abs)
-                          new_img_name = f"{idx+1:04d}_p{idx+1:03d}{os.path.splitext(old_img_path_abs)[1]}"
-                          new_img_path_abs = os.path.join(img_dir, new_img_name)
-                          new_img_path_rel = self.get_relative_path(new_img_path_abs)
-
-                          if old_img_path_abs != new_img_path_abs:
-                              try:
-                                  os.rename(old_img_path_abs, new_img_path_abs)
-                                  self.main_df.at[idx, 'Image_Path'] = new_img_path_rel
-                              except OSError as rename_err:
-                                   self.error_logging(f"Error renaming image for index {idx}: {rename_err}", level="ERROR")
-
-
-
-            # Clean up pass_images directory
-            try:
-                for file in edited_images: # Use the list we already have
-                    file_path = os.path.join(pass_images_dir, file)
-                    if os.path.isfile(file_path):
-                        os.unlink(file_path)
-            except Exception as e:
-                self.log_error(f"Error cleaning up pass_images directory: {e}", level="ERROR")
-
-            # Refresh display to show the first inserted image
-            self.page_counter = current_df_index # Stay at the start of the inserted block
-            self.refresh_display()
-
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to process edited images: {str(e)}")
-            self.error_logging(f"Process edited image error: {str(e)}")
-
     def apply_document_separation(self):
         """Apply document separation based on ***** markers and replace main_df with the compiled documents."""
         try:
@@ -3821,13 +2776,6 @@ class App(TkinterDnD.Tk):
             # Check current state before toggling
             if self.button1['state'] == "disabled":
                 self.toggle_button_state()
-
-    def apply_document_separation_with_boxes(self):
-        """
-        Legacy method kept for backward compatibility.
-        Now just calls the simplified separation method.
-        """
-        self.apply_document_separation()
 
 if __name__ == "__main__":
     try:

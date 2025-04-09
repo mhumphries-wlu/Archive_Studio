@@ -1,3 +1,8 @@
+# util/ImageSplitter.py
+
+# This file contains the ImageSplitter sub_application, which is used to handle
+# the image splitting and editing for the application.
+
 import os, cv2, shutil, threading
 import numpy as np
 import tkinter as tk

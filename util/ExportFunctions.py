@@ -1,3 +1,8 @@
+# util/ExportFunctions.py
+
+# This file contains the ExportManager class, which is used to handle
+# the export functions for the application.
+
 import os
 import re
 import tkinter as tk
@@ -342,7 +347,7 @@ class ExportManager:
             self.app.error_logging("Mapped Place_of_Creation to Creation_Place for consistency")
         return df
 
-    def export_as_csv(self, use_custom_separation=False, generate_metadata=None, single_author=None, citation=None, analyze_dates=None, text_source=None, sequential_preset=None):
+    def export_as_csv(self, export_only_relevant=False, generate_metadata=None, selected_metadata_preset=None, single_author=None, citation=None, analyze_dates=None, text_source=None, sequential_preset=None):
         """Export metadata for each document as a CSV file."""
         if self.app.main_df.empty:
             messagebox.showwarning("No Data", "No documents to export.")
@@ -358,56 +363,47 @@ class ExportManager:
             self.app.error_logging("Starting CSV export process")
             print(f"Starting CSV export process with {len(self.app.main_df)} rows in main_df")
             
-            # Check for document separators if using custom separation
-            if use_custom_separation:
-                documents_separated = self._check_for_document_separators()
-                if not documents_separated:
-                    messagebox.showwarning(
-                        "Warning", 
-                        "No document separators found. Falling back to Basic Pagination."
-                    )
-                    use_custom_separation = False
+            # --- Filter by Relevance if requested ---
+            if export_only_relevant:
+                if 'Relevance' in self.app.main_df.columns:
+                    relevant_values = ["Relevant", "Partially Relevant"]
+                    filtered_df = self.app.main_df[self.app.main_df['Relevance'].isin(relevant_values)].copy()
+                    if filtered_df.empty:
+                        messagebox.showinfo("No Relevant Data", "No relevant or partially relevant pages found to export.")
+                        return
+                    self.app.error_logging(f"Filtered DataFrame to {len(filtered_df)} relevant/partially relevant rows.")
+                    source_df = filtered_df # Use the filtered df for the rest of the process
+                else:
+                    messagebox.showwarning("Relevance Column Missing", "Relevance column not found. Exporting all pages.")
+                    source_df = self.app.main_df.copy() # Fallback to all pages
             else:
-                documents_separated = False
+                source_df = self.app.main_df.copy() # Use all pages
+
+            # Basic Pagination: Each page is its own row in the CSV
+            compiled_df = source_df # Use the potentially filtered df
             
-            # Compile documents based on pagination method
-            compiled_df = self._compile_documents(use_custom_separation, documents_separated)
-            if compiled_df is None or compiled_df.empty:
-                return
-                
+            # Make sure we have a Document_Page column using the original index
+            if 'Document_Page' not in compiled_df.columns:
+                compiled_df['Document_Page'] = compiled_df.index + 1
+
             # Ensure all required columns exist in the DataFrame
             compiled_df = self._ensure_required_columns(compiled_df)
-            
+
             # Use the specified text source to populate the Text column
-            # We will handle the renaming to 'Original_Text' later in _prepare_export_dataframe
-            actual_text_source_column = 'Text' # Default
-            if text_source and text_source != "Text":
-                self.app.error_logging(f"Using {text_source} as the source for text data")
-                
-                # Determine the actual column name or method to get the text
-                if text_source == "Current Display":
-                    # We'll apply this later row by row if needed
-                    actual_text_source_column = 'Current Display'
-                elif text_source in self.app.main_df.columns:
-                    actual_text_source_column = text_source
-                    # Ensure this column exists in compiled_df if needed
-                    if actual_text_source_column not in compiled_df.columns and actual_text_source_column in self.app.main_df.columns:
-                         # Simple page-by-page copy if pagination was basic
-                        if not use_custom_separation:
-                             compiled_df[actual_text_source_column] = self.app.main_df[actual_text_source_column]
-                        else:
-                             # This case is more complex if custom separation was used;
-                             # For now, we'll rely on the 'Text' column populated during compile_documents
-                             self.app.error_logging(f"Warning: Cannot directly map {text_source} with custom separation. Using compiled 'Text'.")
-                             actual_text_source_column = 'Text'
+            # The 'text_source' parameter is already resolved by the caller (handle_csv_export)
+            actual_text_source_column = 'Text' # Default fallback
+            if text_source and text_source in self.app.main_df.columns:
+                actual_text_source_column = text_source
+                self.app.error_logging(f"Using resolved text source column: {actual_text_source_column}")
+                # Ensure the source column exists in compiled_df if we need its data later
+                if actual_text_source_column not in compiled_df.columns:
+                    original_indices = compiled_df.index
+                    compiled_df[actual_text_source_column] = self.app.main_df.loc[original_indices, actual_text_source_column]
+            elif text_source:
+                self.app.error_logging(f"Warning: Resolved text source '{text_source}' not found in DataFrame columns. Falling back to '{actual_text_source_column}'.")
+            else:
+                self.app.error_logging(f"No valid text source provided. Falling back to '{actual_text_source_column}'.")
 
-                else:
-                    # Fallback if the specified source doesn't exist
-                    self.app.error_logging(f"Warning: Text source '{text_source}' not found. Falling back to 'Text'.")
-                    actual_text_source_column = 'Text'
-
-                self.app.error_logging(f"Actual text source column identified as: {actual_text_source_column}")
-            
             # Ask for metadata generation if not specified
             if generate_metadata is None:
                 generate_metadata = messagebox.askyesno(
@@ -417,7 +413,13 @@ class ExportManager:
             
             # Generate metadata if requested
             if generate_metadata:
-                compiled_df = self._generate_metadata(compiled_df)
+                # Pass the selected preset name to _generate_metadata
+                # Also pass the resolved text source column name
+                compiled_df = self._generate_metadata(
+                    compiled_df,
+                    selected_metadata_preset=selected_metadata_preset,
+                    actual_text_source_column=actual_text_source_column
+                )
             
             # Reapply single author AFTER metadata generation if it was set
             # The override logic is handled later in _prepare_export_dataframe
@@ -523,8 +525,8 @@ class ExportManager:
         if use_custom_separation and documents_separated:
             try:
                 # Create analyzer to access compile_documents functionality
-                from util.AnalyzeDocuments import AnalyzeDocuments
-                analyzer = AnalyzeDocuments(self.app)
+                from util.CompileDocuments import CompileDocuments
+                analyzer = CompileDocuments(self.app)
                 
                 # Force recompile to ensure document separators are processed
                 print("Compiling documents using document separators...")
@@ -599,7 +601,7 @@ class ExportManager:
                 
         return df
         
-    def _generate_metadata(self, compiled_df):
+    def _generate_metadata(self, compiled_df, selected_metadata_preset=None, actual_text_source_column=None):
         """Generate metadata for documents using AI."""
         # Store the original main_df temporarily
         self._original_df = self.app.main_df.copy()
@@ -616,7 +618,14 @@ class ExportManager:
             
             # Call the app's AI function with the standard Metadata job
             print("Starting metadata generation with AI function...")
-            self.app.ai_function(all_or_one_flag="All Pages", ai_job="Metadata")
+            # Pass the selected preset name to ai_function
+            # Also pass the resolved text source column name
+            self.app.ai_functions_handler.ai_function(
+                all_or_one_flag="All Pages",
+                ai_job="Metadata",
+                selected_metadata_preset=selected_metadata_preset, # Pass the preset name here
+                export_text_source=actual_text_source_column # Pass resolved source column
+            )
             print("Metadata generation completed")
             
             # Retrieve the updated dataframe and copy metadata columns back
@@ -666,17 +675,20 @@ class ExportManager:
             # Get the metadata headers from the selected preset
             metadata_columns = []
             preset_name = ""
-            
+
+            # Determine which preset was actually used for generation
+            # (This could be refined if the preset name used by AI function needs confirmation)
+            preset_name_used = getattr(self.app.ai_functions_handler, 'last_used_metadata_preset', None) or getattr(self.app.settings, 'metadata_preset', None)
+
             # First try to get headers from the selected preset
-            if hasattr(self.app.settings, 'metadata_preset') and hasattr(self.app.settings, 'metadata_presets'):
-                preset_name = self.app.settings.metadata_preset
-                # Find the selected preset
-                selected_preset = next((p for p in self.app.settings.metadata_presets if p.get('name') == preset_name), None)
-                
+            # Re-fetch the preset details based on the name (could be default or from dropdown)
+            if preset_name_used and hasattr(self.app.settings, 'metadata_presets'):
+                selected_preset = next((p for p in self.app.settings.metadata_presets if p.get('name') == preset_name_used), None)
+
                 if selected_preset and 'metadata_headers' in selected_preset:
                     # Get headers from the selected preset
                     header_str = selected_preset['metadata_headers']
-                    self.app.error_logging(f"Using metadata headers from preset '{preset_name}': {header_str}")
+                    self.app.error_logging(f"Using metadata headers from preset '{preset_name_used}': {header_str}")
                     # Process the semicolon-separated list, converting to dataframe column names
                     metadata_columns = [h.strip().replace(" ", "_") for h in header_str.split(';') if h.strip()]
             
@@ -764,8 +776,18 @@ class ExportManager:
             self.app.update_idletasks()
             
             # Import required modules
-            from util.AnalyzeDate import analyze_dates, DateAnalyzer
-            from util.APIHandler import APIHandler
+            try:
+                from util.AnalyzeDate import analyze_dates, DateAnalyzer
+                from util.APIHandler import APIHandler
+            except ModuleNotFoundError:
+                self.app.error_logging("ERROR: Could not find the 'util.AnalyzeDate' module. Please ensure AnalyzeDate.py exists in the util folder.", level="CRITICAL")
+                messagebox.showerror("Module Not Found", "Could not find the required 'AnalyzeDate' module. Date analysis cannot proceed.")
+                # Close progress window if open
+                try:
+                    self.app.progress_bar.close_progress_window()
+                except: # Handle potential TclError if window already closed
+                    pass
+                return compiled_df # Return the df without analysis
             
             # Log the start of date analysis
             self.app.error_logging(f"Starting date and place analysis sequence using preset: {preset_name if preset_name else 'default'}")
@@ -1234,7 +1256,9 @@ class ExportManager:
                     # Overwrite logic is implicitly handled by sequential analysis results already in compiled_df
                     # and the Author override above.
                 else:
-                     self.app.error_logging(f"Sequential header '{header}' not found in compiled data.")
+                     # Only log if the header was expected to be added by analysis
+                     if header in (sequential_preset_headers or []): 
+                         self.app.error_logging(f"Sequential header '{header}' not found in compiled data.")
 
         # 7. Add 'Original_Text' column (already created and populated)
         if 'Original_Text' in export_df.columns:
@@ -1302,9 +1326,12 @@ class ExportManager:
         # Create the CSV options window
         csv_window = tk.Toplevel(self.app)
         csv_window.title("CSV Export Options")
-        csv_window.geometry("450x550")  # Made taller to accommodate sequential preset dropdown
+        csv_window.geometry("450x555")  # Increased from 530 to 555 (25px taller)
         csv_window.transient(self.app)  # Make window modal
         csv_window.grab_set()  # Make window modal
+
+        # Store reference to the window for use in open_settings_to_tab
+        self.csv_window = csv_window
 
         # Configure grid
         csv_window.grid_columnconfigure(0, weight=1)
@@ -1318,120 +1345,158 @@ class ExportManager:
         options_frame.grid(row=1, column=0, padx=20, pady=10, sticky="ew")
         options_frame.grid_columnconfigure(1, weight=1)
 
-        # Pagination method
-        ttk.Label(options_frame, text="Pagination Method:").grid(row=0, column=0, sticky="w", pady=5)
-        pagination_var = tk.StringVar(value="basic")
-        pagination_combobox = ttk.Combobox(
-            options_frame,
-            textvariable=pagination_var,
-            state="readonly",
-            width=25
+        # --- Relevance Filtering Option ---
+        relevance_frame = ttk.LabelFrame(options_frame, text="Page Filtering")
+        relevance_frame.grid(row=0, column=0, columnspan=2, sticky="ew", pady=5)
+        relevance_frame.grid_columnconfigure(0, weight=1)
+
+        export_scope_var = tk.StringVar(value="all") # Default to exporting all
+
+        # Check if Relevance column exists and has data
+        relevance_col_exists = 'Relevance' in self.app.main_df.columns
+        has_relevance_data = False
+        if relevance_col_exists:
+            # Check for any non-empty/non-NA relevance values
+            has_relevance_data = self.app.main_df['Relevance'].notna().any() and \
+                                 (self.app.main_df['Relevance'].astype(str).str.strip() != '').any()
+
+        ttk.Radiobutton(
+            relevance_frame,
+            text="Export All Pages",
+            variable=export_scope_var,
+            value="all"
+        ).grid(row=0, column=0, sticky="w", pady=(5,0), padx=5)
+
+        relevance_radio = ttk.Radiobutton(
+            relevance_frame,
+            text="Export Only Relevant/Partially Relevant Pages",
+            variable=export_scope_var,
+            value="relevant"
         )
+        relevance_radio.grid(row=1, column=0, sticky="w", pady=(0,5), padx=5)
+
+        # Disable relevance option if column doesn't exist or has no data
+        if not has_relevance_data:
+            relevance_radio.config(state="disabled")
+            export_scope_var.set("all") # Force back to all if disabled
+            # Add a label explaining why it's disabled
+            disabled_label = ttk.Label(
+                relevance_frame,
+                text="(Enable by running Relevance Analysis first)",
+                font=("Arial", 8, "italic")
+            )
+            disabled_label.grid(row=2, column=0, sticky="w", padx=10, pady=(0,5))
         
-        # Set combobox values
-        if documents_separated:
-            pagination_combobox['values'] = ["Basic Pagination", "Custom Separation"]
-        else:
-            pagination_combobox['values'] = ["Basic Pagination"]
-            
-        pagination_combobox.current(0)  # Set default to first option
-        pagination_combobox.grid(row=0, column=1, sticky="w", pady=5, padx=5)
+        # --- Text Source ---
+        text_source_frame = ttk.LabelFrame(options_frame, text="Text Source")
+        text_source_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=5)
+        text_source_frame.grid_columnconfigure(1, weight=1)
 
-        # Description for pagination
-        pagination_desc = ttk.Label(
-            options_frame,
-            text="Basic Pagination: Each page as separate row\nCustom Separation: Use document separators",
-            font=("Arial", 8),
-            justify=tk.LEFT
-        )
-        pagination_desc.grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 10))
-
-        # Text source dropdown
-        ttk.Label(options_frame, text="Text Source:").grid(row=2, column=0, sticky="w", pady=5)
+        ttk.Label(text_source_frame, text="Text Source:").grid(row=0, column=0, sticky="w", pady=5, padx=5)
         text_source_var = tk.StringVar(value="Current Display")
-        
+
         # Get text source options - always include Current Display
         text_sources = ["Current Display"]
-        
+
         # Potential text source columns to check
         potential_sources = ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]
-        
+
         # Add columns that actually exist in the dataframe AND have non-empty values
         for col in potential_sources + [col for col in self.app.main_df.columns if col.endswith("_Text")]:
             # Skip duplicates
             if col in text_sources:
                 continue
-            
+
             # Check if column exists and has any non-empty values
             if col in self.app.main_df.columns:
                 has_data = self.app.main_df[col].notna().any() and self.app.main_df[col].astype(str).str.strip().str.len().gt(0).any()
                 if has_data:
                     text_sources.append(col)
                     print(f"Adding text source with data: {col}")
-        
+
         text_source_dropdown = ttk.Combobox(
-            options_frame,
+            text_source_frame,
             textvariable=text_source_var,
             values=text_sources,
             state="readonly",
             width=25
         )
-        text_source_dropdown.grid(row=2, column=1, sticky="w", pady=5, padx=5)
-        
+        text_source_dropdown.grid(row=0, column=1, sticky="w", pady=5, padx=5)
+
         # Description for text source
         text_source_desc = ttk.Label(
-            options_frame,
-            text="Select which text version to export in the Text column",
+            text_source_frame,
+            text="Select which text version to export in the Original_Text column",
             font=("Arial", 8),
             justify=tk.LEFT
         )
-        text_source_desc.grid(row=3, column=0, columnspan=2, sticky="w", pady=(0, 10))
+        text_source_desc.grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 10), padx=5)
+
+        # --- Metadata Options ---
+        metadata_options_frame = ttk.LabelFrame(options_frame, text="Metadata and Analysis")
+        metadata_options_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=5)
+        metadata_options_frame.grid_columnconfigure(1, weight=1)
 
         # Metadata generation checkbox
         generate_metadata_var = tk.BooleanVar(value=True)
         generate_metadata_cb = ttk.Checkbutton(
-            options_frame,
-            text="Generate metadata for each document",
+            metadata_options_frame,
+            text="Generate/Include Metadata",
             variable=generate_metadata_var,
             command=lambda: toggle_metadata_options()
         )
-        generate_metadata_cb.grid(row=4, column=0, columnspan=2, sticky="w", pady=5)
+        generate_metadata_cb.grid(row=0, column=0, columnspan=2, sticky="w", pady=5, padx=5)
 
-        # Create a frame for metadata options (hidden initially)
-        metadata_frame = ttk.Frame(options_frame)
-        metadata_frame.grid(row=5, column=0, columnspan=2, padx=20, pady=5, sticky="ew")
-        metadata_frame.grid_columnconfigure(1, weight=1)
+        # Create a frame for metadata options (visible only if generate_metadata_var is True)
+        metadata_frame = ttk.Frame(metadata_options_frame)
+        # Don't grid remove here, rely on toggle_metadata_options initial call
+        metadata_frame.grid(row=1, column=0, columnspan=2, padx=20, pady=5, sticky="ew")
 
         # Metadata preset dropdown
         ttk.Label(metadata_frame, text="Metadata Preset:").grid(row=0, column=0, sticky="w", pady=5)
         metadata_preset_var = tk.StringVar()
-        
+
         # Get preset names from settings
         preset_names = []
         if hasattr(self.app.settings, 'metadata_presets'):
             preset_names = [p['name'] for p in self.app.settings.metadata_presets]
-        
+
         # Set initial value to the current preset if it exists
         if hasattr(self.app.settings, 'metadata_preset') and self.app.settings.metadata_preset in preset_names:
             metadata_preset_var.set(self.app.settings.metadata_preset)
         elif preset_names:
             metadata_preset_var.set(preset_names[0])
-        
+
         metadata_preset_dropdown = ttk.Combobox(
             metadata_frame,
             textvariable=metadata_preset_var,
             values=preset_names,
             state="readonly",
-            width=25
+            width=25,
+            name="metadata_preset_dropdown"
         )
         metadata_preset_dropdown.grid(row=0, column=1, sticky="w", pady=5, padx=5)
+
+        # Add "+" button to open settings window to Metadata Presets tab
+        metadata_add_button = ttk.Button(
+            metadata_frame,
+            text="+",
+            width=2,
+            command=lambda: self.open_settings_to_tab("Metadata Presets")
+        )
+        metadata_add_button.grid(row=0, column=2, sticky="w", pady=5, padx=0)
         
+        # Create a tooltip for the button
+        from util.SettingsWindow import CreateToolTip
+        CreateToolTip(metadata_add_button, "Open settings to create a new metadata preset")
+
         # Single Author checkbox and entry
         single_author_var = tk.BooleanVar(value=False)
         single_author_cb = ttk.Checkbutton(
             metadata_frame,
             text="Single Author",
-            variable=single_author_var
+            variable=single_author_var,
+            command=lambda: toggle_author_entry()
         )
         single_author_cb.grid(row=1, column=0, sticky="w", pady=5)
 
@@ -1450,7 +1515,7 @@ class ExportManager:
         sequential_dating_var = tk.BooleanVar(value=False)
         sequential_dating_cb = ttk.Checkbutton(
             metadata_frame,
-            text="Document has sequential dating (i.e., a diary)",
+            text="Analyze Sequential Dates/Places",
             variable=sequential_dating_var,
             command=lambda: toggle_sequential_options()
         )
@@ -1459,29 +1524,44 @@ class ExportManager:
         # Create a frame for sequential metadata options (hidden initially)
         sequential_frame = ttk.Frame(metadata_frame)
         sequential_frame.grid(row=4, column=0, columnspan=2, padx=20, pady=5, sticky="ew")
-        sequential_frame.grid_columnconfigure(1, weight=1)
+        sequential_frame.grid_remove()
 
         # Sequential metadata preset dropdown
         ttk.Label(sequential_frame, text="Sequential Preset:").grid(row=0, column=0, sticky="w", pady=5)
         sequential_preset_var = tk.StringVar()
-        
+
         # Get preset names from settings
         sequential_preset_names = []
         if hasattr(self.app.settings, 'sequential_metadata_presets'):
             sequential_preset_names = [p['name'] for p in self.app.settings.sequential_metadata_presets]
-        
+
         # Set initial value if presets exist
         if sequential_preset_names:
-            sequential_preset_var.set(sequential_preset_names[0])
-        
+            # Default to 'Sequence_Dates' if available, otherwise first
+            default_seq_preset = next((name for name in sequential_preset_names if name == "Sequence_Dates"), sequential_preset_names[0])
+            sequential_preset_var.set(default_seq_preset)
+
         sequential_preset_dropdown = ttk.Combobox(
             sequential_frame,
             textvariable=sequential_preset_var,
             values=sequential_preset_names,
             state="readonly",
-            width=25
+            width=25,
+            name="sequential_preset_dropdown"
         )
         sequential_preset_dropdown.grid(row=0, column=1, sticky="w", pady=5, padx=5)
+        
+        # Add "+" button to open settings window to Sequential Metadata Presets tab
+        sequential_add_button = ttk.Button(
+            sequential_frame,
+            text="+",
+            width=2,
+            command=lambda: self.open_settings_to_tab("Sequential Metadata Presets")
+        )
+        sequential_add_button.grid(row=0, column=2, sticky="w", pady=5, padx=0)
+        
+        # Create a tooltip for the button
+        CreateToolTip(sequential_add_button, "Open settings to create a new sequential metadata preset")
 
         # Function to toggle author entry based on checkbox
         def toggle_author_entry():
@@ -1494,26 +1574,35 @@ class ExportManager:
         def toggle_metadata_options():
             if generate_metadata_var.get():
                 metadata_frame.grid()
+                # Re-apply author and sequential state when shown
+                toggle_author_entry()
+                toggle_sequential_options()
             else:
                 metadata_frame.grid_remove()
-                
+
         # Function to toggle sequential options based on checkbox
         def toggle_sequential_options():
-            if sequential_dating_var.get():
-                sequential_frame.grid()
-            else:
-                sequential_frame.grid_remove()
+            # Only toggle if metadata options are visible
+            if generate_metadata_var.get():
+                if sequential_dating_var.get():
+                    sequential_frame.grid()
+                else:
+                    sequential_frame.grid_remove()
+            else: # Ensure it's hidden if metadata is off
+                 sequential_frame.grid_remove()
 
         # Connect functions to checkboxes
-        single_author_var.trace_add("write", lambda *args: toggle_author_entry())
+        # Note: Command link added directly to Checkbutton definitions above
 
         # Add buttons frame
         button_frame = ttk.Frame(csv_window)
-        button_frame.grid(row=2, column=0, pady=20)
+        button_frame.grid(row=3, column=0, pady=20)
 
         def handle_csv_export():
             # Get all options
-            use_custom_separation = (pagination_var.get() == "Custom Separation")
+            export_scope = export_scope_var.get() # 'all' or 'relevant'
+            export_only_relevant = (export_scope == "relevant")
+
             generate_metadata = generate_metadata_var.get()
             selected_metadata_preset = metadata_preset_var.get() if generate_metadata else None
             single_author = None
@@ -1521,8 +1610,21 @@ class ExportManager:
                 single_author = author_var.get()
             citation = citation_var.get() if generate_metadata else None
             analyze_dates = sequential_dating_var.get() if generate_metadata else False
-            text_source = text_source_var.get()
-            
+
+            # Resolve text source selection
+            selected_text_source_option = text_source_var.get()
+            resolved_text_source = selected_text_source_option
+            if selected_text_source_option == "Current Display":
+                # Get the actual column name currently displayed in the main UI
+                resolved_text_source = self.app.text_display_var.get()
+                # Handle case where current display is "None"
+                if resolved_text_source == "None":
+                    messagebox.showerror("Error", "Cannot export metadata using 'Current Display' when it is set to 'None'. Please select a specific text source.")
+                    return # Abort export
+                self.app.error_logging(f"Resolved 'Current Display' to actual column: {resolved_text_source}")
+            else:
+                self.app.error_logging(f"Using specified text source column: {resolved_text_source}")
+
             # Get sequential preset selection
             selected_sequential_preset = None
             if analyze_dates and sequential_preset_var.get():
@@ -1530,34 +1632,95 @@ class ExportManager:
 
             # Update the selected metadata preset in settings if needed
             if selected_metadata_preset and hasattr(self.app.settings, 'metadata_preset'):
-                self.app.settings.metadata_preset = selected_metadata_preset
+                # Only update if the generation box is checked
+                if generate_metadata:
+                     self.app.settings.metadata_preset = selected_metadata_preset
 
             csv_window.destroy()
-            
+
             # Call export_as_csv with all options
             self.export_as_csv(
-                use_custom_separation=use_custom_separation,
+                export_only_relevant=export_only_relevant, # Pass new flag
                 generate_metadata=generate_metadata,
+                selected_metadata_preset=selected_metadata_preset,
                 single_author=single_author,
                 citation=citation,
                 analyze_dates=analyze_dates,
-                text_source=text_source,
+                text_source=resolved_text_source, # Pass the resolved source
                 sequential_preset=selected_sequential_preset
             )
 
         # Add buttons
         ttk.Button(
-            button_frame, 
-            text="Export", 
+            button_frame,
+            text="Export",
             command=handle_csv_export
         ).grid(row=0, column=0, padx=5)
-        
+
         ttk.Button(
-            button_frame, 
-            text="Cancel", 
+            button_frame,
+            text="Cancel",
             command=csv_window.destroy
         ).grid(row=0, column=1, padx=5)
 
         # Initialize the UI state
         toggle_metadata_options()
-        toggle_sequential_options()  # Initialize sequential options 
+        # toggle_sequential_options() # This is called within toggle_metadata_options
+        toggle_author_entry() # Initialize author entry state 
+
+    def open_settings_to_tab(self, tab_name):
+        """Open the settings window to a specific tab"""
+        # First close the current CSV export window if it exists
+        if hasattr(self, 'csv_window') and self.csv_window.winfo_exists():
+            self.csv_window.destroy()
+        
+        # Create a new settings window instance
+        settings_window = self.app.create_settings_window_to_tab(tab_name)
+        
+        # Store reference to the settings window
+        settings_tk_window = settings_window.settings_window
+        
+        # Function to check if settings window is still open
+        def check_settings_window():
+            try:
+                # Check if settings window still exists
+                if not settings_tk_window.winfo_exists():
+                    # Settings window closed, reopen CSV export window
+                    self.show_csv_export_options()
+                    return  # Stop checking
+                # Continue checking every 100ms
+                self.app.after(100, check_settings_window)
+            except Exception as e:
+                # If any error occurs, reopen the CSV window
+                print(f"Error checking settings window: {e}")
+                self.show_csv_export_options()
+        
+        # Start checking after a short delay
+        self.app.after(200, check_settings_window)
+    
+    def refresh_preset_dropdowns(self):
+        """Refresh the metadata preset dropdowns with any new values"""
+        if hasattr(self, 'csv_window') and self.csv_window.winfo_exists():
+            # Find and update the metadata preset dropdown
+            for widget in self.csv_window.winfo_children():
+                self._refresh_dropdown_in_widget(widget)
+    
+    def _refresh_dropdown_in_widget(self, widget):
+        """Recursively search for and refresh Combobox widgets in the given widget"""
+        if isinstance(widget, ttk.Combobox):
+            # Check if it's the metadata preset dropdown
+            if widget.winfo_name() == "metadata_preset_dropdown":
+                preset_names = []
+                if hasattr(self.app.settings, 'metadata_presets'):
+                    preset_names = [p['name'] for p in self.app.settings.metadata_presets]
+                widget['values'] = preset_names
+            # Check if it's the sequential preset dropdown
+            elif widget.winfo_name() == "sequential_preset_dropdown":
+                sequential_preset_names = []
+                if hasattr(self.app.settings, 'sequential_metadata_presets'):
+                    sequential_preset_names = [p['name'] for p in self.app.settings.sequential_metadata_presets]
+                widget['values'] = sequential_preset_names
+        
+        # Check children widgets recursively
+        for child in widget.winfo_children():
+            self._refresh_dropdown_in_widget(child) 

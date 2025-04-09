@@ -1,3 +1,8 @@
+# util/AnalyzeDate.py
+
+# This file contains the DateAnalyzer class, which is used to handle
+# the date analysis for the application.
+
 import pandas as pd
 import re
 from typing import List, Tuple, Callable, Optional

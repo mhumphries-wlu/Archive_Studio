@@ -201,9 +201,9 @@ def apply_document_separation(app):
     app.progress_bar.update_progress(0, 100)
     
     try:
-        # Import AnalyzeDocuments
-        from util.AnalyzeDocuments import AnalyzeDocuments
-        analyzer = AnalyzeDocuments(app)
+        # Import CompileDocuments
+        from util.CompileDocuments import CompileDocuments
+        analyzer = CompileDocuments(app)
         
         # Get a copy of the original dataframe in case we need to restore it
         original_df = app.main_df.copy()
@@ -362,9 +362,9 @@ def apply_document_separation_with_boxes(app):
     app.progress_bar.update_progress(0, 100)
     
     try:
-        # Import AnalyzeDocuments
-        from util.AnalyzeDocuments import AnalyzeDocuments
-        analyzer = AnalyzeDocuments(app)
+        # Import CompileDocuments
+        from util.CompileDocuments import CompileDocuments
+        analyzer = CompileDocuments(app)
         
         # Get a copy of the original dataframe in case we need to restore it
         original_df = app.main_df.copy()
@@ -588,9 +588,9 @@ def apply_document_separation_with_highlights(app):
     app.progress_bar.update_progress(0, 100)
     
     try:
-        # Import AnalyzeDocuments
-        from util.AnalyzeDocuments import AnalyzeDocuments
-        analyzer = AnalyzeDocuments(app)
+        # Import CompileDocuments
+        from util.CompileDocuments import CompileDocuments
+        analyzer = CompileDocuments(app)
         
         # Get a copy of the original dataframe in case we need to restore it
         original_df = app.main_df.copy()
@@ -897,9 +897,9 @@ def apply_document_separation_with_boxes_by_row(app):
     app.progress_bar.update_progress(0, 100)
     
     try:
-        # Import AnalyzeDocuments
-        from util.AnalyzeDocuments import AnalyzeDocuments
-        analyzer = AnalyzeDocuments(app)
+        # Import CompileDocuments
+        from util.CompileDocuments import CompileDocuments
+        analyzer = CompileDocuments(app)
         
         # Get a copy of the original dataframe in case we need to restore it
         original_df = app.main_df.copy()
@@ -1123,9 +1123,9 @@ def apply_document_separation_with_highlights_by_row(app):
     app.progress_bar.update_progress(0, 100)
     
     try:
-        # Import AnalyzeDocuments
-        from util.AnalyzeDocuments import AnalyzeDocuments
-        analyzer = AnalyzeDocuments(app)
+        # Import CompileDocuments
+        from util.CompileDocuments import CompileDocuments
+        analyzer = CompileDocuments(app)
         
         # Get a copy of the original dataframe in case we need to restore it
         original_df = app.main_df.copy()

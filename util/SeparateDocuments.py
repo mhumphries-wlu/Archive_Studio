@@ -1,3 +1,8 @@
+# util/SeparateDocuments.py
+
+# This file contains the SeparateDocuments class, which is used to handle
+# the document separation for the application.
+
 import os
 import pandas as pd
 import tkinter as tk
@@ -53,9 +58,9 @@ def apply_document_separation(app):
     app.progress_bar.update_progress(0, 100)
     
     try:
-        # Import AnalyzeDocuments
-        from util.AnalyzeDocuments import AnalyzeDocuments
-        analyzer = AnalyzeDocuments(app)
+        # Import CompileDocuments
+        from util.CompileDocuments import CompileDocuments
+        analyzer = CompileDocuments(app)
         
         # Get a copy of the original dataframe in case we need to restore it
         original_df = app.main_df.copy()

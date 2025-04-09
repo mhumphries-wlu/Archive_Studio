@@ -1,5 +1,8 @@
 # util/AIFunctions.py
 
+# This file contains the AIFunctionsHandler class, which is used to handle
+# the AI functions for the application.
+
 import asyncio
 import os
 import re
@@ -54,10 +57,17 @@ class AIFunctionsHandler:
             traceback.print_exc()
             return "Error", index
 
-    def ai_function(self, all_or_one_flag="All Pages", ai_job="HTR", batch_size=None):
+    def ai_function(self, all_or_one_flag="All Pages", ai_job="HTR", batch_size=None, selected_metadata_preset=None, export_text_source=None):
         """ Main function to orchestrate AI jobs """
+        # If export_text_source is provided (when called from export), set it as temp_selected_source
+        # This ensures the existing logic for text source selection works correctly
+        if export_text_source:
+            self.temp_selected_source = export_text_source
+            self.app.error_logging(f"Using export-provided text source: {export_text_source}", level="DEBUG")
+
         # Check if we should show text source selection window (moved check here)
-        if ai_job in ["Correct_Text", "Translation", "Identify_Errors", "Format_Text", "Metadata"]: # Added Metadata
+        # Skip window if triggered by export (export_text_source is provided)
+        if ai_job in ["Correct_Text", "Translation", "Identify_Errors", "Format_Text", "Metadata"] and not export_text_source:
              # Check if a selection window is needed (i.e., temp source not already set)
             source_needed = not hasattr(self, 'temp_selected_source') or not self.temp_selected_source
             # Check if format preset needed for Format_Text
@@ -80,7 +90,6 @@ class AIFunctionsHandler:
         error_count = 0
         processed_indices = set()
         batch_df = pd.DataFrame() # Initialize empty DataFrame
-        # **FIX:** Initialize total_rows and processed_rows here to ensure they always exist
         total_rows = 0
         processed_rows = 0
 
@@ -345,7 +354,8 @@ class AIFunctionsHandler:
                 return # Exit if nothing to process
 
             # --- Setup Job Parameters and Process Batches ---
-            job_params = self.setup_job_parameters(ai_job)
+            # Pass the selected preset name if provided (for Metadata job)
+            job_params = self.setup_job_parameters(ai_job, selected_metadata_preset=selected_metadata_preset)
 
             with ThreadPoolExecutor(max_workers=batch_size) as executor:
                 # Submit all tasks first
@@ -358,22 +368,30 @@ class AIFunctionsHandler:
                     source_col_used = None
 
                     if ai_job in ["HTR", "Auto_Rotate"]:
-                         text_to_process = '' # No text input needed
+                        text_to_process = '' # No text input needed
+                    
                     elif ai_job in ["Correct_Text", "Translation", "Identify_Errors", "Metadata"]:
-                         source_col_used = selected_source # Should be set from window or default
-                         text_to_process = row_data.get(source_col_used, "") if source_col_used else ""
+                        # Use export_text_source if provided (export context), otherwise use temp source (standard UI flow)
+                        source_col_used = export_text_source or selected_source
+                        if not source_col_used:
+                            # Fallback if neither export source nor temp source is set (shouldn't happen in normal flow)
+                            self.app.error_logging(f"CRITICAL: Text source missing for job {ai_job} at index {index}", level="ERROR")
+                            # Define a sensible default based on job, e.g.
+                            source_col_used = 'Original_Text' if ai_job == "Correct_Text" else 'Corrected_Text'
+                            self.app.error_logging(f"Using fallback source: {source_col_used}", level="WARNING")
+                        text_to_process = row_data.get(source_col_used, "") if source_col_used else ""
                     elif ai_job == "Format_Text":
-                         # Find best source: Use selected source first, then Corrected, then Original
-                         if selected_source and pd.notna(row_data.get(selected_source)) and row_data.get(selected_source,"").strip():
-                             source_col_used = selected_source
-                         elif pd.notna(row_data.get('Corrected_Text')) and row_data.get('Corrected_Text',"").strip():
-                              source_col_used = 'Corrected_Text'
-                         elif pd.notna(row_data.get('Original_Text')) and row_data.get('Original_Text',"").strip():
-                              source_col_used = 'Original_Text'
-                         text_to_process = row_data.get(source_col_used, "") if source_col_used else ""
+                        # Find best source: Use selected source first, then Corrected, then Original
+                        if selected_source and pd.notna(row_data.get(selected_source)) and row_data.get(selected_source,"").strip():
+                            source_col_used = selected_source
+                        elif pd.notna(row_data.get('Corrected_Text')) and row_data.get('Corrected_Text',"").strip():
+                             source_col_used = 'Corrected_Text'
+                        elif pd.notna(row_data.get('Original_Text')) and row_data.get('Original_Text',"").strip():
+                             source_col_used = 'Original_Text'
+                        text_to_process = row_data.get(source_col_used, "") if source_col_used else ""
                     elif ai_job == "Get_Names_and_Places":
-                         text_to_process = self.app.find_right_text(index) # Use best available text
-                         source_col_used = "Best Available" # Indicate how source was chosen
+                        text_to_process = self.app.find_right_text(index) # Use best available text
+                        source_col_used = "Best Available" # Indicate how source was chosen
 
                     # Ensure text is string and not NaN
                     text_to_process = str(text_to_process) if pd.notna(text_to_process) else ""
@@ -387,6 +405,9 @@ class AIFunctionsHandler:
                         self.app.progress_bar.update_progress(processed_rows, total_rows)
                         continue
 
+                    # Print the prompt
+                    print(f"System Prompt: {job_params['system_prompt']}")
+                    print(f"User Prompt: {job_params['user_prompt']}")
 
                     # Submit the API request
                     future = executor.submit(
@@ -412,6 +433,9 @@ class AIFunctionsHandler:
                     index = futures_to_index[future]
                     try:
                         response, idx_confirm = future.result() # Get result
+                        
+                        print(f"Response: {response}")
+                        
                         if idx_confirm != index:
                             self.app.error_logging(f"Index mismatch! Future for {index}, result for {idx_confirm}", level="ERROR")
                             error_count += 1
@@ -438,7 +462,8 @@ class AIFunctionsHandler:
                                 self.app.update_image_rotation(index, response)
                             else:
                                 # This function now handles different jobs internally
-                                self.app.update_df_with_ai_job_response(ai_job, index, response)
+                                # Call the method on the DataOperations instance via self.app
+                                self.app.data_operations.update_df_with_ai_job_response(ai_job, index, response)
 
                     except Exception as e:
                          error_count += 1
@@ -469,6 +494,9 @@ class AIFunctionsHandler:
             # Ensure temporary selections are cleared
             if hasattr(self, 'temp_selected_source'): delattr(self, 'temp_selected_source')
             if hasattr(self, 'temp_format_preset'): delattr(self, 'temp_format_preset')
+            # Add attribute to store the last used preset name (for ExportFunctions._copy_metadata_columns)
+            if ai_job == "Metadata":
+                 self.last_used_metadata_preset = job_params.get('preset_name_used', None)
 
             # Refresh display for the current page
             self.app.refresh_display() # Use refresh_display for consistency
@@ -490,7 +518,7 @@ class AIFunctionsHandler:
                      messagebox.showinfo("Processing Complete", f"Successfully processed {processed_rows}/{total_rows} applicable pages.")
                 # If total_rows was 0 initially, the 'No Work Needed' message was already shown.
 
-    def setup_job_parameters(self, ai_job):
+    def setup_job_parameters(self, ai_job, selected_metadata_preset=None):
         """Set up parameters for different AI jobs based on settings"""
         self.app.error_logging(f"Setting up job parameters for {ai_job}", level="DEBUG")
         # Ensure settings and presets are loaded/available
@@ -535,10 +563,21 @@ class AIFunctionsHandler:
                          "val_text": "" # Expecting numbers or None
                     })
             elif ai_job == "Metadata":
-                 preset_name = getattr(self, 'temp_selected_source', None) or getattr(self.app.settings, 'metadata_preset', "Standard Metadata")
-                 preset = next((p for p in self.app.settings.metadata_presets if p.get('name') == preset_name), None)
+                 # Use the passed preset name if provided, otherwise use the setting
+                 preset_name_to_use = selected_metadata_preset or getattr(self.app.settings, 'metadata_preset', "Standard Metadata")
+                 self.app.error_logging(f"Attempting to load metadata preset: '{preset_name_to_use}'", level="DEBUG")
+                 params['preset_name_used'] = preset_name_to_use # Store the name actually used
+ 
+                 preset = None
+                 # Validate that metadata_presets is a list and not empty
+                 if isinstance(self.app.settings.metadata_presets, list) and self.app.settings.metadata_presets:
+                      preset = next((p for p in self.app.settings.metadata_presets if p.get('name') == preset_name_to_use), None)
+                 else:
+                      self.app.error_logging("self.app.settings.metadata_presets is not a valid list or is empty.", level="ERROR")
+
                  if preset:
-                     headers = [h.strip() for h in preset.get('metadata_headers', '').split(';') if h.strip()]
+                     headers_str = preset.get('metadata_headers', '')
+                     headers = [h.strip() for h in headers_str.split(';') if h.strip()] if headers_str else []
                      params.update({
                          "temp": float(preset.get('temperature', 0.3)),
                          "val_text": preset.get('val_text', 'Metadata:'),
@@ -549,9 +588,9 @@ class AIFunctionsHandler:
                          "current_image": preset.get("current_image", "Yes"),
                          "headers": headers
                      })
-                     self.app.error_logging(f"Using metadata preset '{preset_name}' with headers: {headers}", level="DEBUG")
+                     self.app.error_logging(f"Using metadata preset '{preset_name_to_use}' with headers: {headers}", level="DEBUG")
                  else:
-                      self.app.error_logging(f"Metadata preset '{preset_name}' not found. Using fallback defaults.", level="WARNING")
+                      self.app.error_logging(f"Metadata preset '{preset_name_to_use}' not found. Using fallback defaults.", level="WARNING")
                       params['headers'] = ["Document Type", "Author", "Correspondent", "Date", "Summary"]
                       params['system_prompt'] = f"Extract the following metadata fields: {'; '.join(params['headers'])}."
                       params['user_prompt'] = "Text:\n{text_to_process}"
@@ -612,6 +651,8 @@ class AIFunctionsHandler:
             log_params = params.copy()
             log_params['user_prompt'] = (log_params['user_prompt'][:100] + "...") if len(log_params.get('user_prompt','')) > 100 else log_params.get('user_prompt','')
             log_params['system_prompt'] = (log_params['system_prompt'][:100] + "...") if len(log_params.get('system_prompt','')) > 100 else log_params.get('system_prompt','')
+            # Remove sensitive headers if present before logging
+            if 'headers' in log_params: del log_params['headers']
             self.app.error_logging(f"Final job parameters for {ai_job}: {log_params}", level="DEBUG")
 
             return params

@@ -1,9 +1,15 @@
+# util/CompileDocuments.py
+
+# This file contains the CompileDocuments class, which is used to compile
+# the documents in the project. It is used to create a new dataframe with
+# the compiled documents.
+
 import os, sys
 from tkinter import messagebox
 import pandas as pd
 from datetime import datetime
 
-class AnalyzeDocuments:
+class CompileDocuments:
     def __init__(self, parent):
         self.parent = parent
         self.main_df = parent.main_df

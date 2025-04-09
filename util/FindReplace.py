@@ -1,3 +1,7 @@
+# util/FindReplace.py
+
+# This file contains the FindReplace class, which is used to handle
+# the find and replace functionality in the application.
 import tkinter as tk
 from tkinter import messagebox
 import string, re

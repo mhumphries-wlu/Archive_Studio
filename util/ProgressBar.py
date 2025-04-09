@@ -1,3 +1,8 @@
+# util/ProgressBar.py
+
+# This file contains the ProgressBar class, which is used to handle
+# the progress bar for the application. 
+
 import tkinter as tk
 from tkinter import ttk
 

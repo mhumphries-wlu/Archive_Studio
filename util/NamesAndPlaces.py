@@ -1,3 +1,8 @@
+# util/NamesAndPlaces.py
+
+# This file contains the NamesAndPlacesHandler class, which is used to handle
+# the names and places for the application. 
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 import re
@@ -85,7 +90,8 @@ class NamesAndPlacesHandler:
              return
         raw = self.names_textbox.get("1.0", tk.END)
         collated_dict = self.parse_collation_response(raw)
-        self.apply_collation_dict(collated_dict, is_names=True)
+        # Call the method on the DataOperations instance via self.app
+        self.app.data_operations.apply_collation_dict(collated_dict, is_names=True)
 
     def replace_places_button(self):
         """
@@ -97,7 +103,8 @@ class NamesAndPlacesHandler:
             return
         raw = self.places_textbox.get("1.0", tk.END)
         collated_dict = self.parse_collation_response(raw)
-        self.apply_collation_dict(collated_dict, is_names=False)
+        # Call the method on the DataOperations instance via self.app
+        self.app.data_operations.apply_collation_dict(collated_dict, is_names=False)
 
     def parse_collation_response(self, response_text):
         """
@@ -175,67 +182,6 @@ class NamesAndPlacesHandler:
         except Exception as e:
             self.app.error_logging(f"Error parsing collation response: {str(e)}") # Use app's logger
             return {}
-
-    def apply_collation_dict(self, coll_dict, is_names=True):
-        """
-        For each row, find-and-replace all variations in the active text column.
-        If is_names=True, we're applying name variants; else place variants.
-        """
-        if not coll_dict:
-                messagebox.showinfo("Info", f"No {'names' if is_names else 'places'} found to replace.")
-                return
-
-        modified_count = 0
-        # Access main_df via self.app
-        for idx, row in self.app.main_df.iterrows():
-            active_col = row.get('Text_Toggle', None)
-            if active_col not in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
-                continue # Skip if no active text or if it's 'None'
-
-            old_text = row.get(active_col, "") # Use .get for safety
-            if not isinstance(old_text, str) or not old_text.strip():
-                continue # Skip if text is empty or not a string
-
-            new_text = old_text
-            # For each correct spelling => list of variants
-            for correct_term, variants in coll_dict.items():
-                # Create a pattern that matches any of the variants (case-insensitive, whole words)
-                # Ensure variants don't contain problematic regex characters or handle them
-                escaped_variants = [re.escape(var) for var in variants if var] # Escape variants
-                if not escaped_variants: continue # Skip if no valid variants
-
-                # Build regex pattern: \b(var1|var2|var3)\b
-                # Use word boundaries (\b) to avoid partial matches within words.
-                # Sort variants by length descending to match longer variants first
-                escaped_variants.sort(key=len, reverse=True)
-                pattern_str = r'\b(' + '|'.join(escaped_variants) + r')\b'
-                pattern = re.compile(pattern_str, re.IGNORECASE)
-
-                # Replace all occurrences of any variant with the correct term
-                new_text = pattern.sub(correct_term, new_text)
-
-            # Update DataFrame only if text changed
-            if new_text != old_text:
-                self.app.main_df.at[idx, active_col] = new_text # Update app's main_df
-                modified_count += 1
-
-        # Refresh text display if the current page was modified
-        # Access page_counter, main_df, load_text, counter_update via self.app
-        if self.app.page_counter in self.app.main_df.index: # Check if index is valid
-            current_page_active_col = self.app.main_df.loc[self.app.page_counter].get('Text_Toggle', None)
-            # Find if current page index was modified
-            current_text_widget_content = self.app.text_display.get("1.0", tk.END).strip()
-            if current_page_active_col in self.app.main_df.columns: # Ensure column exists
-                modified_df_content = self.app.main_df.loc[self.app.page_counter, current_page_active_col]
-                if modified_df_content != current_text_widget_content:
-                    self.app.load_text() # Reload text only if current page changed
-                    self.app.counter_update()
-            else: # If active column somehow doesn't exist, still try to load
-                 self.app.load_text()
-                 self.app.counter_update()
-
-
-        messagebox.showinfo("Replacement Complete", f"Replaced variations in {modified_count} page(s).")
 
 
 

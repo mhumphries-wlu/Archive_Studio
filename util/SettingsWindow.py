@@ -1,12 +1,14 @@
 # util/SettingsWindow.py
 
+# This file contains the SettingsWindow class, which is used to handle
+# the settings window for the application.
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 import json
 import os
 
 from util.APIHandler import APIHandler
-
 
 class CreateToolTip:
     def __init__(self, widget, text):

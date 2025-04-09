@@ -1,3 +1,8 @@
+# util/ImageHandler.py
+
+# This file contains the ImageHandler class, which is used to handle
+# the image handling for the application.
+
 import tkinter as tk
 from PIL import Image, ImageTk, ImageOps
 import os
@@ -85,32 +90,72 @@ class ImageHandler:
         except Exception as e:
             return False, f"An error occurred while rotating the image: {e}"
 
-    def resize_image(self, image_path, output_path, max_size=1980):
-        """Resize an image while maintaining aspect ratio"""
-        with Image.open(image_path) as img:
-            # Get the original image size
-            width, height = img.size
+    def resize_image(self, source_path, target_path, max_width=2048):
+        """
+        Resizes an image to a maximum width while maintaining aspect ratio
+        and saves it to the target path, handling format conversion if necessary.
 
-            # Determine the larger dimension
-            larger_dimension = max(width, height)
+        Args:
+            source_path (str): The path to the source image file.
+            target_path (str): The path to save the resized image file.
+            max_width (int): The maximum width for the resized image.
+        """
+        try:
+            with Image.open(source_path) as img:
+                # Handle EXIF orientation
+                img = ImageOps.exif_transpose(img)
 
-            # Calculate the scaling factor only if larger than max_size
-            scale = 1.0
-            if larger_dimension > max_size:
-                scale = max_size / larger_dimension
+                # Calculate new size
+                img_width, img_height = img.size
+                if img_width > max_width:
+                    ratio = max_width / img_width
+                    new_height = int(img_height * ratio)
+                    new_size = (max_width, new_height)
+                    resized_img = img.resize(new_size, Image.Resampling.LANCZOS)
+                else:
+                    # No resize needed, but still need to potentially convert format
+                    resized_img = img.copy()
 
-            # Calculate new dimensions
-            new_width = int(width * scale)
-            new_height = int(height * scale)
+                # Ensure image is in RGB mode for saving as JPG
+                if resized_img.mode in ('RGBA', 'LA', 'P'): # Handle transparency and palettes
+                    # Create a white background
+                    background = Image.new('RGB', resized_img.size, (255, 255, 255))
+                    # Paste using alpha mask if available
+                    alpha_mask = None
+                    if resized_img.mode == 'RGBA':
+                         alpha_mask = resized_img.split()[-1]
+                    elif resized_img.mode == 'LA':
+                         alpha_mask = resized_img.split()[-1]
+                    elif resized_img.mode == 'P':
+                        # Check if palette has transparency
+                        if 'transparency' in resized_img.info:
+                            # Convert to RGBA to handle transparency mask
+                            resized_img_rgba = resized_img.convert('RGBA')
+                            alpha_mask = resized_img_rgba.split()[-1]
+                            resized_img = resized_img_rgba # Use RGBA for pasting
 
-            # Resize the image only if needed
-            if scale < 1.0:
-                img = img.resize((new_width, new_height), Image.LANCZOS)
+                    if alpha_mask:
+                        background.paste(resized_img, (0, 0), alpha_mask)
+                        final_image = background
+                    else: # No alpha mask, just convert
+                        final_image = resized_img.convert('RGB')
 
-            img = ImageOps.exif_transpose(img)
+                elif resized_img.mode != 'RGB':
+                    # Convert other modes (like L, CMYK) to RGB
+                    final_image = resized_img.convert('RGB')
+                else:
+                    # Already RGB
+                    final_image = resized_img
 
-            # Save the image with high quality
-            img.save(output_path, "JPEG", quality=95)
+                # Save the final image (always as JPG for consistency in the project)
+                final_image.save(target_path, "JPEG", quality=95) # Save as JPEG
+
+        except FileNotFoundError:
+             self.app.error_logging(f"Resize Error: Source image not found at {source_path}", level="ERROR")
+             raise # Re-raise for calling function to handle
+        except Exception as e:
+            self.app.error_logging(f"Error resizing/saving image from {source_path} to {target_path}: {e}", level="ERROR")
+            raise # Re-raise for calling function to handle
 
     def process_new_images(self, source_paths, images_directory, project_directory, temp_directory, main_df, page_counter_setter):
         """Process a list of new image paths, resize them, and prepare data for the main DataFrame"""

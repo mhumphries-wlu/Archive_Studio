@@ -1,275 +1,223 @@
-2025-04-07 12:12:16 [ERROR]: Refresh display error: Failed to refresh display: '_tkinter.tkapp' object has no attribute 'counter_update'
-Index: 0
+2025-04-08 21:17:29 [ERROR]: Starting CSV export process
+2025-04-08 21:17:29 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-08 21:17:29 [ERROR]: Added missing column: Place_of_Creation
+2025-04-08 21:17:29 [ERROR]: Added missing column: Text
+2025-04-08 21:17:29 [ERROR]: Using Current Display as the source for text data
+2025-04-08 21:17:29 [ERROR]: Actual text source column identified as: Current Display
+2025-04-08 21:17:32 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-08 21:17:32 [ERROR]: Added essential column: Creation_Place
+2025-04-08 21:17:32 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-08 21:17:32 [ERROR]: Copied 8 values for column: Document_Type
+2025-04-08 21:17:32 [ERROR]: Copied 8 values for column: Author
+2025-04-08 21:17:32 [ERROR]: Copied 8 values for column: Correspondent
+2025-04-08 21:17:32 [ERROR]: Copied 8 values for column: Correspondent_Place
+2025-04-08 21:17:32 [ERROR]: Copied 8 values for column: Date
+2025-04-08 21:17:32 [ERROR]: Copied 8 values for column: Place_of_Creation
+2025-04-08 21:17:32 [ERROR]: Copied 8 values for column: People
+2025-04-08 21:17:32 [ERROR]: Copied 8 values for column: Places
+2025-04-08 21:17:32 [ERROR]: Copied 8 values for column: Summary
+2025-04-08 21:17:32 [ERROR]: Copied 8 values for column: Creation_Place
+2025-04-08 21:17:32 [ERROR]: Preparing export dataframe. Text source: Current Display
+2025-04-08 21:17:32 [ERROR]: Using 'Current Display' for text - applying find_right_text
+2025-04-08 21:17:32 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-08 21:17:32 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Original_Text']
+2025-04-08 21:23:52 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-08 21:23:55 [ERROR]: Starting CSV export process
+2025-04-08 21:23:55 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-08 21:23:55 [ERROR]: Added missing column: Place_of_Creation
+2025-04-08 21:23:55 [ERROR]: Added missing column: Text
+2025-04-08 21:23:55 [ERROR]: Using Original_Text as the source for text data
+2025-04-08 21:23:55 [ERROR]: Actual text source column identified as: Original_Text
+2025-04-08 21:23:55 [ERROR]: Critical error in metadata generation: name 'actual_text_source_column' is not defined
 Stack trace:
 Traceback (most recent call last):
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2751, in refresh_display
-    self.load_text() # Load_text handles counter update and highlights
-    ^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2062, in load_text
-    self.counter_update()
-    ^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 633, in _generate_metadata
+    export_text_source=actual_text_source_column # Pass resolved source column
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'actual_text_source_column' is not defined
+2025-04-08 21:23:55 [ERROR]: Traceback: Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 633, in _generate_metadata
+    export_text_source=actual_text_source_column # Pass resolved source column
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'actual_text_source_column' is not defined
+
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 633, in _generate_metadata
+    export_text_source=actual_text_source_column # Pass resolved source column
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'actual_text_source_column' is not defined
+2025-04-08 21:23:56 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-08 21:23:56 [ERROR]: Using column 'Original_Text' for text
+2025-04-08 21:23:56 [ERROR]: Dropped original text source column: Original_Text
+2025-04-08 21:23:56 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-08 21:23:56 [ERROR]: 'Original_Text' column is missing before final ordering.
+2025-04-08 21:23:56 [ERROR]: CRITICAL: 'Original_Text' column missing in final export list!
+2025-04-08 21:23:56 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-08 21:25:11 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-08 21:25:14 [ERROR]: Starting CSV export process
+2025-04-08 21:25:14 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-08 21:25:14 [ERROR]: Added missing column: Place_of_Creation
+2025-04-08 21:25:14 [ERROR]: Added missing column: Text
+2025-04-08 21:25:14 [ERROR]: Using Original_Text as the source for text data
+2025-04-08 21:25:14 [ERROR]: Actual text source column identified as: Original_Text
+2025-04-08 21:26:05 [ERROR]: Critical error in metadata generation: cannot access local variable 'job_params' where it is not associated with a value
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 634, in _generate_metadata
+  File "d:\TranscriptionPearl\util\AIFunctions.py", line 493, in ai_function
+    self.last_used_metadata_preset = job_params.get('preset_name_used', None)
+                                     ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'job_params' where it is not associated with a value
+2025-04-08 21:26:05 [ERROR]: Traceback: Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 634, in _generate_metadata
+  File "d:\TranscriptionPearl\util\AIFunctions.py", line 493, in ai_function
+    self.last_used_metadata_preset = job_params.get('preset_name_used', None)
+                                     ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'job_params' where it is not associated with a value
+
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 634, in _generate_metadata
+  File "d:\TranscriptionPearl\util\AIFunctions.py", line 493, in ai_function
+    self.last_used_metadata_preset = job_params.get('preset_name_used', None)
+                                     ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'job_params' where it is not associated with a value
+2025-04-08 21:26:05 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-08 21:26:05 [ERROR]: Using column 'Original_Text' for text
+2025-04-08 21:26:05 [ERROR]: Dropped original text source column: Original_Text
+2025-04-08 21:26:05 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-08 21:26:05 [ERROR]: 'Original_Text' column is missing before final ordering.
+2025-04-08 21:26:05 [ERROR]: CRITICAL: 'Original_Text' column missing in final export list!
+2025-04-08 21:26:05 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-08 21:26:23 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-08 21:26:28 [ERROR]: Starting CSV export process
+2025-04-08 21:26:28 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-08 21:26:28 [ERROR]: Added missing column: Place_of_Creation
+2025-04-08 21:26:28 [ERROR]: Added missing column: Text
+2025-04-08 21:26:28 [ERROR]: Using resolved text source column: Original_Text
+2025-04-08 21:26:29 [ERROR]: Critical error in metadata generation: cannot access local variable 'job_params' where it is not associated with a value
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 623, in _generate_metadata
+    self.app.ai_functions_handler.ai_function(
+  File "d:\TranscriptionPearl\util\AIFunctions.py", line 493, in ai_function
+    self.last_used_metadata_preset = job_params.get('preset_name_used', None)
+                                     ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'job_params' where it is not associated with a value
+2025-04-08 21:26:29 [ERROR]: Traceback: Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 623, in _generate_metadata
+    self.app.ai_functions_handler.ai_function(
+  File "d:\TranscriptionPearl\util\AIFunctions.py", line 493, in ai_function
+    self.last_used_metadata_preset = job_params.get('preset_name_used', None)
+                                     ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'job_params' where it is not associated with a value
+
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 623, in _generate_metadata
+    self.app.ai_functions_handler.ai_function(
+  File "d:\TranscriptionPearl\util\AIFunctions.py", line 493, in ai_function
+    self.last_used_metadata_preset = job_params.get('preset_name_used', None)
+                                     ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'job_params' where it is not associated with a value
+2025-04-08 21:26:29 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-08 21:26:29 [ERROR]: Using column 'Original_Text' for text
+2025-04-08 21:26:29 [ERROR]: Dropped original text source column: Original_Text
+2025-04-08 21:26:29 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-08 21:26:29 [ERROR]: 'Original_Text' column is missing before final ordering.
+2025-04-08 21:26:29 [ERROR]: CRITICAL: 'Original_Text' column missing in final export list!
+2025-04-08 21:26:29 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-08 21:29:19 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-08 21:29:22 [ERROR]: Starting CSV export process
+2025-04-08 21:29:22 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-08 21:29:22 [ERROR]: Added missing column: Place_of_Creation
+2025-04-08 21:29:22 [ERROR]: Added missing column: Text
+2025-04-08 21:29:22 [ERROR]: Using resolved text source column: Original_Text
+2025-04-08 21:29:24 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-08 21:29:24 [ERROR]: Added essential column: Creation_Place
+2025-04-08 21:29:24 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-08 21:29:24 [ERROR]: Copied 8 values for column: Document_Type
+2025-04-08 21:29:24 [ERROR]: Copied 8 values for column: Author
+2025-04-08 21:29:24 [ERROR]: Copied 8 values for column: Correspondent
+2025-04-08 21:29:24 [ERROR]: Copied 8 values for column: Correspondent_Place
+2025-04-08 21:29:24 [ERROR]: Copied 8 values for column: Date
+2025-04-08 21:29:24 [ERROR]: Copied 8 values for column: Place_of_Creation
+2025-04-08 21:29:24 [ERROR]: Copied 8 values for column: People
+2025-04-08 21:29:24 [ERROR]: Copied 8 values for column: Places
+2025-04-08 21:29:24 [ERROR]: Copied 8 values for column: Summary
+2025-04-08 21:29:24 [ERROR]: Copied 8 values for column: Creation_Place
+2025-04-08 21:29:24 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-08 21:29:24 [ERROR]: Using column 'Original_Text' for text
+2025-04-08 21:29:24 [ERROR]: Dropped original text source column: Original_Text
+2025-04-08 21:29:24 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-08 21:29:24 [ERROR]: 'Original_Text' column is missing before final ordering.
+2025-04-08 21:29:24 [ERROR]: CRITICAL: 'Original_Text' column missing in final export list!
+2025-04-08 21:29:24 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-08 21:29:49 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-08 21:29:53 [ERROR]: Starting CSV export process
+2025-04-08 21:29:53 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-08 21:29:53 [ERROR]: Added missing column: Place_of_Creation
+2025-04-08 21:29:53 [ERROR]: Added missing column: Text
+2025-04-08 21:29:53 [ERROR]: Using resolved text source column: Original_Text
+2025-04-08 21:30:01 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-08 21:30:01 [ERROR]: Added essential column: Creation_Place
+2025-04-08 21:30:01 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-08 21:30:01 [ERROR]: Copied 8 values for column: Document_Type
+2025-04-08 21:30:01 [ERROR]: Copied 8 values for column: Author
+2025-04-08 21:30:01 [ERROR]: Copied 8 values for column: Correspondent
+2025-04-08 21:30:01 [ERROR]: Copied 8 values for column: Correspondent_Place
+2025-04-08 21:30:01 [ERROR]: Copied 8 values for column: Date
+2025-04-08 21:30:01 [ERROR]: Copied 8 values for column: Place_of_Creation
+2025-04-08 21:30:01 [ERROR]: Copied 8 values for column: People
+2025-04-08 21:30:01 [ERROR]: Copied 8 values for column: Places
+2025-04-08 21:30:01 [ERROR]: Copied 8 values for column: Summary
+2025-04-08 21:30:01 [ERROR]: Copied 8 values for column: Creation_Place
+2025-04-08 21:30:01 [ERROR]: Single author specified: Jhn Cobb
+2025-04-08 21:30:01 [ERROR]: Citation specified: HBCA
+2025-04-08 21:30:01 [ERROR]: Starting date and place analysis sequence using preset: Sequence_Dates
+2025-04-08 21:30:01 [ERROR]: Using required headers from sequential preset: ['Date', 'Place']
+2025-04-08 21:30:01 [ERROR]: Clearing existing values for fresh date analysis
+2025-04-08 21:30:01 [ERROR]: Copied existing Date values from compiled_df to date_df
+2025-04-08 21:30:01 [ERROR]: Added legacy Creation_Place column to date_df
+2025-04-08 21:30:01 [ERROR]: Created date analysis dataframe with 8 rows and columns: ['Page', 'Text', 'Date', 'Place', 'Creation_Place']
+2025-04-08 21:30:01 [ERROR]: Using specified sequential preset: Sequence_Dates
+2025-04-08 21:30:01 [ERROR]: Found required headers in sequence preset: ['Date', 'Place']
+2025-04-08 21:30:01 [ERROR]: Setting active sequential preset to: Sequence_Dates
+2025-04-08 21:30:22 [ERROR]: Date analysis result dataframe has columns: ['Page', 'Text', 'Date', 'Place', 'Creation_Place']
+2025-04-08 21:30:22 [ERROR]: Date analysis result dataframe has 8 rows
+2025-04-08 21:30:22 [ERROR]: Date analysis found 8 dates
+2025-04-08 21:30:22 [ERROR]: Date analysis found 8 Date values
+2025-04-08 21:30:22 [ERROR]: Date analysis found 8 Place values
+2025-04-08 21:30:22 [ERROR]: Sample row 0: {'Page': np.int64(0), 'Text': 'A Journal of Transactions at\nAsh Fall by Mr John Cobb\n1', 'Date': 'YYYY/MM/DD', 'Place': 'Ash Fall', 'Creation_Place': 'Ash Fall'}
+2025-04-08 21:30:22 [ERROR]: Sample row 1: {'Page': np.int64(1), 'Text': '1798.\nAugt 2 Thursday Wind Westerly clear pleasant weather at 2 P. M.\nI set off from Martins Fall with two Boats for Osnaburgh\nHouse and arrived at that place the 19 Inst.', 'Date': '1798/08/02', 'Place': 'Martins Fall', 'Creation_Place': 'Martins Fall'}
+2025-04-08 21:30:22 [ERROR]: Sample row 2: {'Page': np.int64(2), 'Text': '20 Monday Wind N Wst with rain all day in the evening\nMr McKay arrived from Martins Fall with 3 Boats', 'Date': '1798/08/20', 'Place': 'Osnaburgh House', 'Creation_Place': 'Osnaburgh House'}
+2025-04-08 21:30:22 [ERROR]: Date analysis returned dataframe with columns: Page, Text, Date, Place, Creation_Place
+2025-04-08 21:30:22 [ERROR]: Sample row 0: {'Page': np.int64(0), 'Text': 'A Journal of Transactions at\nAsh Fall by Mr John Cobb\n1', 'Date': 'YYYY/MM/DD', 'Place': 'Ash Fall', 'Creation_Place': 'Ash Fall'}
+2025-04-08 21:30:22 [ERROR]: Sample row 1: {'Page': np.int64(1), 'Text': '1798.\nAugt 2 Thursday Wind Westerly clear pleasant weather at 2 P. M.\nI set off from Martins Fall with two Boats for Osnaburgh\nHouse and arrived at that place the 19 Inst.', 'Date': '1798/08/02', 'Place': 'Martins Fall', 'Creation_Place': 'Martins Fall'}
+2025-04-08 21:30:22 [ERROR]: Sample row 2: {'Page': np.int64(2), 'Text': '20 Monday Wind N Wst with rain all day in the evening\nMr McKay arrived from Martins Fall with 3 Boats', 'Date': '1798/08/20', 'Place': 'Osnaburgh House', 'Creation_Place': 'Osnaburgh House'}
+2025-04-08 21:30:22 [ERROR]: Using specified sequential preset for copying results: Sequence_Dates
+2025-04-08 21:30:22 [ERROR]: Copying required headers from sequence preset: ['Date', 'Place']
+2025-04-08 21:30:22 [ERROR]: Added missing Place column to compiled_df before copying results
+2025-04-08 21:30:22 [ERROR]: Updated fields in the compiled dataframe: 8 Date, 8 Place, 8 Place_of_Creation, 8 Creation_Place
+2025-04-08 21:30:22 [ERROR]: Sequential preset headers: ['Date', 'Place']
+2025-04-08 21:30:22 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-08 21:30:22 [ERROR]: Using column 'Original_Text' for text
+2025-04-08 21:30:22 [ERROR]: Dropped original text source column: Original_Text
+2025-04-08 21:30:22 [ERROR]: Overriding 'Author' column with single author: Jhn Cobb
+2025-04-08 21:30:22 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-08 21:30:22 [ERROR]: Adding/overwriting with sequential headers: ['Date', 'Place']
+2025-04-08 21:30:22 [ERROR]: 'Original_Text' column is missing before final ordering.
+2025-04-08 21:30:22 [ERROR]: Adding 'Citation' column.
+2025-04-08 21:30:22 [ERROR]: CRITICAL: 'Original_Text' column missing in final export list!
+2025-04-08 21:30:22 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Place', 'Citation']
+2025-04-08 22:09:19 [ERROR]: Critical error in collate_names_and_places: '_tkinter.tkapp' object has no attribute 'parse_collation_response'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\AIFunctions.py", line 861, in collate_names_and_places
+    names_dict = self.app.parse_collation_response(self.collated_names_raw)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
     return getattr(self.tk, attr)
            ^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: '_tkinter.tkapp' object has no attribute 'counter_update'
-
-2025-04-07 13:15:36 [ERROR]: Enabled relevance dropdown due to existing relevance data
-2025-04-07 14:46:37 [ERROR]: Enabled relevance dropdown due to existing relevance data
-2025-04-07 14:59:51 [ERROR]: Error processing image images\0001_p001.jpg for row 0: too many values to unpack (expected 4)
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
-    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
-    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
-    y_min, x_min, y_max, x_max = box_coords
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: too many values to unpack (expected 4)
-
-2025-04-07 14:59:51 [ERROR]: Error processing image images\0002_p002.jpg for row 0: too many values to unpack (expected 4)
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
-    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
-    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
-    y_min, x_min, y_max, x_max = box_coords
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: too many values to unpack (expected 4)
-
-2025-04-07 14:59:51 [ERROR]: Error processing image images\0003_p003.jpg for row 0: too many values to unpack (expected 4)
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
-    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
-    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
-    y_min, x_min, y_max, x_max = box_coords
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: too many values to unpack (expected 4)
-
-2025-04-07 14:59:51 [ERROR]: Error processing image images\0003_p003.jpg for row 1: unsupported operand type(s) for /: 'str' and 'int'
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
-    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
-    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 203, in normalize_coordinates
-    x_min_px = int(x_min * img_width / 1000)
-                   ~~~~~~~~~~~~~~~~~~^~~~~~
-TypeError: unsupported operand type(s) for /: 'str' and 'int'
-
-2025-04-07 14:59:51 [ERROR]: Error processing image images\0004_p004.jpg for row 1: unsupported operand type(s) for /: 'str' and 'int'
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
-    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
-    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 203, in normalize_coordinates
-    x_min_px = int(x_min * img_width / 1000)
-                   ~~~~~~~~~~~~~~~~~~^~~~~~
-TypeError: unsupported operand type(s) for /: 'str' and 'int'
-
-2025-04-07 14:59:51 [ERROR]: Error processing image images\0005_p005.jpg for row 1: unsupported operand type(s) for /: 'str' and 'int'
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
-    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
-    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 203, in normalize_coordinates
-    x_min_px = int(x_min * img_width / 1000)
-                   ~~~~~~~~~~~~~~~~~~^~~~~~
-TypeError: unsupported operand type(s) for /: 'str' and 'int'
-
-2025-04-07 14:59:51 [ERROR]: Error processing image images\0006_p006.jpg for row 1: unsupported operand type(s) for /: 'str' and 'int'
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
-    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
-    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 203, in normalize_coordinates
-    x_min_px = int(x_min * img_width / 1000)
-                   ~~~~~~~~~~~~~~~~~~^~~~~~
-TypeError: unsupported operand type(s) for /: 'str' and 'int'
-
-2025-04-07 14:59:51 [ERROR]: Error processing image images\0006_p006.jpg for row 2: too many values to unpack (expected 4)
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
-    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
-    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
-    y_min, x_min, y_max, x_max = box_coords
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: too many values to unpack (expected 4)
-
-2025-04-07 15:01:32 [ERROR]: Error processing image ..\..\..\TranscriptionPearl\util\temp\images\0001_p001.jpg for row 3: too many values to unpack (expected 4)
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
-    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
-    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
-    y_min, x_min, y_max, x_max = box_coords
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: too many values to unpack (expected 4)
-
-2025-04-07 15:01:32 [ERROR]: Error processing image ..\..\..\TranscriptionPearl\util\temp\images\0001_p001.jpg for row 4: too many values to unpack (expected 4)
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
-    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
-    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
-    y_min, x_min, y_max, x_max = box_coords
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: too many values to unpack (expected 4)
-
-2025-04-07 15:01:32 [ERROR]: Error processing image ..\..\..\TranscriptionPearl\util\temp\images\0001_p001.jpg for row 6: too many values to unpack (expected 4)
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
-    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
-    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
-    y_min, x_min, y_max, x_max = box_coords
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: too many values to unpack (expected 4)
-
-2025-04-07 15:01:32 [ERROR]: Error processing image ..\..\..\TranscriptionPearl\util\temp\images\0001_p001.jpg for row 7: too many values to unpack (expected 4)
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\util\apply_separation_options.py", line 1049, in apply_document_separation_with_boxes_by_row
-    cropped_image_path = crop_image(full_image_path, box_data['box_2d'], output_path)
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 242, in crop_image
-    norm_coords = normalize_coordinates(box_coords, img_width, img_height)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\TranscriptionPearl\util\process_boxes.py", line 200, in normalize_coordinates
-    y_min, x_min, y_max, x_max = box_coords
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: too many values to unpack (expected 4)
-
-2025-04-07 19:41:29 [ERROR]: Critical error in main application scope: '_tkinter.tkapp' object has no attribute 'settings'
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 49, in __init__
-    self.iconbitmap(os.path.join(self.base_dir, "util", "pb.ico"))
-  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2156, in wm_iconbitmap
-    return self.tk.call('wm', 'iconbitmap', self._w, bitmap)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_tkinter.TclError: bitmap "d:\TranscriptionPearl\util\pb.ico" not defined
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2424, in <module>
-    app = App()
-          ^^^^^
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 51, in __init__
-    self.log_app_error("Icon file 'util/pb.ico' not found or invalid.", level="WARNING")
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 1159, in log_app_error
-    log_level_setting=getattr(self.settings, 'log_level', 'ERROR'),
-                              ^^^^^^^^^^^^^
-  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
-    return getattr(self.tk, attr)
-           ^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: '_tkinter.tkapp' object has no attribute 'settings'
-2025-04-07 19:43:00 [ERROR]: Critical error in main application scope: unknown option "-weight"
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2424, in <module>
-    app = App()
-          ^^^^^
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 89, in __init__
-    self._setup_main_paned_window()
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 170, in _setup_main_paned_window
-    self.main_frame.add(self.text_display, weight=1) # Give text display initial weight
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 4487, in add
-    self.tk.call((self._w, 'add', child) + self._options(kw))
-_tkinter.TclError: unknown option "-weight"
-2025-04-07 19:43:19 [ERROR]: Critical error in main application scope: unknown option "-weight"
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2429, in <module>
-    app = App()
-          ^^^^^
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 89, in __init__
-    self._setup_main_paned_window()
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 170, in _setup_main_paned_window
-    self.main_frame.add(self.text_display, weight=1) # Give text display initial weight
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 4487, in add
-    self.tk.call((self._w, 'add', child) + self._options(kw))
-_tkinter.TclError: unknown option "-weight"
-2025-04-07 20:40:21.322905: CRITICAL: Critical error in main application scope: ImageHandler.__init__() takes 2 positional arguments but 3 were given
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 3872, in <module>
-    app = App()
-          ^^^^^
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 135, in __init__
-    self.image_handler = ImageHandler(self.image_display, self)
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-TypeError: ImageHandler.__init__() takes 2 positional arguments but 3 were given
-
-2025-04-07 20:42:02 [ERROR]: Error in process_new_images: 'ImageHandler' object has no attribute 'process_new_images'
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 1448, in process_new_images
-    successful_copies, new_rows_list = self.image_handler.process_new_images(
-                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'ImageHandler' object has no attribute 'process_new_images'
-2025-04-08 10:46:30 [ERROR]: Error processing future result for index 0, job HTR: '_tkinter.tkapp' object has no attribute 'update_df_with_ai_job_response'
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\util\AIFunctions.py", line 441, in ai_function
-    self.app.update_df_with_ai_job_response(ai_job, index, response)
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
-    return getattr(self.tk, attr)
-           ^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: '_tkinter.tkapp' object has no attribute 'update_df_with_ai_job_response'
-2025-04-08 10:46:53 [ERROR]: Error processing future result for index 0, job HTR: '_tkinter.tkapp' object has no attribute 'update_df_with_ai_job_response'
-Stack trace:
-Traceback (most recent call last):
-  File "d:\TranscriptionPearl\util\AIFunctions.py", line 441, in ai_function
-    self.app.update_df_with_ai_job_response(ai_job, index, response)
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
-    return getattr(self.tk, attr)
-           ^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: '_tkinter.tkapp' object has no attribute 'update_df_with_ai_job_response'
+AttributeError: '_tkinter.tkapp' object has no attribute 'parse_collation_response'
