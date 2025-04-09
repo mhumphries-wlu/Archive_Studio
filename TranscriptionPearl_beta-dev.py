@@ -1118,7 +1118,7 @@ class App(TkinterDnD.Tk):
         if self.page_counter < len(self.main_df):
             current_display_val = self.main_df.loc[self.page_counter, 'Text_Toggle']
             if current_display_val != "None":
-                text = self.clean_text(self.text_display.get("1.0", tk.END))
+                text = self.data_operations.clean_text(self.text_display.get("1.0", tk.END))
                 if current_display_val in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
                     self.main_df.loc[self.page_counter, current_display_val] = text
         # --- End Save ---
@@ -1252,7 +1252,7 @@ class App(TkinterDnD.Tk):
             if self.page_counter < len(self.main_df):
                 current_display = self.main_df.loc[self.page_counter, 'Text_Toggle']
                 if current_display != "None":
-                    text = self.clean_text(self.text_display.get("1.0", tk.END))
+                    text = self.data_operations.clean_text(self.text_display.get("1.0", tk.END))
                     if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
                         self.main_df.loc[self.page_counter, current_display] = text
 
@@ -1684,84 +1684,6 @@ class App(TkinterDnD.Tk):
         except tk.TclError:
             pass
 
-    def clean_text(self, text):
-        """Clean text by replacing curly braces with parentheses and handling special cases"""
-        if not isinstance(text, str):
-            return text
-
-        # Dictionary of replacements (add more variations as needed)
-        replacements = {
-            '{': '(',
-            '}': ')',
-            '﹛': '(',  # Alternative left curly bracket
-            '﹜': ')',  # Alternative right curly bracket
-            '｛': '(',  # Fullwidth left curly bracket
-            '｝': ')',  # Fullwidth right curly bracket
-            '❴': '(',  # Ornate left curly bracket
-            '❵': ')',  # Ornate right curly bracket
-            '⟨': '(',  # Mathematical left angle bracket
-            '⟩': ')',  # Mathematical right angle bracket
-            '『': '(',  # White corner bracket
-            '』': ')',  # White corner bracket
-            '〔': '(',  # Tortoise shell bracket
-            '〕': ')',  # Tortoise shell bracket
-        }
-
-        # Replace all instances of special brackets with regular parentheses
-        for old, new in replacements.items():
-            text = text.replace(old, new)
-
-        # Added: remove trailing newlines/whitespace
-        return text.rstrip()
-
-    def find_right_text(self, index_no):
-        """ Finds the most relevant text for a given index, prioritizing specific columns. """
-        if self.main_df.empty or index_no >= len(self.main_df):
-            return ""
-
-        row = self.main_df.loc[index_no]
-
-        # Prioritize based on Text_Toggle first
-        text_toggle = row.get('Text_Toggle', 'None')
-        if text_toggle != 'None' and text_toggle in row and pd.notna(row[text_toggle]) and row[text_toggle].strip():
-             return row[text_toggle]
-
-        # Fallback priority if Text_Toggle is None or its content is empty
-        priority_order = ['Separated_Text', 'Translation', 'Formatted_Text', 'Corrected_Text', 'Original_Text']
-        for col in priority_order:
-            if col in row and pd.notna(row[col]) and row[col].strip():
-                return row[col]
-
-        return "" # Return empty string if no text is found
-
-    def find_chunk_text(self, index_no):
-        """
-        Special version of find_right_text specifically for Chunk_Text operations.
-        Prioritizes Corrected_Text -> Original_Text, never uses Translation.
-        Returns a tuple of (text_to_use, has_translation) where has_translation is a boolean.
-        """
-        if self.main_df.empty or index_no >= len(self.main_df):
-            return "", False
-
-        row = self.main_df.loc[index_no]
-
-        Corrected_Text = row.get('Corrected_Text', "") if pd.notna(row.get('Corrected_Text')) else ""
-        original_text = row.get('Original_Text', "") if pd.notna(row.get('Original_Text')) else ""
-        translation = row.get('Translation', "") if pd.notna(row.get('Translation')) else ""
-
-        # Check if translation exists and is non-empty
-        has_translation = bool(translation.strip())
-
-        # First try Corrected_Text
-        if Corrected_Text.strip():
-            return Corrected_Text, has_translation
-        # Then try Original_Text
-        elif original_text.strip():
-            return original_text, has_translation
-        # If neither is available, return empty string
-        else:
-            return "", has_translation
-
     def error_logging(self, error_message, additional_info=None, level="ERROR"):
         """Use the ErrorLogger module to log errors."""
         base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1918,58 +1840,6 @@ class App(TkinterDnD.Tk):
             # In this case, we cannot create a relative path, so return the absolute path.
             return abs_path
 
-    # def apply_collation_dict(self, coll_dict, is_names=True):
-    #     """
-    #     For each row, find-and-replace all variations in the active text column.
-    #     If is_names=True, we're applying name variants; else place variants.
-    #     """
-    #     if not coll_dict:
-    #          messagebox.showinfo("Info", f"No {'names' if is_names else 'places'} found to replace.")
-    #          return
-
-    #     modified_count = 0
-    #     for idx, row in self.main_df.iterrows():
-    #         active_col = row.get('Text_Toggle', None)
-    #         if active_col not in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
-    #             continue # Skip if no active text or if it's 'None'
-
-    #         old_text = row.get(active_col, "") # Use .get for safety
-    #         if not isinstance(old_text, str) or not old_text.strip():
-    #             continue # Skip if text is empty or not a string
-
-    #         new_text = old_text
-    #         # For each correct spelling => list of variants
-    #         for correct_term, variants in coll_dict.items():
-    #             # Create a pattern that matches any of the variants (case-insensitive, whole words)
-    #             # Ensure variants don't contain problematic regex characters or handle them
-    #             escaped_variants = [re.escape(var) for var in variants if var] # Escape variants
-    #             if not escaped_variants: continue # Skip if no valid variants
-
-    #             # Build regex pattern: \b(var1|var2|var3)\b
-    #             # Use word boundaries (\b) to avoid partial matches within words.
-    #             # Sort variants by length descending to match longer variants first
-    #             escaped_variants.sort(key=len, reverse=True)
-    #             pattern_str = r'\b(' + '|'.join(escaped_variants) + r')\b'
-    #             pattern = re.compile(pattern_str, re.IGNORECASE)
-
-    #             # Replace all occurrences of any variant with the correct term
-    #             new_text = pattern.sub(correct_term, new_text)
-
-    #         # Update DataFrame only if text changed
-    #         if new_text != old_text:
-    #             self.main_df.at[idx, active_col] = new_text
-    #             modified_count += 1
-
-    #     # Refresh text display if the current page was modified
-    #     if self.page_counter in self.main_df.index: # Check if index is valid
-    #         current_page_active_col = self.main_df.loc[self.page_counter].get('Text_Toggle', None)
-    #         # Find if current page index was modified
-    #         if self.page_counter in self.main_df[self.main_df[current_page_active_col] != self.text_display.get("1.0", tk.END).strip()].index:
-    #              self.load_text() # Reload text only if current page changed
-    #              self.counter_update()
-
-    #     messagebox.showinfo("Replacement Complete", f"Replaced variations in {modified_count} page(s).")
-
     def on_closing(self):
         """Handle application closing"""
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
@@ -1979,115 +1849,132 @@ class App(TkinterDnD.Tk):
             self.quit()
             self.destroy() # Ensure window closes fully
 
-    def format_text_with_line_numbers(self, text):
-        """
-        Format text with line numbers for chunking.
-
-        Args:
-            text (str): The text to format with line numbers
-
-        Returns:
-            tuple: (formatted_text, line_map) where formatted_text has line numbers and
-                  line_map is a dict mapping line numbers to original text lines
-        """
-        if not text or not isinstance(text, str) or not text.strip():
-            return "", {}
-
-        lines = text.strip().split('\n')
-        line_map = {}
-        formatted_lines = []
-
-        for i, line in enumerate(lines, 1):
-            line_map[i] = line
-            formatted_lines.append(f"{i}: {line}")
-
-        formatted_text = '\n'.join(formatted_lines)
-        return formatted_text, line_map
-
-    def insert_separators_by_line_numbers(self, original_text, line_numbers_response, line_map):
-        """
-        Insert document separators based on line numbers from the API response.
-
-        Args:
-            original_text (str): The original text without line numbers
-            line_numbers_response (str): The API response containing line numbers where separators should be inserted
-            line_map (dict): Dictionary mapping line numbers to original text lines
-
-        Returns:
-            str: Text with document separators inserted
-        """
-        try:
-            # Extract line numbers from the response
-            # The response should ideally be just the line numbers, e.g. "4;15;27"
-            # or potentially have some validation text like "Line numbers: 4;15;27"
-
-            line_numbers_str = line_numbers_response.strip()
-
-            # Try to isolate the number string if there's a prefix
-            if ':' in line_numbers_str:
-                 # Take the part after the last colon
-                 parts = line_numbers_str.rsplit(':', 1)
-                 if len(parts) > 1:
-                     line_numbers_str = parts[1].strip()
-
-            # Remove any remaining non-numeric/non-delimiter characters (except spaces for splitting)
-            # Allow digits, semicolons, commas, and spaces
-            cleaned_numbers_str = re.sub(r'[^\d;, ]', '', line_numbers_str)
-
-            # Split by common delimiters (semicolon, comma, space)
-            number_strings = re.split(r'[;, ]+', cleaned_numbers_str)
-
-            line_numbers = []
-            for num_str in number_strings:
-                num_str_clean = num_str.strip()
-                if num_str_clean.isdigit(): # Ensure it's purely digits
-                    try:
-                        num = int(num_str_clean)
-                        # Ensure line number is valid within the map
-                        if num in line_map:
-                            line_numbers.append(num)
-                        else:
-                            pass
-
-                    except ValueError:
-                        # This shouldn't happen after isdigit check
-                        self.error_logging(f"Skipping non-integer value: '{num_str_clean}'", level="WARNING")
-                        continue
-                elif num_str_clean: # Log if non-empty but not digits
-                     self.error_logging(f"Skipping non-digit value: '{num_str_clean}'", level="WARNING")
-
-
-            # Sort line numbers for consistent processing
-            line_numbers = sorted(list(set(line_numbers))) # Ensure uniqueness and sort
-
-            if not line_numbers:
-                self.error_logging(f"No valid line numbers found in response: {line_numbers_response}", level="WARNING")
-                return original_text # Return original text if no valid numbers found
-
-            # Insert separators
-            lines = original_text.split('\n')
-            result_lines = []
-            inserted_count = 0
-
-            # Iterate through the original lines by their original index (1-based)
-            for i, line in enumerate(lines, 1):
-                 # Insert separator *before* the line number specified by the AI
-                 if i in line_numbers:
-                     # Avoid inserting multiple separators if numbers are consecutive
-                     # Or if the previous line was already a separator
-                     if not result_lines or result_lines[-1] != "*****":
-                         result_lines.append("*****")
-                         inserted_count += 1
-                 result_lines.append(line)
-
-            return '\n'.join(result_lines)
-
-        except Exception as e:
-            self.error_logging(f"Error inserting separators: {str(e)}")
-            return original_text # Return original text on error
-
 # GUI Actions / Toggles
 
+    def toggle_button_state(self):
+
+        if self.button1['state'] == "normal" and self.button2['state'] == "normal" and self.button4['state'] == "normal" and self.button5['state'] == "normal":
+            self.button1.config(state="disabled")
+            self.button2.config(state="disabled")
+            self.button4.config(state="disabled")
+            self.button5.config(state="disabled")
+
+        else:
+            self.button1.config(state="normal")
+            self.button2.config(state="normal")
+            self.button4.config(state="normal")
+            self.button5.config(state="normal")
+
+    def toggle_text(self):
+        if self.main_df.empty or self.page_counter >= len(self.main_df):
+            return
+
+        # Get current state before toggling
+        index = self.page_counter
+        row_data = self.main_df.loc[index]
+        current_toggle = row_data.get('Text_Toggle', "None")
+
+        # Only save changes if we're not in "None" mode
+        if current_toggle != "None":
+            # Get the current text from the text widget
+            text = self.data_operations.clean_text(self.text_display.get("1.0", tk.END))
+
+            # Save the text to the appropriate column based on CURRENT display type
+            if current_toggle in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
+                self.main_df.loc[index, current_toggle] = text
+
+        # Determine available text types
+        has_separated = pd.notna(row_data.get('Separated_Text')) and row_data.get('Separated_Text', "").strip()
+        has_translation = pd.notna(row_data.get('Translation')) and row_data.get('Translation', "").strip()
+        has_formatted = pd.notna(row_data.get('Formatted_Text')) and row_data.get('Formatted_Text', "").strip()
+        has_corrected = pd.notna(row_data.get('Corrected_Text')) and row_data.get('Corrected_Text', "").strip()
+        has_original = pd.notna(row_data.get('Original_Text')) and row_data.get('Original_Text', "").strip()
+
+        # Define the toggle order
+        toggle_order = ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]
+        available_toggles = [t for t in toggle_order if locals()[f'has_{t.split("_")[0].lower()}']]
+
+        if not available_toggles: # If no text available at all
+             self.main_df.loc[index, 'Text_Toggle'] = "None"
+             self.load_text()
+             return
+
+        # Find the index of the current toggle in the available list
+        try:
+            current_idx = available_toggles.index(current_toggle)
+        except ValueError:
+            # If current toggle isn't available (e.g., was deleted), start from the first available
+            current_idx = -1
+
+        # Calculate the next index, wrapping around
+        next_idx = (current_idx + 1) % len(available_toggles)
+        next_toggle = available_toggles[next_idx]
+
+        self.main_df.loc[index, 'Text_Toggle'] = next_toggle
+        self.load_text()
+
+        # Apply highlighting based on toggle states without mutual exclusivity
+
+        # Apply highlighting
+        self.highlight_handler.highlight_text() # <-- Use handler
+
+        # Update menu item states
+        self.update_highlight_menu_states()
+
+    def toggle_relevance_display(self, event=None):
+         """Toggle the visibility of the entire relevance section (dropdown and buttons)"""
+         self.show_relevance.set(not self.show_relevance.get())
+         self.toggle_relevance_visibility() # This now handles dropdown and buttons together
+
+    def toggle_nav_display(self, event=None):
+        """Toggle the visibility of the document navigation controls"""
+        self.show_page_nav.set(not self.show_page_nav.get())
+        self.toggle_page_nav_visibility()
+
+    def toggle_highlight_options(self):
+        """Update highlight display based on toggle states without mutual exclusivity"""
+
+        # Apply highlighting
+        self.highlight_handler.highlight_text() # <-- Use handler
+
+        # Update menu item states
+        self.update_highlight_menu_states()
+
+    def toggle_relevance_visibility(self):
+        """Toggles the visibility of the relevance dropdown, label, AND navigation buttons."""
+        if self.show_relevance.get():
+            # Show relevance elements
+            self.relevance_label.pack(side="left", padx=2)
+            self.relevance_dropdown.pack(side="left", padx=2)
+            # Show navigation buttons directly
+            self.relevant_back_button.pack(side="left", padx=(5, 2))
+            self.relevant_forward_button.pack(side="left", padx=2)
+        else:
+            # Hide relevance elements
+            self.relevance_label.pack_forget()
+            self.relevance_dropdown.pack_forget()
+            # Hide navigation buttons directly
+            self.relevant_back_button.pack_forget()
+            self.relevant_forward_button.pack_forget()
+
+    def toggle_page_nav_visibility(self):
+        """Toggles the visibility of the document page navigation controls."""
+        if self.show_page_nav.get():
+            self.doc_page_label.pack(side="left", padx=(5, 2))
+            self.doc_button1.pack(side="left", padx=2)
+            self.doc_button2.pack(side="left", padx=2)
+            self.doc_page_counter_label.pack(side="left", padx=2)
+            self.doc_button4.pack(side="left", padx=2)
+            self.doc_button5.pack(side="left", padx=2)
+        else:
+            self.doc_page_label.pack_forget()
+            self.doc_button1.pack_forget()
+            self.doc_button2.pack_forget()
+            self.doc_page_counter_label.pack_forget()
+            self.doc_button4.pack_forget()
+            self.doc_button5.pack_forget()
+
+# Update Functions
     def refresh_display(self):
         """Refresh the current image and text display, handling single and multi-image paths."""
         if self.main_df.empty:
@@ -2239,129 +2126,6 @@ class App(TkinterDnD.Tk):
         # Apply highlighting based on current settings - called within load_text
         # self.highlight_text()
 
-    def toggle_button_state(self):
-
-        if self.button1['state'] == "normal" and self.button2['state'] == "normal" and self.button4['state'] == "normal" and self.button5['state'] == "normal":
-            self.button1.config(state="disabled")
-            self.button2.config(state="disabled")
-            self.button4.config(state="disabled")
-            self.button5.config(state="disabled")
-
-        else:
-            self.button1.config(state="normal")
-            self.button2.config(state="normal")
-            self.button4.config(state="normal")
-            self.button5.config(state="normal")
-
-    def toggle_text(self):
-        if self.main_df.empty or self.page_counter >= len(self.main_df):
-            return
-
-        # Get current state before toggling
-        index = self.page_counter
-        row_data = self.main_df.loc[index]
-        current_toggle = row_data.get('Text_Toggle', "None")
-
-        # Only save changes if we're not in "None" mode
-        if current_toggle != "None":
-            # Get the current text from the text widget
-            text = self.clean_text(self.text_display.get("1.0", tk.END))
-
-            # Save the text to the appropriate column based on CURRENT display type
-            if current_toggle in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
-                self.main_df.loc[index, current_toggle] = text
-
-        # Determine available text types
-        has_separated = pd.notna(row_data.get('Separated_Text')) and row_data.get('Separated_Text', "").strip()
-        has_translation = pd.notna(row_data.get('Translation')) and row_data.get('Translation', "").strip()
-        has_formatted = pd.notna(row_data.get('Formatted_Text')) and row_data.get('Formatted_Text', "").strip()
-        has_corrected = pd.notna(row_data.get('Corrected_Text')) and row_data.get('Corrected_Text', "").strip()
-        has_original = pd.notna(row_data.get('Original_Text')) and row_data.get('Original_Text', "").strip()
-
-        # Define the toggle order
-        toggle_order = ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]
-        available_toggles = [t for t in toggle_order if locals()[f'has_{t.split("_")[0].lower()}']]
-
-        if not available_toggles: # If no text available at all
-             self.main_df.loc[index, 'Text_Toggle'] = "None"
-             self.load_text()
-             return
-
-        # Find the index of the current toggle in the available list
-        try:
-            current_idx = available_toggles.index(current_toggle)
-        except ValueError:
-            # If current toggle isn't available (e.g., was deleted), start from the first available
-            current_idx = -1
-
-        # Calculate the next index, wrapping around
-        next_idx = (current_idx + 1) % len(available_toggles)
-        next_toggle = available_toggles[next_idx]
-
-        self.main_df.loc[index, 'Text_Toggle'] = next_toggle
-        self.load_text()
-
-        # Apply highlighting based on toggle states without mutual exclusivity
-
-        # Apply highlighting
-        self.highlight_handler.highlight_text() # <-- Use handler
-
-        # Update menu item states
-        self.update_highlight_menu_states()
-
-    def toggle_relevance_display(self, event=None):
-         """Toggle the visibility of the entire relevance section (dropdown and buttons)"""
-         self.show_relevance.set(not self.show_relevance.get())
-         self.toggle_relevance_visibility() # This now handles dropdown and buttons together
-
-    def toggle_nav_display(self, event=None):
-        """Toggle the visibility of the document navigation controls"""
-        self.show_page_nav.set(not self.show_page_nav.get())
-        self.toggle_page_nav_visibility()
-
-    def toggle_highlight_options(self):
-        """Update highlight display based on toggle states without mutual exclusivity"""
-
-        # Apply highlighting
-        self.highlight_handler.highlight_text() # <-- Use handler
-
-        # Update menu item states
-        self.update_highlight_menu_states()
-
-    def toggle_relevance_visibility(self):
-        """Toggles the visibility of the relevance dropdown, label, AND navigation buttons."""
-        if self.show_relevance.get():
-            # Show relevance elements
-            self.relevance_label.pack(side="left", padx=2)
-            self.relevance_dropdown.pack(side="left", padx=2)
-            # Show navigation buttons directly
-            self.relevant_back_button.pack(side="left", padx=(5, 2))
-            self.relevant_forward_button.pack(side="left", padx=2)
-        else:
-            # Hide relevance elements
-            self.relevance_label.pack_forget()
-            self.relevance_dropdown.pack_forget()
-            # Hide navigation buttons directly
-            self.relevant_back_button.pack_forget()
-            self.relevant_forward_button.pack_forget()
-
-    def toggle_page_nav_visibility(self):
-        """Toggles the visibility of the document page navigation controls."""
-        if self.show_page_nav.get():
-            self.doc_page_label.pack(side="left", padx=(5, 2))
-            self.doc_button1.pack(side="left", padx=2)
-            self.doc_button2.pack(side="left", padx=2)
-            self.doc_page_counter_label.pack(side="left", padx=2)
-            self.doc_button4.pack(side="left", padx=2)
-            self.doc_button5.pack(side="left", padx=2)
-        else:
-            self.doc_page_label.pack_forget()
-            self.doc_button1.pack_forget()
-            self.doc_button2.pack_forget()
-            self.doc_page_counter_label.pack_forget()
-            self.doc_button4.pack_forget()
-            self.doc_button5.pack_forget()
-
     def update_highlight_menu_states(self):
         """Enable or disable highlight menu items based on data availability"""
         if self.main_df.empty or self.page_counter < 0 or self.page_counter >= len(self.main_df):
@@ -2439,11 +2203,6 @@ class App(TkinterDnD.Tk):
         self.process_menu.entryconfig("Apply Document Separation", state="normal")
 
 # GUI and DF Update Functions
-
-    def update_df(self):
-        """Explicitly save the currently displayed text to the correct DF column."""
-        # Delegate to DataOperations
-        self.data_operations.update_df()
 
     def update_image_rotation(self, index, response):
         if self.main_df.empty or index >= len(self.main_df):
@@ -2752,7 +2511,7 @@ class App(TkinterDnD.Tk):
             # Check if any pages have no recognized text (using find_right_text as a proxy)
             unrecognized_pages = []
             for index in self.main_df.index:
-                 text = self.find_right_text(index)
+                 text = self.data_operations.find_right_text(index)
                  if not text.strip():
                       unrecognized_pages.append(index + 1) # Store 1-based page number
 
@@ -2807,4 +2566,5 @@ if __name__ == "__main__":
                 app.quit()
                 app.destroy()
         except Exception as destroy_e:
+            print(f"Failed to destroy app window: {destroy_e}")
             print(f"Failed to destroy app window: {destroy_e}")

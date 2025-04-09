@@ -25,6 +25,84 @@ class DataOperations:
         """
         self.app = app_instance
 
+    def clean_text(self, text):
+        """Clean text by replacing curly braces with parentheses and handling special cases"""
+        if not isinstance(text, str):
+            return text
+
+        # Dictionary of replacements (add more variations as needed)
+        replacements = {
+            '{': '(',
+            '}': ')',
+            '﹛': '(',  # Alternative left curly bracket
+            '﹜': ')',  # Alternative right curly bracket
+            '｛': '(',  # Fullwidth left curly bracket
+            '｝': ')',  # Fullwidth right curly bracket
+            '❴': '(',  # Ornate left curly bracket
+            '❵': ')',  # Ornate right curly bracket
+            '⟨': '(',  # Mathematical left angle bracket
+            '⟩': ')',  # Mathematical right angle bracket
+            '『': '(',  # White corner bracket
+            '』': ')',  # White corner bracket
+            '〔': '(',  # Tortoise shell bracket
+            '〕': ')',  # Tortoise shell bracket
+        }
+
+        # Replace all instances of special brackets with regular parentheses
+        for old, new in replacements.items():
+            text = text.replace(old, new)
+
+        # Added: remove trailing newlines/whitespace
+        return text.rstrip()
+
+    def find_right_text(self, index_no):
+        """ Finds the most relevant text for a given index, prioritizing specific columns. """
+        if self.app.main_df.empty or index_no >= len(self.app.main_df):
+            return ""
+
+        row = self.app.main_df.loc[index_no]
+
+        # Prioritize based on Text_Toggle first
+        text_toggle = row.get('Text_Toggle', 'None')
+        if text_toggle != 'None' and text_toggle in row and pd.notna(row[text_toggle]) and row[text_toggle].strip():
+             return row[text_toggle]
+
+        # Fallback priority if Text_Toggle is None or its content is empty
+        priority_order = ['Separated_Text', 'Translation', 'Formatted_Text', 'Corrected_Text', 'Original_Text']
+        for col in priority_order:
+            if col in row and pd.notna(row[col]) and row[col].strip():
+                return row[col]
+
+        return "" # Return empty string if no text is found
+
+    def find_chunk_text(self, index_no):
+        """
+        Special version of find_right_text specifically for Chunk_Text operations.
+        Prioritizes Corrected_Text -> Original_Text, never uses Translation.
+        Returns a tuple of (text_to_use, has_translation) where has_translation is a boolean.
+        """
+        if self.app.main_df.empty or index_no >= len(self.app.main_df):
+            return "", False
+
+        row = self.app.main_df.loc[index_no]
+
+        Corrected_Text = row.get('Corrected_Text', "") if pd.notna(row.get('Corrected_Text')) else ""
+        original_text = row.get('Original_Text', "") if pd.notna(row.get('Original_Text')) else ""
+        translation = row.get('Translation', "") if pd.notna(row.get('Translation')) else ""
+
+        # Check if translation exists and is non-empty
+        has_translation = bool(translation.strip())
+
+        # First try Corrected_Text
+        if Corrected_Text.strip():
+            return Corrected_Text, has_translation
+        # Then try Original_Text
+        elif original_text.strip():
+            return original_text, has_translation
+        # If neither is available, return empty string
+        else:
+            return "", has_translation
+
     def initialize_main_df(self):
         """Initialize the main DataFrame with appropriate columns and data types"""
         # Define base columns - include all potentially used columns
@@ -125,7 +203,7 @@ class DataOperations:
                 return
 
             # Clean the response text
-            cleaned_response = self.app.clean_text(str(response)) # Ensure it's a string
+            cleaned_response = self.clean_text(str(response)) # Ensure it's a string
 
             # Update based on job type
             target_column = None
@@ -219,7 +297,7 @@ class DataOperations:
             current_display = self.app.text_display_var.get()
             if current_display != "None":
                 # Access text_display via self.app
-                text = self.app.clean_text(self.app.text_display.get("1.0", END))
+                text = self.clean_text(self.app.text_display.get("1.0", END))
                 if current_display in ["Original_Text", "Corrected_Text", "Formatted_Text", "Translation", "Separated_Text"]:
                     self.app.main_df.loc[self.app.page_counter, current_display] = text
 
@@ -280,7 +358,7 @@ class DataOperations:
             if current_page_active_col in self.app.main_df.columns: # Ensure column exists
                 modified_df_content = self.app.main_df.loc[self.app.page_counter, current_page_active_col]
                 # Compare cleaned versions to avoid issues with trailing newlines
-                if self.app.clean_text(modified_df_content) != self.app.clean_text(current_text_widget_content):
+                if self.clean_text(modified_df_content) != self.clean_text(current_text_widget_content):
                     self.app.load_text() # Reload text only if current page changed
                     self.app.counter_update()
             else: # If active column somehow doesn't exist, still try to load

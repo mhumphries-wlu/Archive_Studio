@@ -858,7 +858,7 @@ class AIFunctionsHandler:
             missing_names = []
             missing_places = []
             if unique_names:
-                 names_dict = self.app.parse_collation_response(self.collated_names_raw)
+                 names_dict = self.app.names_places_handler.parse_collation_response(self.collated_names_raw)
                  output_name_variants = set(var for sublist in names_dict.values() for var in sublist)
                  output_name_variants.update(names_dict.keys())
                  missing_names = [name for name in unique_names if name not in output_name_variants]
@@ -866,7 +866,7 @@ class AIFunctionsHandler:
                      self.app.error_logging(f"Warning: {len(missing_names)} names might be missing from collation output (e.g., {missing_names[:5]})", level="WARNING")
 
             if unique_places:
-                 places_dict = self.app.parse_collation_response(self.collated_places_raw)
+                 places_dict = self.app.names_places_handler.parse_collation_response(self.collated_places_raw)
                  output_place_variants = set(var for sublist in places_dict.values() for var in sublist)
                  output_place_variants.update(places_dict.keys())
                  missing_places = [place for place in unique_places if place not in output_place_variants]
@@ -940,7 +940,9 @@ class AIFunctionsHandler:
                          continue
 
                      # Format text with line numbers and store the mapping
-                     formatted_text, line_map = self.app.format_text_with_line_numbers(text_to_process)
+                     # Import the function from SeparateDocuments instead of using app instance method
+                     from util.SeparateDocuments import format_text_with_line_numbers
+                     formatted_text, line_map = format_text_with_line_numbers(text_to_process)
                      original_texts_and_maps[index] = (text_to_process, line_map)
 
                      # Get images (if needed by the preset)
@@ -995,8 +997,14 @@ class AIFunctionsHandler:
                             # Process the line number response to add separators
                             if index in original_texts_and_maps:
                                 original_text, line_map = original_texts_and_maps[index]
-                                # Use the original text to insert separators, not the formatted one
-                                separated_text = self.app.insert_separators_by_line_numbers(original_text, response, line_map)
+                                # Use the function from SeparateDocuments instead of app instance method
+                                from util.SeparateDocuments import insert_separators_by_line_numbers
+                                separated_text = insert_separators_by_line_numbers(
+                                    original_text, 
+                                    response, 
+                                    line_map, 
+                                    error_logging_func=self.app.error_logging
+                                )
                                 # Update the DataFrame using the dedicated method
                                 self.update_df_with_chunk_result(index, separated_text, selected_text_source)
                             else:
@@ -1080,7 +1088,9 @@ class AIFunctionsHandler:
                     text_to_process = row_data['Translation']
 
                     # Format text with line numbers and store the mapping
-                    formatted_text, line_map = self.app.format_text_with_line_numbers(text_to_process)
+                    # Import the function from SeparateDocuments instead of using app instance method
+                    from util.SeparateDocuments import format_text_with_line_numbers
+                    formatted_text, line_map = format_text_with_line_numbers(text_to_process)
                     original_translations_and_maps[index] = (text_to_process, line_map)
 
                     # Get images (if needed by the preset)
@@ -1135,8 +1145,14 @@ class AIFunctionsHandler:
                             # Process the line number response and update the Translation field
                             if index in original_translations_and_maps:
                                 original_text, line_map = original_translations_and_maps[index]
-                                separated_text = self.app.insert_separators_by_line_numbers(original_text, response, line_map)
-
+                                # Use the function from SeparateDocuments instead of app instance method
+                                from util.SeparateDocuments import insert_separators_by_line_numbers
+                                separated_text = insert_separators_by_line_numbers(
+                                    original_text, 
+                                    response, 
+                                    line_map, 
+                                    error_logging_func=self.app.error_logging
+                                )
                                 # Update the Translation field directly in the DataFrame
                                 self.app.main_df.loc[index, 'Translation'] = separated_text
                                 self.app.error_logging(f"Updated Translation for index {index} with separators.", level="DEBUG")

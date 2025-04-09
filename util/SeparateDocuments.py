@@ -8,6 +8,119 @@ import pandas as pd
 import tkinter as tk
 from tkinter import messagebox
 from pathlib import Path
+import re
+
+def format_text_with_line_numbers(text):
+    """
+    Format text with line numbers for chunking.
+
+    Args:
+        text (str): The text to format with line numbers
+
+    Returns:
+        tuple: (formatted_text, line_map) where formatted_text has line numbers and
+              line_map is a dict mapping line numbers to original text lines
+    """
+    if not text or not isinstance(text, str) or not text.strip():
+        return "", {}
+
+    lines = text.strip().split('\n')
+    line_map = {}
+    formatted_lines = []
+
+    for i, line in enumerate(lines, 1):
+        line_map[i] = line
+        formatted_lines.append(f"{i}: {line}")
+
+    formatted_text = '\n'.join(formatted_lines)
+    return formatted_text, line_map
+
+def insert_separators_by_line_numbers(original_text, line_numbers_response, line_map, error_logging_func=None):
+    """
+    Insert document separators based on line numbers from the API response.
+
+    Args:
+        original_text (str): The original text without line numbers
+        line_numbers_response (str): The API response containing line numbers where separators should be inserted
+        line_map (dict): Dictionary mapping line numbers to original text lines
+        error_logging_func (callable, optional): Function to use for error logging
+
+    Returns:
+        str: Text with document separators inserted
+    """
+    try:
+        # Extract line numbers from the response
+        # The response should ideally be just the line numbers, e.g. "4;15;27"
+        # or potentially have some validation text like "Line numbers: 4;15;27"
+
+        line_numbers_str = line_numbers_response.strip()
+
+        # Try to isolate the number string if there's a prefix
+        if ':' in line_numbers_str:
+             # Take the part after the last colon
+             parts = line_numbers_str.rsplit(':', 1)
+             if len(parts) > 1:
+                 line_numbers_str = parts[1].strip()
+
+        # Remove any remaining non-numeric/non-delimiter characters (except spaces for splitting)
+        # Allow digits, semicolons, commas, and spaces
+        cleaned_numbers_str = re.sub(r'[^\d;, ]', '', line_numbers_str)
+
+        # Split by common delimiters (semicolon, comma, space)
+        number_strings = re.split(r'[;, ]+', cleaned_numbers_str)
+
+        line_numbers = []
+        for num_str in number_strings:
+            num_str_clean = num_str.strip()
+            if num_str_clean.isdigit(): # Ensure it's purely digits
+                try:
+                    num = int(num_str_clean)
+                    # Ensure line number is valid within the map
+                    if num in line_map:
+                        line_numbers.append(num)
+                    else:
+                        pass
+
+                except ValueError:
+                    # This shouldn't happen after isdigit check
+                    if error_logging_func:
+                        error_logging_func(f"Skipping non-integer value: '{num_str_clean}'", level="WARNING")
+                    continue
+            elif num_str_clean: # Log if non-empty but not digits
+                 if error_logging_func:
+                     error_logging_func(f"Skipping non-digit value: '{num_str_clean}'", level="WARNING")
+
+
+        # Sort line numbers for consistent processing
+        line_numbers = sorted(list(set(line_numbers))) # Ensure uniqueness and sort
+
+        if not line_numbers:
+            if error_logging_func:
+                error_logging_func(f"No valid line numbers found in response: {line_numbers_response}", level="WARNING")
+            return original_text # Return original text if no valid numbers found
+
+        # Insert separators
+        lines = original_text.split('\n')
+        result_lines = []
+        inserted_count = 0
+
+        # Iterate through the original lines by their original index (1-based)
+        for i, line in enumerate(lines, 1):
+             # Insert separator *before* the line number specified by the AI
+             if i in line_numbers:
+                 # Avoid inserting multiple separators if numbers are consecutive
+                 # Or if the previous line was already a separator
+                 if not result_lines or result_lines[-1] != "*****":
+                     result_lines.append("*****")
+                     inserted_count += 1
+             result_lines.append(line)
+
+        return '\n'.join(result_lines)
+
+    except Exception as e:
+        if error_logging_func:
+            error_logging_func(f"Error inserting separators: {str(e)}")
+        return original_text # Return original text on error
 
 def apply_document_separation(app):
     """
