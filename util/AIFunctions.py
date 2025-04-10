@@ -54,7 +54,7 @@ class AIFunctionsHandler:
         except Exception as e:
             self.app.error_logging(f"API Error during processing for index {index}, job {ai_job}", f"{e}", level="ERROR")
             # Optionally print traceback for detailed debugging
-            traceback.print_exc()
+            # REMOVED traceback.print_exc()
             return "Error", index
 
     def ai_function(self, all_or_one_flag="All Pages", ai_job="HTR", batch_size=None, selected_metadata_preset=None, export_text_source=None):
@@ -390,7 +390,7 @@ class AIFunctionsHandler:
                              source_col_used = 'Original_Text'
                         text_to_process = row_data.get(source_col_used, "") if source_col_used else ""
                     elif ai_job == "Get_Names_and_Places":
-                        text_to_process = self.app.find_right_text(index) # Use best available text
+                        text_to_process = self.app.data_operations.find_right_text(index) # Use best available text
                         source_col_used = "Best Available" # Indicate how source was chosen
 
                     # Ensure text is string and not NaN
@@ -406,8 +406,8 @@ class AIFunctionsHandler:
                         continue
 
                     # Print the prompt
-                    print(f"System Prompt: {job_params['system_prompt']}")
-                    print(f"User Prompt: {job_params['user_prompt']}")
+                    # REMOVED print(f"System Prompt: {job_params['system_prompt']}")
+                    # REMOVED print(f"User Prompt: {job_params['user_prompt']}")
 
                     # Submit the API request
                     future = executor.submit(
@@ -434,7 +434,7 @@ class AIFunctionsHandler:
                     try:
                         response, idx_confirm = future.result() # Get result
                         
-                        print(f"Response: {response}")
+                        # REMOVED print(f"Response: {response}")
                         
                         if idx_confirm != index:
                             self.app.error_logging(f"Index mismatch! Future for {index}, result for {idx_confirm}", level="ERROR")
@@ -468,7 +468,7 @@ class AIFunctionsHandler:
                     except Exception as e:
                          error_count += 1
                          self.app.error_logging(f"Error processing future result for index {index}, job {ai_job}: {str(e)}", level="ERROR")
-                         traceback.print_exc() # Log detailed traceback
+                         # REMOVED traceback.print_exc() # Log detailed traceback
 
                          # Update progress even on error
                          if index not in processed_indices:
@@ -479,7 +479,7 @@ class AIFunctionsHandler:
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred in ai_function orchestration: {str(e)}")
             self.app.error_logging(f"Error in ai_function orchestration for job {ai_job}: {str(e)}", level="ERROR")
-            traceback.print_exc()
+            # REMOVED traceback.print_exc()
 
 
         finally:
@@ -659,7 +659,7 @@ class AIFunctionsHandler:
 
         except Exception as e:
              self.app.error_logging(f"Error setting up job parameters for {ai_job}: {str(e)}", level="ERROR")
-             traceback.print_exc()
+             # REMOVED traceback.print_exc()
              return params # Return defaults on error
 
     def get_images_for_job(self, ai_job, index, row_data, job_params):
@@ -719,7 +719,7 @@ class AIFunctionsHandler:
 
         except Exception as e:
             self.app.error_logging(f"Critical error in get_images_for_job at index {index}: {str(e)}", level="ERROR")
-            traceback.print_exc()
+            # REMOVED traceback.print_exc()
             return []  # Return empty list as safe fallback
 
     def collate_names_and_places(self):
@@ -876,7 +876,7 @@ class AIFunctionsHandler:
 
         except Exception as e:
             self.app.error_logging(f"Critical error in collate_names_and_places: {str(e)}", level="ERROR")
-            traceback.print_exc()
+            # REMOVED traceback.print_exc()
             messagebox.showerror("Error",
                 "An error occurred while collating names and places. Check the error log for details.")
             # Ensure defaults are set
@@ -1013,7 +1013,7 @@ class AIFunctionsHandler:
                     except Exception as e:
                         error_count += 1
                         self.app.error_logging(f"Error processing chunking future result for index {index}: {str(e)}", level="ERROR")
-                        traceback.print_exc()
+                        # REMOVED traceback.print_exc() # Log detailed traceback
                         # Update progress even on error
                         if index not in processed_indices:
                             processed_indices.add(index)
@@ -1029,7 +1029,7 @@ class AIFunctionsHandler:
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred in process_chunk_text: {str(e)}")
             self.app.error_logging(f"Error in process_chunk_text: {str(e)}", level="ERROR")
-            traceback.print_exc()
+            # REMOVED traceback.print_exc()
 
         finally:
             # Close progress window
@@ -1166,7 +1166,7 @@ class AIFunctionsHandler:
                     except Exception as e:
                         error_count += 1
                         self.app.error_logging(f"Error processing translation chunking future result for index {index}: {str(e)}", level="ERROR")
-                        traceback.print_exc()
+                        # REMOVED traceback.print_exc()
                          # Update progress even on error
                         if index not in processed_indices:
                             processed_indices.add(index)
@@ -1181,7 +1181,7 @@ class AIFunctionsHandler:
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred in process_translation_chunks: {str(e)}")
             self.app.error_logging(f"Error in process_translation_chunks: {str(e)}", level="ERROR")
-            traceback.print_exc()
+            # REMOVED traceback.print_exc()
 
         finally:
             # Close progress window if it exists
@@ -1325,7 +1325,7 @@ class AIFunctionsHandler:
 
         except Exception as e:
             self.app.error_logging(f"Error extracting metadata for index {index}: {str(e)}", level="ERROR")
-            traceback.print_exc()
+            # REMOVED traceback.print_exc()
             return False
 
     def process_ai_with_selected_source(self, all_or_one_flag, ai_job):
@@ -1361,7 +1361,7 @@ class AIFunctionsHandler:
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred preparing AI processing: {str(e)}")
             self.app.error_logging(f"Error in process_ai_with_selected_source: {str(e)}", level="ERROR")
-            traceback.print_exc()
+            # REMOVED traceback.print_exc()
             # Clean up temp vars if ai_function wasn't called or errored immediately
             if hasattr(self, 'temp_selected_source'): delattr(self, 'temp_selected_source')
             if hasattr(self, 'temp_format_preset'): delattr(self, 'temp_format_preset')
@@ -1397,7 +1397,7 @@ class AIFunctionsHandler:
 
         except Exception as e:
             self.app.error_logging(f"Error updating DataFrame with chunk result for index {index}: {str(e)}", level="ERROR")
-            traceback.print_exc()
+            # REMOVED traceback.print_exc()
 
     def process_relevance_search(self, criteria_text, selected_source, mode):
         """Process the relevance search using AI and update the DataFrame"""
@@ -1542,7 +1542,7 @@ class AIFunctionsHandler:
 
                     except Exception as e:
                         self.app.error_logging(f"Error processing relevance for index {index}: {str(e)}", level="ERROR")
-                        traceback.print_exc()
+                        # REMOVED traceback.print_exc()
                         error_count += 1
                         self.app.main_df.at[index, 'Relevance'] = "Error" # Mark as error
                          # Update progress even on error
@@ -1570,7 +1570,7 @@ class AIFunctionsHandler:
 
         except Exception as e:
             self.app.error_logging(f"Error in process_relevance_search: {str(e)}", level="ERROR")
-            traceback.print_exc()
+            # REMOVED traceback.print_exc()
             messagebox.showerror("Error", f"An error occurred during relevance analysis: {str(e)}")
 
         finally:

@@ -246,3 +246,921 @@ Traceback (most recent call last):
     key=natural_sort_key # Sort naturally
         ^^^^^^^^^^^^^^^^
 NameError: name 'natural_sort_key' is not defined
+2025-04-09 22:17:14 [ERROR]: Error in ai_function orchestration for job Get_Names_and_Places: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\AIFunctions.py", line 393, in ai_function
+    text_to_process = self.app.data_operations.find_right_text(index) # Use best available text
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:18:10 [ERROR]: Error checking for document separators: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\SeparateDocuments.py", line 146, in apply_document_separation
+    text = app.find_right_text(index)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:22:17 [ERROR]: Error in compile_documents: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\CompileDocuments.py", line 134, in compile_documents
+    text_content = self.parent.find_right_text(index).strip()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:22:17 [ERROR]: Error applying document separation: No documents were found after separation. Check that your separators are correct.
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\SeparateDocuments.py", line 189, in apply_document_separation
+    raise Exception("No documents were found after separation. Check that your separators are correct.")
+Exception: No documents were found after separation. Check that your separators are correct.
+2025-04-09 22:24:23 [ERROR]: Critical error in get_images_for_job at index 0: _path_exists: path should be string, bytes, os.PathLike or integer, not list
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\AIFunctions.py", line 683, in get_images_for_job
+    if not current_image_abs or not os.path.exists(current_image_abs):
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: _path_exists: path should be string, bytes, os.PathLike or integer, not list
+2025-04-09 22:32:13 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-09 22:32:17 [ERROR]: Starting CSV export process
+2025-04-09 22:32:17 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-09 22:32:17 [ERROR]: Added missing column: Place_of_Creation
+2025-04-09 22:32:17 [ERROR]: Added missing column: Text
+2025-04-09 22:32:17 [ERROR]: Using resolved text source column: Original_Text
+2025-04-09 22:32:23 [ERROR]: Using metadata headers from preset 'damn it': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-09 22:32:23 [ERROR]: Added essential column: Creation_Place
+2025-04-09 22:32:23 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-09 22:32:23 [ERROR]: Copied 14 values for column: Document_Type
+2025-04-09 22:32:23 [ERROR]: Copied 14 values for column: Author
+2025-04-09 22:32:23 [ERROR]: Copied 14 values for column: Correspondent
+2025-04-09 22:32:23 [ERROR]: Copied 14 values for column: Correspondent_Place
+2025-04-09 22:32:23 [ERROR]: Copied 14 values for column: Date
+2025-04-09 22:32:23 [ERROR]: Copied 14 values for column: Place_of_Creation
+2025-04-09 22:32:23 [ERROR]: Copied 14 values for column: People
+2025-04-09 22:32:23 [ERROR]: Copied 14 values for column: Places
+2025-04-09 22:32:23 [ERROR]: Copied 14 values for column: Summary
+2025-04-09 22:32:23 [ERROR]: Copied 14 values for column: Creation_Place
+2025-04-09 22:32:23 [ERROR]: Starting date and place analysis sequence using preset: Sequence_Dates
+2025-04-09 22:32:23 [ERROR]: Using required headers from sequential preset: ['Date', 'Place']
+2025-04-09 22:32:23 [ERROR]: Clearing existing values for fresh date analysis
+2025-04-09 22:32:23 [ERROR]: Error getting text for date analysis at idx 0: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:32:23 [ERROR]: Error getting text for date analysis at idx 1: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:32:23 [ERROR]: Error getting text for date analysis at idx 2: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:32:23 [ERROR]: Error getting text for date analysis at idx 3: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:32:23 [ERROR]: Error getting text for date analysis at idx 4: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:32:23 [ERROR]: Error getting text for date analysis at idx 5: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:32:23 [ERROR]: Error getting text for date analysis at idx 6: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:32:23 [ERROR]: Error getting text for date analysis at idx 7: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:32:23 [ERROR]: Error getting text for date analysis at idx 8: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:32:23 [ERROR]: Error getting text for date analysis at idx 9: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:32:23 [ERROR]: Error getting text for date analysis at idx 10: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:32:23 [ERROR]: Error getting text for date analysis at idx 11: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:32:23 [ERROR]: Error getting text for date analysis at idx 12: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:32:23 [ERROR]: Error getting text for date analysis at idx 13: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:32:23 [ERROR]: Copied existing Date values from compiled_df to date_df
+2025-04-09 22:32:23 [ERROR]: Added legacy Creation_Place column to date_df
+2025-04-09 22:32:23 [ERROR]: Created date analysis dataframe with 14 rows and columns: ['Page', 'Text', 'Date', 'Place', 'Creation_Place']
+2025-04-09 22:32:23 [ERROR]: Using specified sequential preset: Sequence_Dates
+2025-04-09 22:32:23 [ERROR]: Found required headers in sequence preset: ['Date', 'Place']
+2025-04-09 22:32:23 [ERROR]: Error in asyncio loop: 'APIHandler' object has no attribute 'parent'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 1008, in _run_date_analysis
+    result = loop.run_until_complete(process_with_progress())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\asyncio\base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 996, in process_with_progress
+    analyzer = DateAnalyzer(api_handler, self.app.settings)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\AnalyzeDate.py", line 17, in __init__
+    self.parent_app = api_handler.parent
+                      ^^^^^^^^^^^^^^^^^^
+AttributeError: 'APIHandler' object has no attribute 'parent'
+2025-04-09 22:32:23 [ERROR]: Traceback: Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 1008, in _run_date_analysis
+    result = loop.run_until_complete(process_with_progress())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\asyncio\base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 996, in process_with_progress
+    analyzer = DateAnalyzer(api_handler, self.app.settings)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\AnalyzeDate.py", line 17, in __init__
+    self.parent_app = api_handler.parent
+                      ^^^^^^^^^^^^^^^^^^
+AttributeError: 'APIHandler' object has no attribute 'parent'
+
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 1008, in _run_date_analysis
+    result = loop.run_until_complete(process_with_progress())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\asyncio\base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 996, in process_with_progress
+    analyzer = DateAnalyzer(api_handler, self.app.settings)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\AnalyzeDate.py", line 17, in __init__
+    self.parent_app = api_handler.parent
+                      ^^^^^^^^^^^^^^^^^^
+AttributeError: 'APIHandler' object has no attribute 'parent'
+2025-04-09 22:32:23 [ERROR]: Sequential preset headers: ['Date', 'Place']
+2025-04-09 22:32:23 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-09 22:32:23 [ERROR]: Using column 'Original_Text' for text
+2025-04-09 22:32:23 [ERROR]: Dropped original text source column: Original_Text
+2025-04-09 22:32:23 [ERROR]: Metadata headers from preset 'damn it': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-09 22:32:23 [ERROR]: Adding/overwriting with sequential headers: ['Date', 'Place']
+2025-04-09 22:32:23 [ERROR]: Sequential header 'Place' not found in compiled data.
+2025-04-09 22:32:23 [ERROR]: 'Original_Text' column is missing before final ordering.
+2025-04-09 22:32:23 [ERROR]: CRITICAL: 'Original_Text' column missing in final export list!
+2025-04-09 22:32:23 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-09 22:32:42 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-09 22:35:41 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-09 22:35:45 [ERROR]: Starting CSV export process
+2025-04-09 22:35:45 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-09 22:35:45 [ERROR]: Added missing column: Place_of_Creation
+2025-04-09 22:35:45 [ERROR]: Added missing column: Text
+2025-04-09 22:35:45 [ERROR]: Using resolved text source column: Original_Text
+2025-04-09 22:35:54 [ERROR]: Using metadata headers from preset 'damn it': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-09 22:35:54 [ERROR]: Added essential column: Creation_Place
+2025-04-09 22:35:54 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-09 22:35:54 [ERROR]: Copied 14 values for column: Document_Type
+2025-04-09 22:35:54 [ERROR]: Copied 14 values for column: Author
+2025-04-09 22:35:54 [ERROR]: Copied 14 values for column: Correspondent
+2025-04-09 22:35:54 [ERROR]: Copied 14 values for column: Correspondent_Place
+2025-04-09 22:35:54 [ERROR]: Copied 14 values for column: Date
+2025-04-09 22:35:54 [ERROR]: Copied 14 values for column: Place_of_Creation
+2025-04-09 22:35:54 [ERROR]: Copied 14 values for column: People
+2025-04-09 22:35:54 [ERROR]: Copied 14 values for column: Places
+2025-04-09 22:35:54 [ERROR]: Copied 14 values for column: Summary
+2025-04-09 22:35:54 [ERROR]: Copied 14 values for column: Creation_Place
+2025-04-09 22:35:54 [ERROR]: Starting date and place analysis sequence using preset: Sequence_Dates
+2025-04-09 22:35:54 [ERROR]: Error getting text for date analysis at idx None: '>=' not supported between instances of 'NoneType' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 808, in _analyze_dates_sequentially
+    text_for_date = self.app.data_operations.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 60, in find_right_text
+    if self.app.main_df.empty or index_no >= len(self.app.main_df):
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+2025-04-09 22:35:54 [ERROR]: Error getting text for date analysis at idx None: '>=' not supported between instances of 'NoneType' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 808, in _analyze_dates_sequentially
+    text_for_date = self.app.data_operations.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 60, in find_right_text
+    if self.app.main_df.empty or index_no >= len(self.app.main_df):
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+2025-04-09 22:35:54 [ERROR]: Error getting text for date analysis at idx None: '>=' not supported between instances of 'NoneType' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 808, in _analyze_dates_sequentially
+    text_for_date = self.app.data_operations.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 60, in find_right_text
+    if self.app.main_df.empty or index_no >= len(self.app.main_df):
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+2025-04-09 22:35:54 [ERROR]: Error getting text for date analysis at idx None: '>=' not supported between instances of 'NoneType' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 808, in _analyze_dates_sequentially
+    text_for_date = self.app.data_operations.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 60, in find_right_text
+    if self.app.main_df.empty or index_no >= len(self.app.main_df):
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+2025-04-09 22:35:54 [ERROR]: Error getting text for date analysis at idx None: '>=' not supported between instances of 'NoneType' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 808, in _analyze_dates_sequentially
+    text_for_date = self.app.data_operations.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 60, in find_right_text
+    if self.app.main_df.empty or index_no >= len(self.app.main_df):
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+2025-04-09 22:35:54 [ERROR]: Error getting text for date analysis at idx None: '>=' not supported between instances of 'NoneType' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 808, in _analyze_dates_sequentially
+    text_for_date = self.app.data_operations.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 60, in find_right_text
+    if self.app.main_df.empty or index_no >= len(self.app.main_df):
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+2025-04-09 22:35:54 [ERROR]: Error getting text for date analysis at idx None: '>=' not supported between instances of 'NoneType' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 808, in _analyze_dates_sequentially
+    text_for_date = self.app.data_operations.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 60, in find_right_text
+    if self.app.main_df.empty or index_no >= len(self.app.main_df):
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+2025-04-09 22:35:54 [ERROR]: Error getting text for date analysis at idx None: '>=' not supported between instances of 'NoneType' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 808, in _analyze_dates_sequentially
+    text_for_date = self.app.data_operations.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 60, in find_right_text
+    if self.app.main_df.empty or index_no >= len(self.app.main_df):
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+2025-04-09 22:35:54 [ERROR]: Error getting text for date analysis at idx None: '>=' not supported between instances of 'NoneType' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 808, in _analyze_dates_sequentially
+    text_for_date = self.app.data_operations.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 60, in find_right_text
+    if self.app.main_df.empty or index_no >= len(self.app.main_df):
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+2025-04-09 22:35:54 [ERROR]: Error getting text for date analysis at idx None: '>=' not supported between instances of 'NoneType' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 808, in _analyze_dates_sequentially
+    text_for_date = self.app.data_operations.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 60, in find_right_text
+    if self.app.main_df.empty or index_no >= len(self.app.main_df):
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+2025-04-09 22:35:54 [ERROR]: Error getting text for date analysis at idx None: '>=' not supported between instances of 'NoneType' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 808, in _analyze_dates_sequentially
+    text_for_date = self.app.data_operations.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 60, in find_right_text
+    if self.app.main_df.empty or index_no >= len(self.app.main_df):
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+2025-04-09 22:35:54 [ERROR]: Error getting text for date analysis at idx None: '>=' not supported between instances of 'NoneType' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 808, in _analyze_dates_sequentially
+    text_for_date = self.app.data_operations.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 60, in find_right_text
+    if self.app.main_df.empty or index_no >= len(self.app.main_df):
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+2025-04-09 22:35:54 [ERROR]: Error getting text for date analysis at idx None: '>=' not supported between instances of 'NoneType' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 808, in _analyze_dates_sequentially
+    text_for_date = self.app.data_operations.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 60, in find_right_text
+    if self.app.main_df.empty or index_no >= len(self.app.main_df):
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+2025-04-09 22:35:54 [ERROR]: Error getting text for date analysis at idx None: '>=' not supported between instances of 'NoneType' and 'int'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 808, in _analyze_dates_sequentially
+    text_for_date = self.app.data_operations.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 60, in find_right_text
+    if self.app.main_df.empty or index_no >= len(self.app.main_df):
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+2025-04-09 22:35:54 [ERROR]: Date and place analysis failed: name 'sequence_preset' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 835, in _analyze_dates_sequentially
+    preset_name = sequence_preset.get('name', "Sequence_Dates") if sequence_preset else "Sequence_Dates"
+                                                                   ^^^^^^^^^^^^^^^
+NameError: name 'sequence_preset' is not defined
+2025-04-09 22:37:22 [ERROR]: Sequential preset headers: ['Date', 'Place']
+2025-04-09 22:37:22 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-09 22:37:22 [ERROR]: Using column 'Original_Text' for text
+2025-04-09 22:37:22 [ERROR]: Dropped original text source column: Original_Text
+2025-04-09 22:37:22 [ERROR]: Metadata headers from preset 'damn it': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-09 22:37:22 [ERROR]: Adding/overwriting with sequential headers: ['Date', 'Place']
+2025-04-09 22:37:22 [ERROR]: Sequential header 'Place' not found in compiled data.
+2025-04-09 22:37:22 [ERROR]: 'Original_Text' column is missing before final ordering.
+2025-04-09 22:37:22 [ERROR]: CRITICAL: 'Original_Text' column missing in final export list!
+2025-04-09 22:37:22 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-09 22:38:17 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-09 22:38:21 [ERROR]: Starting CSV export process
+2025-04-09 22:38:21 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-09 22:38:21 [ERROR]: Added missing column: Place_of_Creation
+2025-04-09 22:38:21 [ERROR]: Added missing column: Text
+2025-04-09 22:38:21 [ERROR]: Using resolved text source column: Original_Text
+2025-04-09 22:38:26 [ERROR]: Using metadata headers from preset 'damn it': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-09 22:38:26 [ERROR]: Added essential column: Creation_Place
+2025-04-09 22:38:26 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-09 22:38:26 [ERROR]: Copied 14 values for column: Document_Type
+2025-04-09 22:38:26 [ERROR]: Copied 14 values for column: Author
+2025-04-09 22:38:26 [ERROR]: Copied 14 values for column: Correspondent
+2025-04-09 22:38:26 [ERROR]: Copied 14 values for column: Correspondent_Place
+2025-04-09 22:38:26 [ERROR]: Copied 14 values for column: Date
+2025-04-09 22:38:26 [ERROR]: Copied 14 values for column: Place_of_Creation
+2025-04-09 22:38:26 [ERROR]: Copied 14 values for column: People
+2025-04-09 22:38:26 [ERROR]: Copied 14 values for column: Places
+2025-04-09 22:38:26 [ERROR]: Copied 14 values for column: Summary
+2025-04-09 22:38:26 [ERROR]: Copied 14 values for column: Creation_Place
+2025-04-09 22:38:26 [ERROR]: Starting date and place analysis sequence using preset: Sequence_Dates
+2025-04-09 22:38:26 [ERROR]: Using sequential preset: Sequence_Dates
+2025-04-09 22:38:26 [ERROR]: Date and place analysis failed: name 'loop' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 887, in _analyze_dates_sequentially
+    result = loop.run_until_complete(process_with_progress())
+             ^^^^
+NameError: name 'loop' is not defined
+2025-04-09 22:38:28 [ERROR]: Sequential preset headers: ['Date', 'Place']
+2025-04-09 22:38:28 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-09 22:38:28 [ERROR]: Using column 'Original_Text' for text
+2025-04-09 22:38:28 [ERROR]: Dropped original text source column: Original_Text
+2025-04-09 22:38:28 [ERROR]: Metadata headers from preset 'damn it': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-09 22:38:28 [ERROR]: Adding/overwriting with sequential headers: ['Date', 'Place']
+2025-04-09 22:38:28 [ERROR]: Sequential header 'Place' not found in compiled data.
+2025-04-09 22:38:28 [ERROR]: 'Original_Text' column is missing before final ordering.
+2025-04-09 22:38:28 [ERROR]: CRITICAL: 'Original_Text' column missing in final export list!
+2025-04-09 22:38:28 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-09 22:39:53 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-09 22:39:58 [ERROR]: Starting CSV export process
+2025-04-09 22:39:58 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-09 22:39:58 [ERROR]: Added missing column: Place_of_Creation
+2025-04-09 22:39:58 [ERROR]: Added missing column: Text
+2025-04-09 22:39:58 [ERROR]: Using resolved text source column: Original_Text
+2025-04-09 22:40:03 [ERROR]: Using metadata headers from preset 'damn it': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-09 22:40:03 [ERROR]: Added essential column: Creation_Place
+2025-04-09 22:40:03 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-09 22:40:03 [ERROR]: Copied 14 values for column: Document_Type
+2025-04-09 22:40:03 [ERROR]: Copied 14 values for column: Author
+2025-04-09 22:40:03 [ERROR]: Copied 14 values for column: Correspondent
+2025-04-09 22:40:03 [ERROR]: Copied 14 values for column: Correspondent_Place
+2025-04-09 22:40:03 [ERROR]: Copied 14 values for column: Date
+2025-04-09 22:40:03 [ERROR]: Copied 14 values for column: Place_of_Creation
+2025-04-09 22:40:03 [ERROR]: Copied 14 values for column: People
+2025-04-09 22:40:03 [ERROR]: Copied 14 values for column: Places
+2025-04-09 22:40:03 [ERROR]: Copied 14 values for column: Summary
+2025-04-09 22:40:03 [ERROR]: Copied 14 values for column: Creation_Place
+2025-04-09 22:40:04 [ERROR]: Starting date and place analysis sequence using preset: Sequence_Dates
+2025-04-09 22:40:04 [ERROR]: Using required headers from sequential preset: ['Date', 'Place']
+2025-04-09 22:40:04 [ERROR]: Clearing existing values for fresh date analysis
+2025-04-09 22:40:04 [ERROR]: Error getting text for date analysis at idx 0: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:40:04 [ERROR]: Error getting text for date analysis at idx 1: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:40:04 [ERROR]: Error getting text for date analysis at idx 2: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:40:04 [ERROR]: Error getting text for date analysis at idx 3: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:40:04 [ERROR]: Error getting text for date analysis at idx 4: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:40:04 [ERROR]: Error getting text for date analysis at idx 5: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:40:04 [ERROR]: Error getting text for date analysis at idx 6: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:40:04 [ERROR]: Error getting text for date analysis at idx 7: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:40:04 [ERROR]: Error getting text for date analysis at idx 8: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:40:04 [ERROR]: Error getting text for date analysis at idx 9: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:40:04 [ERROR]: Error getting text for date analysis at idx 10: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:40:04 [ERROR]: Error getting text for date analysis at idx 11: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:40:04 [ERROR]: Error getting text for date analysis at idx 12: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:40:04 [ERROR]: Error getting text for date analysis at idx 13: '_tkinter.tkapp' object has no attribute 'find_right_text'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 914, in _prepare_date_df
+    fallback_text = self.app.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-09 22:40:04 [ERROR]: Copied existing Date values from compiled_df to date_df
+2025-04-09 22:40:04 [ERROR]: Added legacy Creation_Place column to date_df
+2025-04-09 22:40:04 [ERROR]: Created date analysis dataframe with 14 rows and columns: ['Page', 'Text', 'Date', 'Place', 'Creation_Place']
+2025-04-09 22:40:04 [ERROR]: Using specified sequential preset: Sequence_Dates
+2025-04-09 22:40:04 [ERROR]: Found required headers in sequence preset: ['Date', 'Place']
+2025-04-09 22:40:04 [ERROR]: Setting active sequential preset to: Sequence_Dates
+2025-04-09 22:40:04 [ERROR]: Date analysis result dataframe has columns: ['Page', 'Text', 'Date', 'Place', 'Creation_Place']
+2025-04-09 22:40:04 [ERROR]: Date analysis result dataframe has 14 rows
+2025-04-09 22:40:04 [ERROR]: Date analysis found 0 dates
+2025-04-09 22:40:04 [ERROR]: Date analysis found 0 Date values
+2025-04-09 22:40:04 [ERROR]: Date analysis found 0 Place values
+2025-04-09 22:40:04 [ERROR]: Sample row 0: {'Page': np.int64(0)}
+2025-04-09 22:40:04 [ERROR]: Sample row 1: {'Page': np.int64(1)}
+2025-04-09 22:40:04 [ERROR]: Sample row 2: {'Page': np.int64(2)}
+2025-04-09 22:40:04 [ERROR]: Date analysis returned dataframe with columns: Page, Text, Date, Place, Creation_Place
+2025-04-09 22:40:04 [ERROR]: Sample row 0: {'Page': np.int64(0), 'Text': '', 'Date': '', 'Place': '', 'Creation_Place': ''}
+2025-04-09 22:40:04 [ERROR]: Sample row 1: {'Page': np.int64(1), 'Text': '', 'Date': '', 'Place': '', 'Creation_Place': ''}
+2025-04-09 22:40:04 [ERROR]: Sample row 2: {'Page': np.int64(2), 'Text': '', 'Date': '', 'Place': '', 'Creation_Place': ''}
+2025-04-09 22:40:04 [ERROR]: Using specified sequential preset for copying results: Sequence_Dates
+2025-04-09 22:40:04 [ERROR]: Copying required headers from sequence preset: ['Date', 'Place']
+2025-04-09 22:40:04 [ERROR]: Added missing Place column to compiled_df before copying results
+2025-04-09 22:40:04 [ERROR]: No fields were updated in the compiled dataframe
+2025-04-09 22:40:04 [ERROR]: Sequential preset headers: ['Date', 'Place']
+2025-04-09 22:40:04 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-09 22:40:04 [ERROR]: Using column 'Original_Text' for text
+2025-04-09 22:40:04 [ERROR]: Dropped original text source column: Original_Text
+2025-04-09 22:40:04 [ERROR]: Metadata headers from preset 'damn it': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-09 22:40:04 [ERROR]: Adding/overwriting with sequential headers: ['Date', 'Place']
+2025-04-09 22:40:04 [ERROR]: 'Original_Text' column is missing before final ordering.
+2025-04-09 22:40:04 [ERROR]: CRITICAL: 'Original_Text' column missing in final export list!
+2025-04-09 22:40:04 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Place']
+2025-04-09 22:43:25 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-09 22:43:29 [ERROR]: Starting CSV export process
+2025-04-09 22:43:29 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-09 22:43:29 [ERROR]: Added missing column: Text
+2025-04-09 22:43:29 [ERROR]: Added missing column: Place_of_Creation
+2025-04-09 22:43:29 [ERROR]: Using resolved text source column: Original_Text
+2025-04-09 22:43:33 [ERROR]: Using metadata headers from preset 'damn it': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-09 22:43:33 [ERROR]: Added essential column: Creation_Place
+2025-04-09 22:43:33 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-09 22:43:33 [ERROR]: Copied 14 values for column: Document_Type
+2025-04-09 22:43:33 [ERROR]: Copied 14 values for column: Author
+2025-04-09 22:43:33 [ERROR]: Copied 14 values for column: Correspondent
+2025-04-09 22:43:33 [ERROR]: Copied 14 values for column: Correspondent_Place
+2025-04-09 22:43:33 [ERROR]: Copied 14 values for column: Date
+2025-04-09 22:43:33 [ERROR]: Copied 14 values for column: Place_of_Creation
+2025-04-09 22:43:33 [ERROR]: Copied 14 values for column: People
+2025-04-09 22:43:33 [ERROR]: Copied 14 values for column: Places
+2025-04-09 22:43:33 [ERROR]: Copied 14 values for column: Summary
+2025-04-09 22:43:33 [ERROR]: Copied 14 values for column: Creation_Place
+2025-04-09 22:43:33 [ERROR]: Starting date and place analysis sequence using preset: Sequence_Dates
+2025-04-09 22:43:33 [ERROR]: Using required headers from sequential preset: ['Date', 'Place']
+2025-04-09 22:43:33 [ERROR]: Clearing existing values for fresh date analysis
+2025-04-09 22:43:33 [ERROR]: Error getting text for date analysis at idx 0: '_tkinter.tkapp' object has no attribute 'data_ops'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 915, in _prepare_date_df
+    fallback_text = self.app.data_ops.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
+2025-04-09 22:43:33 [ERROR]: Error getting text for date analysis at idx 1: '_tkinter.tkapp' object has no attribute 'data_ops'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 915, in _prepare_date_df
+    fallback_text = self.app.data_ops.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
+2025-04-09 22:43:33 [ERROR]: Error getting text for date analysis at idx 2: '_tkinter.tkapp' object has no attribute 'data_ops'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 915, in _prepare_date_df
+    fallback_text = self.app.data_ops.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
+2025-04-09 22:43:33 [ERROR]: Error getting text for date analysis at idx 3: '_tkinter.tkapp' object has no attribute 'data_ops'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 915, in _prepare_date_df
+    fallback_text = self.app.data_ops.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
+2025-04-09 22:43:33 [ERROR]: Error getting text for date analysis at idx 4: '_tkinter.tkapp' object has no attribute 'data_ops'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 915, in _prepare_date_df
+    fallback_text = self.app.data_ops.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
+2025-04-09 22:43:33 [ERROR]: Error getting text for date analysis at idx 5: '_tkinter.tkapp' object has no attribute 'data_ops'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 915, in _prepare_date_df
+    fallback_text = self.app.data_ops.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
+2025-04-09 22:43:33 [ERROR]: Error getting text for date analysis at idx 6: '_tkinter.tkapp' object has no attribute 'data_ops'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 915, in _prepare_date_df
+    fallback_text = self.app.data_ops.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
+2025-04-09 22:43:33 [ERROR]: Error getting text for date analysis at idx 7: '_tkinter.tkapp' object has no attribute 'data_ops'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 915, in _prepare_date_df
+    fallback_text = self.app.data_ops.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
+2025-04-09 22:43:33 [ERROR]: Error getting text for date analysis at idx 8: '_tkinter.tkapp' object has no attribute 'data_ops'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 915, in _prepare_date_df
+    fallback_text = self.app.data_ops.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
+2025-04-09 22:43:33 [ERROR]: Error getting text for date analysis at idx 9: '_tkinter.tkapp' object has no attribute 'data_ops'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 915, in _prepare_date_df
+    fallback_text = self.app.data_ops.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
+2025-04-09 22:43:33 [ERROR]: Error getting text for date analysis at idx 10: '_tkinter.tkapp' object has no attribute 'data_ops'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 915, in _prepare_date_df
+    fallback_text = self.app.data_ops.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
+2025-04-09 22:43:33 [ERROR]: Error getting text for date analysis at idx 11: '_tkinter.tkapp' object has no attribute 'data_ops'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 915, in _prepare_date_df
+    fallback_text = self.app.data_ops.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
+2025-04-09 22:43:33 [ERROR]: Error getting text for date analysis at idx 12: '_tkinter.tkapp' object has no attribute 'data_ops'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 915, in _prepare_date_df
+    fallback_text = self.app.data_ops.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
+2025-04-09 22:43:33 [ERROR]: Error getting text for date analysis at idx 13: '_tkinter.tkapp' object has no attribute 'data_ops'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 915, in _prepare_date_df
+    fallback_text = self.app.data_ops.find_right_text(main_idx)
+                    ^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
+2025-04-09 22:43:33 [ERROR]: Copied existing Date values from compiled_df to date_df
+2025-04-09 22:43:33 [ERROR]: Added legacy Creation_Place column to date_df
+2025-04-09 22:43:33 [ERROR]: Created date analysis dataframe with 14 rows and columns: ['Page', 'Text', 'Date', 'Place', 'Creation_Place']
+2025-04-09 22:43:34 [ERROR]: Using specified sequential preset: Sequence_Dates
+2025-04-09 22:43:34 [ERROR]: Found required headers in sequence preset: ['Date', 'Place']
+2025-04-09 22:43:34 [ERROR]: Setting active sequential preset to: Sequence_Dates
+2025-04-09 22:43:34 [ERROR]: Date analysis result dataframe has columns: ['Page', 'Text', 'Date', 'Place', 'Creation_Place']
+2025-04-09 22:43:34 [ERROR]: Date analysis result dataframe has 14 rows
+2025-04-09 22:43:34 [ERROR]: Date analysis found 0 dates
+2025-04-09 22:43:34 [ERROR]: Date analysis found 0 Date values
+2025-04-09 22:43:34 [ERROR]: Date analysis found 0 Place values
+2025-04-09 22:43:34 [ERROR]: Sample row 0: {'Page': np.int64(0)}
+2025-04-09 22:43:34 [ERROR]: Sample row 1: {'Page': np.int64(1)}
+2025-04-09 22:43:34 [ERROR]: Sample row 2: {'Page': np.int64(2)}
+2025-04-09 22:43:34 [ERROR]: Date analysis returned dataframe with columns: Page, Text, Date, Place, Creation_Place
+2025-04-09 22:43:34 [ERROR]: Sample row 0: {'Page': np.int64(0), 'Text': '', 'Date': '', 'Place': '', 'Creation_Place': ''}
+2025-04-09 22:43:34 [ERROR]: Sample row 1: {'Page': np.int64(1), 'Text': '', 'Date': '', 'Place': '', 'Creation_Place': ''}
+2025-04-09 22:43:34 [ERROR]: Sample row 2: {'Page': np.int64(2), 'Text': '', 'Date': '', 'Place': '', 'Creation_Place': ''}
+2025-04-09 22:43:34 [ERROR]: Using specified sequential preset for copying results: Sequence_Dates
+2025-04-09 22:43:34 [ERROR]: Copying required headers from sequence preset: ['Date', 'Place']
+2025-04-09 22:43:34 [ERROR]: Added missing Place column to compiled_df before copying results
+2025-04-09 22:43:34 [ERROR]: No fields were updated in the compiled dataframe
+2025-04-09 22:43:34 [ERROR]: Sequential preset headers: ['Date', 'Place']
+2025-04-09 22:43:34 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-09 22:43:34 [ERROR]: Using column 'Original_Text' for text
+2025-04-09 22:43:34 [ERROR]: Dropped original text source column: Original_Text
+2025-04-09 22:43:34 [ERROR]: Metadata headers from preset 'damn it': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-09 22:43:34 [ERROR]: Adding/overwriting with sequential headers: ['Date', 'Place']
+2025-04-09 22:43:34 [ERROR]: 'Original_Text' column is missing before final ordering.
+2025-04-09 22:43:34 [ERROR]: CRITICAL: 'Original_Text' column missing in final export list!
+2025-04-09 22:43:34 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Place']
+2025-04-09 22:45:40 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-09 22:45:43 [ERROR]: Starting CSV export process
+2025-04-09 22:45:43 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-09 22:45:43 [ERROR]: Added missing column: Place_of_Creation
+2025-04-09 22:45:43 [ERROR]: Added missing column: Text
+2025-04-09 22:45:43 [ERROR]: Using resolved text source column: Original_Text
+2025-04-09 22:45:49 [ERROR]: Using metadata headers from preset 'damn it': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-09 22:45:49 [ERROR]: Added essential column: Creation_Place
+2025-04-09 22:45:49 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-09 22:45:49 [ERROR]: Copied 14 values for column: Document_Type
+2025-04-09 22:45:49 [ERROR]: Copied 14 values for column: Author
+2025-04-09 22:45:49 [ERROR]: Copied 14 values for column: Correspondent
+2025-04-09 22:45:49 [ERROR]: Copied 14 values for column: Correspondent_Place
+2025-04-09 22:45:49 [ERROR]: Copied 14 values for column: Date
+2025-04-09 22:45:49 [ERROR]: Copied 14 values for column: Place_of_Creation
+2025-04-09 22:45:49 [ERROR]: Copied 14 values for column: People
+2025-04-09 22:45:49 [ERROR]: Copied 14 values for column: Places
+2025-04-09 22:45:49 [ERROR]: Copied 14 values for column: Summary
+2025-04-09 22:45:49 [ERROR]: Copied 14 values for column: Creation_Place
+2025-04-09 22:45:49 [ERROR]: Starting date and place analysis sequence using preset: Sequence_Dates
+2025-04-09 22:45:49 [ERROR]: Using required headers from sequential preset: ['Date', 'Place']
+2025-04-09 22:45:49 [ERROR]: Clearing existing values for fresh date analysis
+2025-04-09 22:45:49 [ERROR]: Copied existing Date values from compiled_df to date_df
+2025-04-09 22:45:49 [ERROR]: Added legacy Creation_Place column to date_df
+2025-04-09 22:45:49 [ERROR]: Created date analysis dataframe with 14 rows and columns: ['Page', 'Text', 'Date', 'Place', 'Creation_Place']
+2025-04-09 22:45:49 [ERROR]: Using specified sequential preset: Sequence_Dates
+2025-04-09 22:45:49 [ERROR]: Found required headers in sequence preset: ['Date', 'Place']
+2025-04-09 22:45:49 [ERROR]: Setting active sequential preset to: Sequence_Dates
+2025-04-09 22:46:06 [ERROR]: Date analysis result dataframe has columns: ['Page', 'Text', 'Date', 'Place', 'Creation_Place']
+2025-04-09 22:46:06 [ERROR]: Date analysis result dataframe has 14 rows
+2025-04-09 22:46:06 [ERROR]: Date analysis found 14 dates
+2025-04-09 22:46:06 [ERROR]: Date analysis found 14 Date values
+2025-04-09 22:46:06 [ERROR]: Date analysis found 14 Place values
+2025-04-09 22:46:06 [ERROR]: Sample row 0: {'Page': np.int64(0), 'Text': 'A Journal of Transactions at 1\nAsh Fall by Mr John Cobb', 'Date': 'Unknown', 'Place': 'Ash Fall', 'Creation_Place': 'Ash Fall'}
+2025-04-09 22:46:06 [ERROR]: Sample row 1: {'Page': np.int64(1), 'Text': '1798.\nAugt 2 Thursday Wind Westerly clear pleasant weather at 2 P. M.\nI set off from Martins Fall with two Boats for Osnaburgh\nHouse and arrived at that place the 19 Inst.', 'Date': '1798/08/02', 'Place': 'Martins Fall', 'Creation_Place': 'Martins Fall'}
+2025-04-09 22:46:06 [ERROR]: Sample row 2: {'Page': np.int64(2), 'Text': '20 Monday Wind N Wst with rain all day in the evening\nMr McKay arrived from Martins Fall with 3 Boats', 'Date': '1798/08/20', 'Place': 'Osnaburgh House', 'Creation_Place': 'Osnaburgh House'}
+2025-04-09 22:46:06 [ERROR]: Date analysis returned dataframe with columns: Page, Text, Date, Place, Creation_Place
+2025-04-09 22:46:06 [ERROR]: Sample row 0: {'Page': np.int64(0), 'Text': 'A Journal of Transactions at 1\nAsh Fall by Mr John Cobb', 'Date': 'Unknown', 'Place': 'Ash Fall', 'Creation_Place': 'Ash Fall'}
+2025-04-09 22:46:06 [ERROR]: Sample row 1: {'Page': np.int64(1), 'Text': '1798.\nAugt 2 Thursday Wind Westerly clear pleasant weather at 2 P. M.\nI set off from Martins Fall with two Boats for Osnaburgh\nHouse and arrived at that place the 19 Inst.', 'Date': '1798/08/02', 'Place': 'Martins Fall', 'Creation_Place': 'Martins Fall'}
+2025-04-09 22:46:06 [ERROR]: Sample row 2: {'Page': np.int64(2), 'Text': '20 Monday Wind N Wst with rain all day in the evening\nMr McKay arrived from Martins Fall with 3 Boats', 'Date': '1798/08/20', 'Place': 'Osnaburgh House', 'Creation_Place': 'Osnaburgh House'}
+2025-04-09 22:46:06 [ERROR]: Using specified sequential preset for copying results: Sequence_Dates
+2025-04-09 22:46:06 [ERROR]: Copying required headers from sequence preset: ['Date', 'Place']
+2025-04-09 22:46:06 [ERROR]: Added missing Place column to compiled_df before copying results
+2025-04-09 22:46:06 [ERROR]: Updated fields in the compiled dataframe: 14 Date, 14 Place, 14 Place_of_Creation, 14 Creation_Place
+2025-04-09 22:46:06 [ERROR]: Sequential preset headers: ['Date', 'Place']
+2025-04-09 22:46:06 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-09 22:46:06 [ERROR]: Using column 'Original_Text' for text
+2025-04-09 22:46:06 [ERROR]: Metadata headers from preset 'damn it': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-09 22:46:06 [ERROR]: Adding/overwriting with sequential headers: ['Date', 'Place']
+2025-04-09 22:46:06 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Place', 'Original_Text']

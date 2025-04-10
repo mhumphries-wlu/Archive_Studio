@@ -143,7 +143,7 @@ def apply_document_separation(app):
         pages_with_separators = []
         
         for index, row in app.main_df.iterrows():
-            text = app.find_right_text(index)
+            text = app.data_operations.find_right_text(index)
             if "*****" in text:
                 separator_count += text.count("*****")
                 pages_with_separators.append(index)

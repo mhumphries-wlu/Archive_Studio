@@ -911,7 +911,8 @@ class ExportManager:
                         main_idx = idx
 
                     if 0 <= main_idx < len(self.app.main_df):
-                        fallback_text = self.app.find_right_text(main_idx)
+                        # Corrected call: Use self.app.data_operations
+                        fallback_text = self.app.data_operations.find_right_text(main_idx)
                         if fallback_text and fallback_text.strip():
                             row_text = fallback_text
                             # self.app.error_logging(f"Idx {idx}: Using fallback text from main_df[{main_idx}]: '{row_text[:50]}...'") # Optional debug log
@@ -1203,7 +1204,7 @@ class ExportManager:
             export_df['Original_Text'] = export_df['Text'] if 'Text' in export_df.columns else ""
             
         # Remove the original source text column if it wasn't 'Text' and exists
-        if text_source_column != 'Text' and text_source_column in export_df.columns:
+        if text_source_column != 'Original_Text' and text_source_column in export_df.columns:
              try:
                  export_df = export_df.drop(columns=[text_source_column])
                  self.app.error_logging(f"Dropped original text source column: {text_source_column}")

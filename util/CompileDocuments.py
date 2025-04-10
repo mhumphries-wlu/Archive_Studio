@@ -130,8 +130,8 @@ class CompileDocuments:
 
             # First pass: collect all text and corresponding indices/images
             for index, row in self.main_df.iterrows():
-                # Get the correct text version using parent's find_right_text method
-                text_content = self.parent.find_right_text(index).strip()
+                # Get the correct text version using parent's data_operations method
+                text_content = self.parent.data_operations.find_right_text(index).strip()
                 
                 # Get image path and convert to relative path
                 image_path = row['Image_Path'] if pd.notna(row['Image_Path']) else ""
