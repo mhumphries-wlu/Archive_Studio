@@ -605,17 +605,25 @@ class ExportManager:
         """Generate metadata for documents using AI."""
         # Store the original main_df temporarily
         self._original_df = self.app.main_df.copy()
-        
+        self.app._is_generating_export_metadata = True # Add flag
+
         try:
             # Make a copy of compiled_df to avoid modifying the original
             temp_df = compiled_df.copy()
-            
+
+            # Store the original index before resetting
+            temp_df_original_index = temp_df.index
+
             # Ensure all required columns for AI function exist
             temp_df = self._prepare_temp_df_for_ai(temp_df)
-            
+
+            # Reset the index for the AI function to use (0, 1, 2...)
+            temp_df.reset_index(drop=True, inplace=True)
+            self.app.error_logging(f"Reset index for temp_df. New length: {len(temp_df)}")
+
             # Replace the app's main_df with our temp_df temporarily
             self.app.main_df = temp_df
-            
+
             # Call the app's AI function with the standard Metadata job
             print("Starting metadata generation with AI function...")
             # Pass the selected preset name to ai_function
@@ -627,11 +635,25 @@ class ExportManager:
                 export_text_source=actual_text_source_column # Pass resolved source column
             )
             print("Metadata generation completed")
-            
+
             # Retrieve the updated dataframe and copy metadata columns back
-            updated_df = self.app.main_df.copy()
+            updated_df = self.app.main_df.copy() # This df has index 0, 1, ...
+
+            # Restore the original index to updated_df so it aligns with compiled_df
+            if len(updated_df) == len(temp_df_original_index):
+                updated_df.index = temp_df_original_index
+                self.app.error_logging("Restored original index to updated_df for alignment.")
+            else:
+                 self.app.error_logging(f"CRITICAL: Length mismatch between updated_df ({len(updated_df)}) and original index ({len(temp_df_original_index)}). Cannot align indices reliably.", level="ERROR")
+                 # Attempt partial alignment based on matching lengths if possible, or handle error
+                 min_len = min(len(updated_df), len(temp_df_original_index))
+                 updated_df = updated_df.iloc[:min_len]
+                 updated_df.index = temp_df_original_index[:min_len]
+                 messagebox.showerror("Index Alignment Error", "Could not reliably align generated metadata due to length mismatch. Results may be incomplete. Check logs.")
+
+
             compiled_df = self._copy_metadata_columns(compiled_df, updated_df)
-            
+
         except Exception as e:
             print(f"CRITICAL ERROR in metadata generation: {str(e)}")
             self.app.error_logging(f"Critical error in metadata generation: {str(e)}")

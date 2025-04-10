@@ -1589,15 +1589,12 @@ class App(TkinterDnD.Tk):
         self.counter_update()
 
     def load_text(self):
-        # Ensure there is at least one row and that the page counter is valid.
-        if self.main_df.empty or self.page_counter < 0 or self.page_counter >= len(self.main_df):
-            self.text_display.delete("1.0", tk.END)
-            self.text_display_var.set("None")
-            self.text_display_dropdown['values'] = ["None"]
-            self.relevance_var.set("") # Clear relevance dropdown
-            self.counter_update() # Ensure counter shows 0/0
+        # Prevent updates if metadata generation is happening with a temporary df
+        if getattr(self, '_is_generating_export_metadata', False):
+            self.error_logging("Skipped load_text due to _is_generating_export_metadata flag.", level="INFO")
             return
 
+        # Ensure there is at least one row and that the page counter is valid.
         index = self.page_counter
         row_data = self.main_df.loc[index]
         current_toggle = row_data.get('Text_Toggle', "None")

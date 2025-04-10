@@ -1164,3 +1164,426 @@ AttributeError: '_tkinter.tkapp' object has no attribute 'data_ops'
 2025-04-09 22:46:06 [ERROR]: Metadata headers from preset 'damn it': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
 2025-04-09 22:46:06 [ERROR]: Adding/overwriting with sequential headers: ['Date', 'Place']
 2025-04-09 22:46:06 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Place', 'Original_Text']
+2025-04-10 11:15:54 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-10 11:15:59 [ERROR]: Starting CSV export process
+2025-04-10 11:15:59 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-10 11:15:59 [ERROR]: Added missing column: Text
+2025-04-10 11:15:59 [ERROR]: Added missing column: Place_of_Creation
+2025-04-10 11:15:59 [ERROR]: Using resolved text source column: Original_Text
+2025-04-10 11:16:03 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-10 11:16:03 [ERROR]: Added essential column: Creation_Place
+2025-04-10 11:16:03 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-10 11:16:03 [ERROR]: Copied 20 values for column: Document_Type
+2025-04-10 11:16:03 [ERROR]: Copied 20 values for column: Author
+2025-04-10 11:16:03 [ERROR]: Copied 20 values for column: Correspondent
+2025-04-10 11:16:03 [ERROR]: Copied 20 values for column: Correspondent_Place
+2025-04-10 11:16:03 [ERROR]: Copied 20 values for column: Date
+2025-04-10 11:16:03 [ERROR]: Copied 20 values for column: Place_of_Creation
+2025-04-10 11:16:03 [ERROR]: Copied 20 values for column: People
+2025-04-10 11:16:03 [ERROR]: Copied 20 values for column: Places
+2025-04-10 11:16:03 [ERROR]: Copied 20 values for column: Summary
+2025-04-10 11:16:03 [ERROR]: Copied 20 values for column: Creation_Place
+2025-04-10 11:16:03 [ERROR]: Single author specified: test
+2025-04-10 11:16:03 [ERROR]: Citation specified: test
+2025-04-10 11:16:03 [ERROR]: Starting date and place analysis sequence using preset: Sequence_Dates
+2025-04-10 11:16:03 [ERROR]: Using required headers from sequential preset: ['Date', 'Place']
+2025-04-10 11:16:03 [ERROR]: Clearing existing values for fresh date analysis
+2025-04-10 11:16:03 [ERROR]: Copied existing Date values from compiled_df to date_df
+2025-04-10 11:16:03 [ERROR]: Added legacy Creation_Place column to date_df
+2025-04-10 11:16:03 [ERROR]: Created date analysis dataframe with 20 rows and columns: ['Page', 'Text', 'Date', 'Place', 'Creation_Place']
+2025-04-10 11:16:03 [ERROR]: Using specified sequential preset: Sequence_Dates
+2025-04-10 11:16:03 [ERROR]: Found required headers in sequence preset: ['Date', 'Place']
+2025-04-10 11:16:03 [ERROR]: Setting active sequential preset to: Sequence_Dates
+2025-04-10 11:16:28 [ERROR]: Date analysis result dataframe has columns: ['Page', 'Text', 'Date', 'Place', 'Creation_Place']
+2025-04-10 11:16:28 [ERROR]: Date analysis result dataframe has 20 rows
+2025-04-10 11:16:28 [ERROR]: Date analysis found 20 dates
+2025-04-10 11:16:28 [ERROR]: Date analysis found 20 Date values
+2025-04-10 11:16:28 [ERROR]: Date analysis found 20 Place values
+2025-04-10 11:16:28 [ERROR]: Sample row 0: {'Page': np.int64(0), 'Text': 'A Journal of Transactions at Ash Fall by Mr John Cobb.', 'Date': 'CHECK', 'Place': 'Ash Fall', 'Creation_Place': 'Ash Fall'}
+2025-04-10 11:16:28 [ERROR]: Sample row 1: {'Page': np.int64(1), 'Text': 'Augt 2 Thursday Wind Westerly clear pleasant weather at 2 P. M. I set off from Martins Fall with two Boats of Osnaburgh House and arrived at that place the 19 Inst.', 'Date': '1800/08/02', 'Place': 'Martins Fall', 'Creation_Place': 'Martins Fall'}
+2025-04-10 11:16:28 [ERROR]: Sample row 2: {'Page': np.int64(2), 'Text': '20 Monday Wind N Wst with rain all day in the evening Mr McKay arrived from Martins Fall with 3 Boats', 'Date': '1800/08/20', 'Place': 'Martins Fall', 'Creation_Place': 'Martins Fall'}
+2025-04-10 11:16:28 [ERROR]: Date analysis returned dataframe with columns: Page, Text, Date, Place, Creation_Place
+2025-04-10 11:16:28 [ERROR]: Sample row 0: {'Page': np.int64(0), 'Text': 'A Journal of Transactions at Ash Fall by Mr John Cobb.', 'Date': 'CHECK', 'Place': 'Ash Fall', 'Creation_Place': 'Ash Fall'}
+2025-04-10 11:16:28 [ERROR]: Sample row 1: {'Page': np.int64(1), 'Text': 'Augt 2 Thursday Wind Westerly clear pleasant weather at 2 P. M. I set off from Martins Fall with two Boats of Osnaburgh House and arrived at that place the 19 Inst.', 'Date': '1800/08/02', 'Place': 'Martins Fall', 'Creation_Place': 'Martins Fall'}
+2025-04-10 11:16:28 [ERROR]: Sample row 2: {'Page': np.int64(2), 'Text': '20 Monday Wind N Wst with rain all day in the evening Mr McKay arrived from Martins Fall with 3 Boats', 'Date': '1800/08/20', 'Place': 'Martins Fall', 'Creation_Place': 'Martins Fall'}
+2025-04-10 11:16:28 [ERROR]: Using specified sequential preset for copying results: Sequence_Dates
+2025-04-10 11:16:28 [ERROR]: Copying required headers from sequence preset: ['Date', 'Place']
+2025-04-10 11:16:28 [ERROR]: Added missing Place column to compiled_df before copying results
+2025-04-10 11:16:28 [ERROR]: Updated fields in the compiled dataframe: 20 Date, 20 Place, 20 Place_of_Creation, 20 Creation_Place
+2025-04-10 11:16:28 [ERROR]: Sequential preset headers: ['Date', 'Place']
+2025-04-10 11:16:28 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-10 11:16:28 [ERROR]: Using column 'Original_Text' for text
+2025-04-10 11:16:28 [ERROR]: Overriding 'Author' column with single author: test
+2025-04-10 11:16:28 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-10 11:16:28 [ERROR]: Adding/overwriting with sequential headers: ['Date', 'Place']
+2025-04-10 11:16:28 [ERROR]: Adding 'Citation' column.
+2025-04-10 11:16:28 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Place', 'Original_Text', 'Citation']
+2025-04-10 11:18:36 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-10 11:18:40 [ERROR]: Starting CSV export process
+2025-04-10 11:18:40 [ERROR]: Filtered DataFrame to 2 relevant/partially relevant rows.
+2025-04-10 11:18:40 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-10 11:18:40 [ERROR]: Added missing column: Text
+2025-04-10 11:18:40 [ERROR]: Added missing column: Place_of_Creation
+2025-04-10 11:18:40 [ERROR]: Using resolved text source column: Original_Text
+2025-04-10 11:18:44 [ERROR]: Refresh display error: Failed to refresh display: 1
+Index: 1
+Stack trace:
+Traceback (most recent call last):
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3805, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2606, in pandas._libs.hashtable.Int64HashTable.get_item
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2630, in pandas._libs.hashtable.Int64HashTable.get_item
+KeyError: 1
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2064, in refresh_display
+    current_toggle = self.main_df.loc[self.page_counter, 'Text_Toggle']
+                     ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexing.py", line 1183, in __getitem__
+    return self.obj._get_value(*key, takeable=self._takeable)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\frame.py", line 4221, in _get_value
+    row = self.index.get_loc(index)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3812, in get_loc
+    raise KeyError(key) from err
+KeyError: 1
+2025-04-10 11:18:44 [ERROR]: Critical error in metadata generation: 1
+Stack trace:
+Traceback (most recent call last):
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3805, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2606, in pandas._libs.hashtable.Int64HashTable.get_item
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2630, in pandas._libs.hashtable.Int64HashTable.get_item
+KeyError: 1
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2064, in refresh_display
+    current_toggle = self.main_df.loc[self.page_counter, 'Text_Toggle']
+                     ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexing.py", line 1183, in __getitem__
+    return self.obj._get_value(*key, takeable=self._takeable)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\frame.py", line 4221, in _get_value
+    row = self.index.get_loc(index)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3812, in get_loc
+    raise KeyError(key) from err
+KeyError: 1
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3805, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2606, in pandas._libs.hashtable.Int64HashTable.get_item
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2630, in pandas._libs.hashtable.Int64HashTable.get_item
+KeyError: 1
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 623, in _generate_metadata
+    self.app.ai_functions_handler.ai_function(
+  File "d:\TranscriptionPearl\util\AIFunctions.py", line 502, in ai_function
+    self.app.refresh_display() # Use refresh_display for consistency
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2087, in refresh_display
+    self.load_text() # Try loading text anyway
+    ^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 1602, in load_text
+    row_data = self.main_df.loc[index]
+               ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexing.py", line 1191, in __getitem__
+    return self._getitem_axis(maybe_callable, axis=axis)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexing.py", line 1431, in _getitem_axis
+    return self._get_label(key, axis=axis)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexing.py", line 1381, in _get_label
+    return self.obj.xs(label, axis=axis)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\generic.py", line 4301, in xs
+    loc = index.get_loc(key)
+          ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3812, in get_loc
+    raise KeyError(key) from err
+KeyError: 1
+2025-04-10 11:18:44 [ERROR]: Traceback: Traceback (most recent call last):
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3805, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2606, in pandas._libs.hashtable.Int64HashTable.get_item
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2630, in pandas._libs.hashtable.Int64HashTable.get_item
+KeyError: 1
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2064, in refresh_display
+    current_toggle = self.main_df.loc[self.page_counter, 'Text_Toggle']
+                     ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexing.py", line 1183, in __getitem__
+    return self.obj._get_value(*key, takeable=self._takeable)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\frame.py", line 4221, in _get_value
+    row = self.index.get_loc(index)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3812, in get_loc
+    raise KeyError(key) from err
+KeyError: 1
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3805, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2606, in pandas._libs.hashtable.Int64HashTable.get_item
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2630, in pandas._libs.hashtable.Int64HashTable.get_item
+KeyError: 1
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 623, in _generate_metadata
+    self.app.ai_functions_handler.ai_function(
+  File "d:\TranscriptionPearl\util\AIFunctions.py", line 502, in ai_function
+    self.app.refresh_display() # Use refresh_display for consistency
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2087, in refresh_display
+    self.load_text() # Try loading text anyway
+    ^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 1602, in load_text
+    row_data = self.main_df.loc[index]
+               ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexing.py", line 1191, in __getitem__
+    return self._getitem_axis(maybe_callable, axis=axis)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexing.py", line 1431, in _getitem_axis
+    return self._get_label(key, axis=axis)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexing.py", line 1381, in _get_label
+    return self.obj.xs(label, axis=axis)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\generic.py", line 4301, in xs
+    loc = index.get_loc(key)
+          ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3812, in get_loc
+    raise KeyError(key) from err
+KeyError: 1
+
+Stack trace:
+Traceback (most recent call last):
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3805, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2606, in pandas._libs.hashtable.Int64HashTable.get_item
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2630, in pandas._libs.hashtable.Int64HashTable.get_item
+KeyError: 1
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2064, in refresh_display
+    current_toggle = self.main_df.loc[self.page_counter, 'Text_Toggle']
+                     ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexing.py", line 1183, in __getitem__
+    return self.obj._get_value(*key, takeable=self._takeable)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\frame.py", line 4221, in _get_value
+    row = self.index.get_loc(index)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3812, in get_loc
+    raise KeyError(key) from err
+KeyError: 1
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3805, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2606, in pandas._libs.hashtable.Int64HashTable.get_item
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2630, in pandas._libs.hashtable.Int64HashTable.get_item
+KeyError: 1
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ExportFunctions.py", line 623, in _generate_metadata
+    self.app.ai_functions_handler.ai_function(
+  File "d:\TranscriptionPearl\util\AIFunctions.py", line 502, in ai_function
+    self.app.refresh_display() # Use refresh_display for consistency
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2087, in refresh_display
+    self.load_text() # Try loading text anyway
+    ^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 1602, in load_text
+    row_data = self.main_df.loc[index]
+               ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexing.py", line 1191, in __getitem__
+    return self._getitem_axis(maybe_callable, axis=axis)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexing.py", line 1431, in _getitem_axis
+    return self._get_label(key, axis=axis)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexing.py", line 1381, in _get_label
+    return self.obj.xs(label, axis=axis)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\generic.py", line 4301, in xs
+    loc = index.get_loc(key)
+          ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3812, in get_loc
+    raise KeyError(key) from err
+KeyError: 1
+2025-04-10 11:18:44 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-10 11:18:44 [ERROR]: Using column 'Original_Text' for text
+2025-04-10 11:18:44 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-10 11:18:44 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Original_Text']
+2025-04-10 11:19:13 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-10 11:28:09 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-10 11:28:12 [ERROR]: Starting CSV export process
+2025-04-10 11:28:12 [ERROR]: Filtered DataFrame to 1 relevant/partially relevant rows.
+2025-04-10 11:28:12 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-10 11:28:12 [ERROR]: Added missing column: Text
+2025-04-10 11:28:12 [ERROR]: Added missing column: Place_of_Creation
+2025-04-10 11:28:12 [ERROR]: Using resolved text source column: Original_Text
+2025-04-10 11:28:16 [ERROR]: Refresh display error: Failed to refresh display: 0
+Index: 0
+Stack trace:
+Traceback (most recent call last):
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3805, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2606, in pandas._libs.hashtable.Int64HashTable.get_item
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 2630, in pandas._libs.hashtable.Int64HashTable.get_item
+KeyError: 0
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2061, in refresh_display
+    current_toggle = self.main_df.loc[self.page_counter, 'Text_Toggle']
+                     ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexing.py", line 1183, in __getitem__
+    return self.obj._get_value(*key, takeable=self._takeable)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\frame.py", line 4221, in _get_value
+    row = self.index.get_loc(index)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\site-packages\pandas\core\indexes\base.py", line 3812, in get_loc
+    raise KeyError(key) from err
+KeyError: 0
+2025-04-10 11:28:17 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-10 11:28:17 [ERROR]: Added essential column: Creation_Place
+2025-04-10 11:28:17 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-10 11:28:17 [ERROR]: Copied 1 values for column: Document_Type
+2025-04-10 11:28:17 [ERROR]: Copied 1 values for column: Author
+2025-04-10 11:28:17 [ERROR]: Copied 1 values for column: Correspondent
+2025-04-10 11:28:17 [ERROR]: Copied 1 values for column: Correspondent_Place
+2025-04-10 11:28:17 [ERROR]: Copied 1 values for column: Date
+2025-04-10 11:28:17 [ERROR]: Copied 1 values for column: Place_of_Creation
+2025-04-10 11:28:17 [ERROR]: Copied 1 values for column: People
+2025-04-10 11:28:17 [ERROR]: Copied 1 values for column: Places
+2025-04-10 11:28:17 [ERROR]: Copied 1 values for column: Summary
+2025-04-10 11:28:17 [ERROR]: Copied 1 values for column: Creation_Place
+2025-04-10 11:28:17 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-10 11:28:17 [ERROR]: Using column 'Original_Text' for text
+2025-04-10 11:28:17 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-10 11:28:17 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Original_Text']
+2025-04-10 11:35:41 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-10 11:35:44 [ERROR]: Starting CSV export process
+2025-04-10 11:35:44 [ERROR]: Filtered DataFrame to 1 relevant/partially relevant rows.
+2025-04-10 11:35:44 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-10 11:35:44 [ERROR]: Added missing column: Text
+2025-04-10 11:35:44 [ERROR]: Added missing column: Place_of_Creation
+2025-04-10 11:35:44 [ERROR]: Using resolved text source column: Original_Text
+2025-04-10 11:35:44 [ERROR]: Reset index for temp_df. New length: 1
+2025-04-10 11:35:47 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-10 11:35:47 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-10 11:35:47 [ERROR]: Added essential column: Creation_Place
+2025-04-10 11:35:47 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-10 11:35:47 [ERROR]: Copied 1 values for column: Document_Type
+2025-04-10 11:35:47 [ERROR]: Copied 1 values for column: Author
+2025-04-10 11:35:47 [ERROR]: Copied 1 values for column: Correspondent
+2025-04-10 11:35:47 [ERROR]: Copied 1 values for column: Correspondent_Place
+2025-04-10 11:35:47 [ERROR]: Copied 1 values for column: Date
+2025-04-10 11:35:47 [ERROR]: Copied 1 values for column: Place_of_Creation
+2025-04-10 11:35:47 [ERROR]: Copied 1 values for column: People
+2025-04-10 11:35:47 [ERROR]: Copied 1 values for column: Places
+2025-04-10 11:35:47 [ERROR]: Copied 1 values for column: Summary
+2025-04-10 11:35:47 [ERROR]: Copied 1 values for column: Creation_Place
+2025-04-10 11:35:47 [ERROR]: Preparing export dataframe. Text source: Original_Text
+2025-04-10 11:35:47 [ERROR]: Using column 'Original_Text' for text
+2025-04-10 11:35:47 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-10 11:35:47 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Original_Text']
+2025-04-10 13:01:12 [ERROR]: Could not parse rotation angle from response at index 0: bottom edge
+2025-04-10 13:02:12 [ERROR]: Could not parse rotation angle from response at index 1: bottom edge
+2025-04-10 13:02:12 [ERROR]: Could not parse rotation angle from response at index 2: top edge
+2025-04-10 13:02:12 [ERROR]: Could not parse rotation angle from response at index 0: bottom edge
+2025-04-10 13:02:36 [ERROR]: Could not parse rotation angle from response at index 2: top edge
+2025-04-10 13:38:04 [ERROR]: Error resizing/saving image from D:/OneDrive/Test/test image.jpg to d:\TranscriptionPearl\util\temp\images\0001_p001.jpg: 'bytes' object has no attribute 'get'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ImageHandler.py", line 107, in resize_image
+    print(f"Image rotation: {img.info.get('exif', {}).get(274, 0)}")
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'bytes' object has no attribute 'get'
+2025-04-10 13:38:04 [ERROR]: Error processing file D:/OneDrive/Test/test image.jpg - Additional Info: 'bytes' object has no attribute 'get'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ImageHandler.py", line 178, in process_new_images
+    self.resize_image(source_path, dest_path)
+  File "d:\TranscriptionPearl\util\ImageHandler.py", line 107, in resize_image
+    print(f"Image rotation: {img.info.get('exif', {}).get(274, 0)}")
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'bytes' object has no attribute 'get'
+2025-04-10 13:38:04 [ERROR]: Error in process_new_images: '_tkinter.tkapp' object has no attribute 'messagebox'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\ImageHandler.py", line 178, in process_new_images
+    self.resize_image(source_path, dest_path)
+  File "d:\TranscriptionPearl\util\ImageHandler.py", line 107, in resize_image
+    print(f"Image rotation: {img.info.get('exif', {}).get(274, 0)}")
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'bytes' object has no attribute 'get'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 1332, in process_new_images
+    successful_copies, new_rows_list = self.image_handler.process_new_images(
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\TranscriptionPearl\util\ImageHandler.py", line 214, in process_new_images
+    self.app.messagebox.showerror("Error", f"Failed to process the image {source_path}:\n{e}")
+    ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\tkinter\__init__.py", line 2433, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'messagebox'
+2025-04-10 13:40:57 [ERROR]: Could not parse rotation angle from response at index 0: Upside-down (180 degrees)
+
