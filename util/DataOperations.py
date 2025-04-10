@@ -569,10 +569,36 @@ class DataOperations:
 
                  # Rename the image file
                  if os.path.exists(old_temp_path_abs):
-                     os.rename(old_temp_path_abs, final_image_path_abs)
+                     # First check if destination already exists
+                     if os.path.exists(final_image_path_abs):
+                         try:
+                             # Either remove the existing file first or use a unique name
+                             os.remove(final_image_path_abs)
+                             self.app.error_logging(f"Removed existing file {final_image_path_abs} before renaming", level="INFO")
+                         except Exception as rm_err:
+                             # If we can't remove the existing file, use copy instead of rename
+                             self.app.error_logging(f"Could not remove existing file, using copy instead: {str(rm_err)}", level="WARNING")
+                             shutil.copy2(old_temp_path_abs, final_image_path_abs)
+                             try:
+                                 os.remove(old_temp_path_abs)  # Try to clean up source file
+                             except:
+                                 pass  # Silent fail if we can't remove source
+                             continue  # Skip the rename operation
+                     
+                     # Now rename the file
+                     try:
+                         os.rename(old_temp_path_abs, final_image_path_abs)
+                     except Exception as rename_err:
+                         # If rename fails, try to copy instead
+                         self.app.error_logging(f"Rename failed, attempting copy: {str(rename_err)}", level="WARNING")
+                         try:
+                             shutil.copy2(old_temp_path_abs, final_image_path_abs)
+                             os.remove(old_temp_path_abs)  # Clean up source file
+                         except Exception as copy_err:
+                             self.app.error_logging(f"Failed to copy {old_temp_path_abs} to {final_image_path_abs}: {str(copy_err)}", level="ERROR")
                  else:
-                      # Use app's logger
-                      self.app.error_logging(f"Temporary image file not found for renaming: {old_temp_path_abs}", level="WARNING")
+                     # Use app's logger
+                     self.app.error_logging(f"Temporary image file not found for renaming: {old_temp_path_abs}", level="WARNING")
 
 
                  # Update the app's DataFrame with final info
@@ -606,11 +632,35 @@ class DataOperations:
 
                           if old_img_path_abs != new_img_path_abs:
                               try:
+                                  # Check if destination already exists
+                                  if os.path.exists(new_img_path_abs):
+                                      # Try to remove existing file
+                                      try:
+                                          os.remove(new_img_path_abs)
+                                      except Exception as remove_err:
+                                          self.app.error_logging(f"Could not remove existing file {new_img_path_abs}: {remove_err}", level="WARNING")
+                                          # Try using copy instead of rename
+                                          shutil.copy2(old_img_path_abs, new_img_path_abs)
+                                          # Update path in DataFrame regardless of whether we could delete the original
+                                          self.app.main_df.at[idx, 'Image_Path'] = new_img_path_rel
+                                          continue
+
+                                  # Now do the rename
                                   os.rename(old_img_path_abs, new_img_path_abs)
                                   self.app.main_df.at[idx, 'Image_Path'] = new_img_path_rel
                               except OSError as rename_err:
-                                   # Use app's logger
-                                   self.app.error_logging(f"Error renaming image for index {idx}: {rename_err}", level="ERROR")
+                                  # If rename fails, try copy as fallback
+                                  try:
+                                      shutil.copy2(old_img_path_abs, new_img_path_abs)
+                                      self.app.main_df.at[idx, 'Image_Path'] = new_img_path_rel
+                                      # Try to delete the original file but don't worry if it fails
+                                      try:
+                                          os.remove(old_img_path_abs)
+                                      except:
+                                          pass
+                                  except Exception as copy_err:
+                                      # Use app's logger
+                                      self.app.error_logging(f"Error renaming/copying image for index {idx}: {copy_err}", level="ERROR")
 
             # Clean up pass_images directory
             try:

@@ -221,3 +221,28 @@ Traceback (most recent call last):
     return getattr(self.tk, attr)
            ^^^^^^^^^^^^^^^^^^^^^^
 AttributeError: '_tkinter.tkapp' object has no attribute 'parse_collation_response'
+2025-04-09 18:59:18 [ERROR]: Process edited image error: [WinError 183] Cannot create a file when that file already exists: 'd:\\TranscriptionPearl\\util\\temp\\images\\temp_0_0.jpg' -> 'd:\\TranscriptionPearl\\util\\temp\\images\\0001_p001.jpg'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 572, in process_edited_single_image
+    os.rename(old_temp_path_abs, final_image_path_abs)
+FileExistsError: [WinError 183] Cannot create a file when that file already exists: 'd:\\TranscriptionPearl\\util\\temp\\images\\temp_0_0.jpg' -> 'd:\\TranscriptionPearl\\util\\temp\\images\\0001_p001.jpg'
+2025-04-09 19:00:29 [ERROR]: Process edited image error: [WinError 183] Cannot create a file when that file already exists: 'd:\\TranscriptionPearl\\util\\temp\\images\\temp_0_0.jpg' -> 'd:\\TranscriptionPearl\\util\\temp\\images\\0001_p001.jpg'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 572, in process_edited_single_image
+    os.rename(old_temp_path_abs, final_image_path_abs)
+FileExistsError: [WinError 183] Cannot create a file when that file already exists: 'd:\\TranscriptionPearl\\util\\temp\\images\\temp_0_0.jpg' -> 'd:\\TranscriptionPearl\\util\\temp\\images\\0001_p001.jpg'
+2025-04-09 19:36:46 [ERROR]: Process edited image error: [WinError 183] Cannot create a file when that file already exists: 'd:\\TranscriptionPearl\\util\\temp\\images\\temp_0_0.jpg' -> 'd:\\TranscriptionPearl\\util\\temp\\images\\0001_p001.jpg'
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 572, in process_edited_single_image
+    os.rename(old_temp_path_abs, final_image_path_abs)
+FileExistsError: [WinError 183] Cannot create a file when that file already exists: 'd:\\TranscriptionPearl\\util\\temp\\images\\temp_0_0.jpg' -> 'd:\\TranscriptionPearl\\util\\temp\\images\\0001_p001.jpg'
+2025-04-09 19:40:21 [ERROR]: Error in edit_all_images: name 'natural_sort_key' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2431, in edit_all_images
+    key=natural_sort_key # Sort naturally
+        ^^^^^^^^^^^^^^^^
+NameError: name 'natural_sort_key' is not defined

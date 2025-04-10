@@ -8,6 +8,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 import traceback
 
+# Import natural_sort_key from DataOperations to use in edit_all_images
+from util.DataOperations import DataOperations, natural_sort_key
+
 # Import Local Scripts
 from util.subs.ImageSplitter import ImageSplitter
 from util.FindReplace import FindReplace
@@ -23,7 +26,6 @@ from util.AIFunctions import AIFunctionsHandler
 from util.ErrorLogger import log_error
 from util.NamesAndPlaces import NamesAndPlacesHandler
 from util.Highlights import HighlightHandler # <--- Added Import
-from util.DataOperations import DataOperations
 
 class App(TkinterDnD.Tk):
 
@@ -1975,6 +1977,7 @@ class App(TkinterDnD.Tk):
             self.doc_button5.pack_forget()
 
 # Update Functions
+
     def refresh_display(self):
         """Refresh the current image and text display, handling single and multi-image paths."""
         if self.main_df.empty:

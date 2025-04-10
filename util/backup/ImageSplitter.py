@@ -1,3 +1,8 @@
+# util/ImageSplitter.py
+
+# This file contains the ImageSplitter sub_application, which is used to handle
+# the image splitting and editing for the application.
+
 import os, cv2, shutil, threading
 import numpy as np
 import tkinter as tk
@@ -149,27 +154,12 @@ class ImageSplitter(tk.Toplevel):
         super().__init__()
         self.state('zoomed')
         self.title("Transcription Pearl Image Preprocessing Tool 0.9 beta")
-        
-        # Store the directory path, but validate it
-        if not active_directory:
-            messagebox.showerror("Error", "No directory specified for image editing.")
-            self.destroy()
-            return
-        
-        if not os.path.exists(active_directory):
-            try:
-                os.makedirs(active_directory, exist_ok=True)
-                print(f"Created directory: {active_directory}")
-            except Exception as e:
-                messagebox.showerror("Error", f"Could not create directory: {active_directory}\n{str(e)}")
-                self.destroy()
-                return
-            
         self.folder_path = active_directory
         self.link_nav = 0
         self.current_image_index = 0
        
         self.special_cursor_active = False
+        self.current_image_index = 0
         
         self.split_line = None
         self.split_start = None
@@ -180,7 +170,7 @@ class ImageSplitter(tk.Toplevel):
 
         # Initialize auto_split before creating menus
         self.auto_split = False
-        self.auto_split_var = tk.BooleanVar(value=False)
+        self.auto_split_var = tk.BooleanVar(value=False)  # Add this line
 
         # Determines if the image is cropped on release of the mouse (True) or on press of Enter (False)
         self.batch_process = tk.BooleanVar()
@@ -340,69 +330,45 @@ class ImageSplitter(tk.Toplevel):
     
     def load_a_folder(self):
         if self.folder_path:
-            # Set up temp directory
             self.set_temp_dir()
-            
-            # Look for image files in the temp directory
             image_files = [file for file in os.listdir(self.temp_folder) if file.lower().endswith((".jpg", ".jpeg"))]
-            
-            # Handle case where no images are found
-            if not image_files:
-                print(f"No images found in temp folder: {self.temp_folder}")
-                # If editing a single file (sent from the main app), try to create a blank image placeholder
-                try:
-                    # Create a simple blank image as a placeholder
-                    blank_image = Image.new('RGB', (800, 1000), (255, 255, 255))  # White background
-                    blank_path = os.path.join(self.temp_folder, "blank_image.jpg")
-                    blank_image.save(blank_path)
-                    image_files = ["blank_image.jpg"]
-                    print(f"Created placeholder image at {blank_path}")
-                except Exception as e:
-                    print(f"Error creating placeholder image: {e}")
-                    messagebox.showwarning("No Images", "No images found to edit. The tool will close.")
-                    self.after(500, self.destroy)
-                    return
-            
-            # Initialize DataFrame
             self.image_data = pd.DataFrame(columns=['Image_Index', 'Original_Image', 'Split_Image', 'Left_or_Right'])
-            
-            # Add image files to DataFrame
             for i, image_file in enumerate(image_files, start=1):
                 image_path = os.path.join(self.temp_folder, image_file)
-                self.image_data = pd.concat([self.image_data, pd.DataFrame({
-                    'Image_Index': [i], 
-                    'Original_Image': [image_path], 
-                    'Split_Image': [None], 
-                    'Left_or_Right': [None]
-                })], ignore_index=True)
-            
+                self.image_data = pd.concat([self.image_data, pd.DataFrame({'Image_Index': [i], 'Original_Image': [image_path], 'Split_Image': [None], 'Left_or_Right': [None]})], ignore_index=True)
             if not self.image_data.empty:
                 self.current_image_index = 0
                 self.show_current_image()
-            else:
-                messagebox.showwarning("No Images", "No valid images could be loaded. The tool will close.")
-                self.after(500, self.destroy)
-    
+        
     def process_split_image(self, current_image_path, current_image_row, left_image, right_image, split_type):
         try:
+            # Print debugging info about the row name
+            print(f"Row name in process_split_image: {current_image_row.name}, type: {type(current_image_row.name)}")
+            
             # Get current sequence number from the filename
             # Handle the new format "0001_p001" by splitting on '_' and taking first part
             base_name = os.path.splitext(os.path.basename(current_image_path))[0]
+            current_seq = 0
             
-            # Check different filename patterns
+            # Try to extract sequence number from filename
             if '_p' in base_name:
-                current_seq = int(base_name.split('_p')[0])
+                try:
+                    current_seq = int(base_name.split('_p')[0])
+                except (ValueError, IndexError):
+                    # Fall back to a safe numeric value
+                    current_seq = self.current_image_index + 1
             else:
-                # Try to extract any numeric part for sequence number
+                # Try to use just the numeric part if no '_p' pattern
                 try:
                     current_seq = int(''.join(filter(str.isdigit, base_name)))
                 except ValueError:
-                    # If all else fails, use current_image_index + 1
+                    # Fall back to a safe numeric value
                     current_seq = self.current_image_index + 1
             
             # Calculate new sequence numbers for split images
-            next_images = [f for f in os.listdir(os.path.dirname(current_image_path)) 
-                        if f.endswith('.jpg') and f != os.path.basename(current_image_path)]
+            image_dir = os.path.dirname(current_image_path)
+            next_images = [f for f in os.listdir(image_dir) 
+                        if f.lower().endswith(('.jpg', '.jpeg')) and f != os.path.basename(current_image_path)]
             
             # Extract sequence numbers from filenames, handling the new format
             existing_numbers = []
@@ -419,7 +385,6 @@ class ImageSplitter(tk.Toplevel):
             next_seq = max([current_seq] + existing_numbers) + 1
             
             # Generate new file names with proper sequential numbering
-            image_dir = os.path.dirname(current_image_path)
             left_image_path = os.path.join(image_dir, 
                                         f"{current_seq:04d}_p{current_seq:03d}.jpg")
             right_image_path = os.path.join(image_dir, 
@@ -433,13 +398,15 @@ class ImageSplitter(tk.Toplevel):
             left_image.save(left_image_path)
             right_image.save(right_image_path)
             
-            # Get the current index in the DataFrame
-            # Handle different types of indices safely
-            if isinstance(current_image_row.name, (int, np.integer)):
-                # Use the numeric index directly
-                current_index = current_image_row.name
-            else:
-                # Fall back to current_image_index
+            print(f"Saved split images to: {left_image_path} and {right_image_path}")
+            
+            # For the DataFrame operations, we need a safe numeric index
+            # Ignore row.name completely - use the current_image_index directly
+            current_index = self.current_image_index
+            
+            # Special handling for row name 'current'
+            if isinstance(current_image_row.name, str) and current_image_row.name == 'current':
+                print("Detected 'current' as row name - using safe numeric index")
                 current_index = self.current_image_index
             
             # Create new rows for the split images
@@ -457,16 +424,18 @@ class ImageSplitter(tk.Toplevel):
                 'Left_or_Right': ['Right']
             })
 
-            # Remove the original row and insert the new split rows
-            # Use a try-except block to handle potential indexing issues
+            # Rebuild the DataFrame with the new rows
             try:
-                before_split = self.image_data.loc[:current_index-1] if current_index > 0 else pd.DataFrame()
-                after_split = self.image_data.loc[current_index+1:] if current_index < len(self.image_data)-1 else pd.DataFrame()
+                # If current_image_row.name is a valid integer index, use it
+                before_split = self.image_data.iloc[:current_index] if current_index > 0 else pd.DataFrame()
+                after_split = self.image_data.iloc[current_index+1:] if current_index < len(self.image_data)-1 else pd.DataFrame()
             except Exception:
-                # If there's any issue with indexing, use a different approach
-                before_split = self.image_data[self.image_data['Image_Index'] < self.current_image_index + 1] 
-                after_split = self.image_data[self.image_data['Image_Index'] > self.current_image_index + 1]
+                # If there was any error with slicing, just rebuild the DataFrame completely
+                # by filtering out the current row and adding the new rows
+                before_split = self.image_data[self.image_data['Image_Index'] != self.current_image_index + 1]
+                after_split = pd.DataFrame()
             
+            # Combine everything
             self.image_data = pd.concat([
                 before_split,
                 left_row,
@@ -481,6 +450,8 @@ class ImageSplitter(tk.Toplevel):
             
         except Exception as e:
             print(f"Error in process_split_image: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return False
             
     def clear_all_modes(self):
@@ -1392,7 +1363,11 @@ class ImageSplitter(tk.Toplevel):
         if self.vertical_line:
             try:
                 # Get the x-coordinate of the vertical line
-                split_x = int(self.image_canvas.coords(self.vertical_line)[0] / self.current_scale)
+                canvas_x = self.image_canvas.coords(self.vertical_line)[0]
+                
+                # Convert from canvas coordinates to image coordinates 
+                # by dividing by current_scale
+                split_x = int(canvas_x / self.current_scale)
                 
                 # Ensure split_x is within image bounds
                 split_x = max(0, min(split_x, width))
@@ -1400,7 +1375,6 @@ class ImageSplitter(tk.Toplevel):
                 # Create left and right images
                 left_image = image.crop((0, 0, split_x, height))
                 right_image = image.crop((split_x, 0, width, height))
-                
                 
                 return left_image, right_image
             except Exception as e:
@@ -1411,7 +1385,10 @@ class ImageSplitter(tk.Toplevel):
     def split_horizontal_cursor(self, image, width, height):
         if self.horizontal_line:
             # Get the y-coordinate of the horizontal line
-            split_y = int(self.image_canvas.coords(self.horizontal_line)[1] / self.current_scale)
+            canvas_y = self.image_canvas.coords(self.horizontal_line)[1]
+            
+            # Convert from canvas coordinates to image coordinates
+            split_y = int(canvas_y / self.current_scale)
             
             # Ensure split_y is within image bounds
             split_y = max(0, min(split_y, height))
@@ -1430,6 +1407,8 @@ class ImageSplitter(tk.Toplevel):
                 current_image_row = self.image_data[self.image_data['Image_Index'] == self.current_image_index + 1].iloc[0]
                 current_image_path = current_image_row['Split_Image'] if pd.notna(current_image_row['Split_Image']) else current_image_row['Original_Image']
                 
+                print(f"Row name in split_image_manually: {current_image_row.name}, type: {type(current_image_row.name)}")
+                
                 image = Image.open(current_image_path).convert("RGB")
                 width, height = image.size
                 
@@ -1439,6 +1418,10 @@ class ImageSplitter(tk.Toplevel):
                     return
                 
                 # Determine split type based on cursor state
+                left_image = None
+                right_image = None
+                split_type = None
+                
                 if self.cursor_orientation == 'angled' and self.cursor_line:
                     left_image, right_image = self.angled_cursor_split(image, width, height)
                     split_type = 'angled'
@@ -1457,7 +1440,11 @@ class ImageSplitter(tk.Toplevel):
                     return
                     
                 # Process the split images
-                self.process_split_image(current_image_path, current_image_row, left_image, right_image, split_type)
+                success = self.process_split_image(current_image_path, current_image_row, left_image, right_image, split_type)
+                
+                if not success:
+                    messagebox.showerror("Error", "Failed to process split images")
+                    return
                 
                 # Clear cursor lines
                 self.clear_cursor_lines()
@@ -1468,85 +1455,48 @@ class ImageSplitter(tk.Toplevel):
                 
             except Exception as e:
                 messagebox.showerror("Error", f"Error splitting image: {str(e)}")
+                print(f"Error in split_image_manually: {str(e)}")
+                import traceback
+                traceback.print_exc()
     
     def revert_to_original(self):
         """Revert current image to its original state"""
         if not self.image_data.empty:
             current_image_row = self.image_data[self.image_data['Image_Index'] == self.current_image_index + 1].iloc[0]
             
-            # Get paths
-            original_image_path = current_image_row['Original_Image']
-            
-            # Get the original filename (without path)
-            original_filename = os.path.basename(original_image_path)
-            
-            # Path to the backup of the truly original file
-            backup_original_path = os.path.join(self.originals_folder, original_filename)
-            
-            # Try to find the original backup - use several methods if direct path fails
-            backup_found = False
-            original_backup_file = None
-            
-            # Method 1: Direct path match
-            if os.path.exists(backup_original_path):
-                backup_found = True
-                original_backup_file = backup_original_path
-            else:
-                # Method 2: Try to find by stripping formatting and sequence numbers
-                try:
-                    # Strip sequence numbers and formatting
-                    base_filename_pattern = ''.join(c for c in original_filename if not (c.isdigit() or c in '_.'))
-                    
-                    if base_filename_pattern and os.path.exists(self.originals_folder):
-                        # Search for files with similar names
-                        for backup_file in os.listdir(self.originals_folder):
-                            if backup_file.lower().endswith(('.jpg', '.jpeg')):
-                                # Check if this backup file could match our original
-                                if base_filename_pattern in backup_file:
-                                    backup_found = True
-                                    original_backup_file = os.path.join(self.originals_folder, backup_file)
-                                    break
-                except Exception as e:
-                    print(f"Error in backup file search: {str(e)}")
+            if pd.notna(current_image_row['Split_Image']):
+                split_image_path = current_image_row['Split_Image']
+                original_image_path = current_image_row['Original_Image']
+                left_or_right = current_image_row['Left_or_Right']
                 
-                # Method 3: If there's only one file in the originals folder, use that
-                if not backup_found and os.path.exists(self.originals_folder):
-                    backup_files = [f for f in os.listdir(self.originals_folder) 
-                                 if f.lower().endswith(('.jpg', '.jpeg'))]
-                    if len(backup_files) == 1:
-                        backup_found = True
-                        original_backup_file = os.path.join(self.originals_folder, backup_files[0])
-            
-            # Check if we found a backup by any method
-            if backup_found and original_backup_file:
-                # Find all rows with this original image (both left and right splits)
-                related_rows = self.image_data[self.image_data['Original_Image'] == original_image_path]
+                # Delete the split image file
+                if os.path.exists(split_image_path):
+                    os.remove(split_image_path)
+                
+                # Find the index of the current split image row
                 current_index = current_image_row.name
                 
-                # Delete all split images related to this original
-                for _, row in related_rows.iterrows():
-                    if pd.notna(row['Split_Image']):
-                        split_path = row['Split_Image']
-                        if os.path.exists(split_path):
-                            try:
-                                os.remove(split_path)
-                            except Exception as e:
-                                print(f"Error removing split image {split_path}: {str(e)}")
+                # Delete the row pointing to the split image
+                self.image_data = self.image_data[self.image_data['Image_Index'] != self.current_image_index + 1]
                 
-                # Remove all related rows from the DataFrame
-                self.image_data = self.image_data[self.image_data['Original_Image'] != original_image_path]
+                # Delete the corresponding left or right split image
+                if left_or_right == 'Left':
+                    right_image_path = os.path.splitext(split_image_path)[0][:-1] + '2.jpg'
+                    right_image_row = self.image_data[self.image_data['Split_Image'] == right_image_path]
+                    if not right_image_row.empty:
+                        self.image_data = self.image_data[self.image_data['Image_Index'] != right_image_row['Image_Index'].iloc[0]]
+                        if os.path.exists(right_image_path):
+                            os.remove(right_image_path)
+                elif left_or_right == 'Right':
+                    left_image_path = os.path.splitext(split_image_path)[0][:-1] + '1.jpg'
+                    left_image_row = self.image_data[self.image_data['Split_Image'] == left_image_path]
+                    if not left_image_row.empty:
+                        current_index = left_image_row.index[0]
+                        self.image_data = self.image_data[self.image_data['Image_Index'] != left_image_row['Image_Index'].iloc[0]]
+                        if os.path.exists(left_image_path):
+                            os.remove(left_image_path)
                 
-                # Now restore the truly original image from our backup
-                # Copy from backup to restore original image
-                try:
-                    shutil.copy2(original_backup_file, original_image_path)
-                    print(f"Restored original from: {original_backup_file} to {original_image_path}")
-                except Exception as e:
-                    print(f"Error copying backup file: {str(e)}")
-                    messagebox.showerror("Error", f"Failed to restore original image: {str(e)}")
-                    return
-                
-                # Add a new row for the original image
+                # Insert a new row for the original image at the correct position
                 original_row = pd.DataFrame({
                     'Image_Index': [current_index + 1],
                     'Original_Image': [original_image_path],
@@ -1554,11 +1504,10 @@ class ImageSplitter(tk.Toplevel):
                     'Left_or_Right': [None]
                 })
                 
-                # Insert the original image at the appropriate position
                 self.image_data = pd.concat([
-                    self.image_data.iloc[:current_index] if current_index > 0 else pd.DataFrame(),
+                    self.image_data.iloc[:current_index],
                     original_row,
-                    self.image_data.iloc[current_index:] if current_index < len(self.image_data) else pd.DataFrame()
+                    self.image_data.iloc[current_index:]
                 ], ignore_index=True)
                 
                 # Reset the index of the DataFrame
@@ -1570,17 +1519,8 @@ class ImageSplitter(tk.Toplevel):
                 # Move to the reverted original image
                 self.current_image_index = current_index
                 
-                # Force update of display
-                self.after(50, self.show_current_image)
+                self.show_current_image()
                 self.status = "changed"
-            else:
-                print(f"Could not find original backup for: {original_filename}")
-                print(f"Original path: {original_image_path}")
-                print(f"Looked in: {self.originals_folder}")
-                if os.path.exists(self.originals_folder):
-                    print(f"Available backups: {os.listdir(self.originals_folder)}")
-                messagebox.showwarning("Revert Failed", "Original backup image not found.")
-                return
 
     def revert_all_images(self):
         """Revert all images to their original state"""
@@ -1608,147 +1548,53 @@ class ImageSplitter(tk.Toplevel):
             
             def process_images():
                 try:
-                    # Create a new DataFrame for the reverted images
-                    new_image_data = pd.DataFrame(columns=self.image_data.columns)
-                    errors = []
-                    
                     for i, original_image_path in enumerate(original_images):
                         # Update progress
                         progress_bar['value'] = i + 1
                         progress_label.config(text=f"Reverting image {i + 1} of {total_images}")
                         progress_window.update()
-                            
-                        # Get the original filename (without path)
-                        original_filename = os.path.basename(original_image_path)
                         
-                        # Path to the backup of the truly original file
-                        backup_original_path = os.path.join(self.originals_folder, original_filename)
+                        # Get all rows with this original image
+                        related_rows = self.image_data[self.image_data['Original_Image'] == original_image_path]
                         
-                        # Try to find the original backup file with multiple methods
-                        backup_found = False
-                        original_backup_file = None
+                        # Delete all split image files
+                        for _, row in related_rows.iterrows():
+                            if pd.notna(row['Split_Image']):
+                                split_image_path = row['Split_Image']
+                                if os.path.exists(split_image_path):
+                                    os.remove(split_image_path)
                         
-                        # Method 1: Direct path match
-                        if os.path.exists(backup_original_path):
-                            backup_found = True
-                            original_backup_file = backup_original_path
-                        else:
-                            # Method 2: Try to find by stripping formatting and sequence numbers
-                            try:
-                                # Strip sequence numbers and formatting
-                                base_filename_pattern = ''.join(c for c in original_filename if not (c.isdigit() or c in '_.'))
-                                
-                                if base_filename_pattern and os.path.exists(self.originals_folder):
-                                    # Search for files with similar names
-                                    for backup_file in os.listdir(self.originals_folder):
-                                        if backup_file.lower().endswith(('.jpg', '.jpeg')):
-                                            # Check if this backup file could match our original
-                                            if base_filename_pattern in backup_file:
-                                                backup_found = True
-                                                original_backup_file = os.path.join(self.originals_folder, backup_file)
-                                                break
-                            except Exception as e:
-                                print(f"Error in backup file search for {original_filename}: {str(e)}")
-                            
-                            # Method 3: If there's only one file in the originals folder and we're processing only one image, use that
-                            if not backup_found and os.path.exists(self.originals_folder) and len(original_images) == 1:
-                                backup_files = [f for f in os.listdir(self.originals_folder) 
-                                             if f.lower().endswith(('.jpg', '.jpeg'))]
-                                if len(backup_files) == 1:
-                                    backup_found = True
-                                    original_backup_file = os.path.join(self.originals_folder, backup_files[0])
+                        # Remove all related rows from DataFrame
+                        self.image_data = self.image_data[self.image_data['Original_Image'] != original_image_path]
                         
-                        if backup_found and original_backup_file:
-                            # Get all rows with this original image
-                            related_rows = self.image_data[self.image_data['Original_Image'] == original_image_path]
-                            
-                            # Delete all split image files
-                            for _, row in related_rows.iterrows():
-                                if pd.notna(row['Split_Image']):
-                                    split_image_path = row['Split_Image']
-                                    if os.path.exists(split_image_path):
-                                        try:
-                                            os.remove(split_image_path)
-                                        except Exception as e:
-                                            print(f"Error removing split image {split_image_path}: {str(e)}")
-                            
-                            # Copy from backup to restore original image
-                            try:
-                                shutil.copy2(original_backup_file, original_image_path)
-                                print(f"Restored original from: {original_backup_file} to {original_image_path}")
-                            except Exception as e:
-                                print(f"Error copying backup file for {original_filename}: {str(e)}")
-                                errors.append(f"Failed to restore {original_filename}: {str(e)}")
-                                continue
-                            
-                            # Add back original image row
-                            original_row = pd.DataFrame({
-                                'Image_Index': [len(new_image_data) + 1],
-                                'Original_Image': [original_image_path],
-                                'Split_Image': [None],
-                                'Left_or_Right': [None]
-                            })
-                            
-                            new_image_data = pd.concat([new_image_data, original_row], ignore_index=True)
-                        else:
-                            # Log the error
-                            error_msg = f"Could not find original backup for: {original_filename}"
-                            print(error_msg)
-                            print(f"Original path: {original_image_path}")
-                            print(f"Looked in: {self.originals_folder}")
-                            if os.path.exists(self.originals_folder):
-                                print(f"Available backups: {os.listdir(self.originals_folder)}")
-                            
-                            errors.append(error_msg)
-                            
-                            # If no backup exists, keep just one instance of the original
-                            if len(related_rows) > 0:
-                                row_data = pd.DataFrame({
-                                    'Image_Index': [len(new_image_data) + 1],
-                                    'Original_Image': [original_image_path],
-                                    'Split_Image': [None],
-                                    'Left_or_Right': [None]
-                                })
-                                
-                                new_image_data = pd.concat([new_image_data, row_data], ignore_index=True)
-                    
-                    # Replace the current image_data with the new one
-                    self.image_data = new_image_data
+                        # Add back original image row
+                        original_row = pd.DataFrame({
+                            'Image_Index': [len(self.image_data) + 1],
+                            'Original_Image': [original_image_path],
+                            'Split_Image': [None],
+                            'Left_or_Right': [None]
+                        })
+                        
+                        self.image_data = pd.concat([self.image_data, original_row], ignore_index=True)
                     
                     # Reset index and update Image_Index
                     self.image_data.reset_index(drop=True, inplace=True)
                     self.image_data['Image_Index'] = self.image_data.index + 1
                     
-                    # Reset current image index to beginning
+                    # Reset current image index and show first image
                     self.current_image_index = 0
-                    
-                    # Show first image with slight delay to ensure UI is updated
-                    self.after(100, self.show_current_image)
+                    self.show_current_image()
                     
                     # Show completion message
-                    if errors:
-                        progress_label.config(text=f"Reverted with {len(errors)} errors")
-                    else:
-                        progress_label.config(text="All images reverted!")
+                    progress_label.config(text="All images reverted!")
                     
                     def close_progress():
                         progress_window.destroy()
                         self.status = "changed"
-                        # Force another refresh of display
-                        self.after(50, self.show_current_image)
-                        
-                        # Show any errors in a separate dialog
-                        if errors:
-                            error_message = "\n".join(errors[:10])
-                            if len(errors) > 10:
-                                error_message += f"\n...and {len(errors) - 10} more errors"
-                            messagebox.showwarning("Revert Warnings", 
-                                               f"Some images could not be fully reverted:\n\n{error_message}")
                     
                     self.after(1000, close_progress)
                     
                 except Exception as e:
-                    print(f"Error in revert_all_images: {str(e)}")
                     messagebox.showerror("Error", f"An error occurred while reverting images: {str(e)}")
                     progress_window.destroy()
             
@@ -1787,8 +1633,9 @@ class ImageSplitter(tk.Toplevel):
             return None, None
             
         try:
-            # Get cursor line coordinates
-            x1, y1, x2, y2 = self.image_canvas.coords(self.cursor_line)
+            # Get cursor line coordinates (canvas coordinates)
+            canvas_coords = self.image_canvas.coords(self.cursor_line)
+            x1, y1, x2, y2 = canvas_coords
             
             # Convert canvas coordinates to image coordinates
             x1 = int(x1 / self.current_scale)
@@ -2029,8 +1876,25 @@ class ImageSplitter(tk.Toplevel):
             return False
 
         try:
-            # Set up and clean the pass_images directory
-            pass_images_dir = self.ensure_pass_images_dir()
+            # Set up the pass_images directory
+            current_script_dir = os.path.dirname(os.path.abspath(__file__))
+            # Create the path that DataOperations expects (in subs/pass_images)
+            subs_dir = os.path.join(current_script_dir, "subs")
+            os.makedirs(subs_dir, exist_ok=True)
+            pass_images_dir = os.path.join(subs_dir, "pass_images")
+            
+            # Create the pass_images directory if it doesn't exist
+            os.makedirs(pass_images_dir, exist_ok=True)
+
+            # Clear existing files in pass_images directory
+            for item in os.listdir(pass_images_dir):
+                item_path = os.path.join(pass_images_dir, item)
+                try:
+                    if os.path.isfile(item_path):
+                        os.unlink(item_path)
+                except Exception as e:
+                    print(f"Error deleting file {item_path}: {e}")
+                    continue
 
             # Sort the DataFrame by Image_Index to ensure proper sequence
             sorted_data = self.image_data.sort_values('Image_Index')
@@ -2038,7 +1902,7 @@ class ImageSplitter(tk.Toplevel):
             # Process and save images sequentially
             for i, row in sorted_data.iterrows():
                 try:
-                    # Create consistent naming scheme - use sequential numbers
+                    # Create consistent naming scheme
                     new_name = f"{i+1:04d}.jpg"
                     new_path = os.path.join(pass_images_dir, new_name)
                     
@@ -2074,28 +1938,19 @@ class ImageSplitter(tk.Toplevel):
             # Store the original directory path
             self.original_directory = self.folder_path
             
-            # Check if the original directory exists
-            if not os.path.exists(self.folder_path):
-                print(f"Warning: Source directory does not exist: {self.folder_path}")
-                # Create the directory if it doesn't exist
-                try:
-                    os.makedirs(self.folder_path, exist_ok=True)
-                    print(f"Created directory: {self.folder_path}")
-                except Exception as e:
-                    print(f"Error creating directory {self.folder_path}: {e}")
-            
-            # Set up our own internal temp directory
             current_script_dir = os.path.dirname(os.path.abspath(__file__))
+            
+            # Create subs directory for consistency with DataOperations
+            subs_dir = os.path.join(current_script_dir, "subs")
+            os.makedirs(subs_dir, exist_ok=True)
+            
+            # Set up temp directory
             self.temp_folder = os.path.join(current_script_dir, "temp")
             
             # Create temp directory if it doesn't exist
             os.makedirs(self.temp_folder, exist_ok=True)
             
-            # Set up original backups directory
-            self.originals_folder = os.path.join(current_script_dir, "originals_backup")
-            os.makedirs(self.originals_folder, exist_ok=True)
-            
-            # Clear existing files in our temp directory
+            # Clear existing files
             for item in os.listdir(self.temp_folder):
                 item_path = os.path.join(self.temp_folder, item)
                 if os.path.isfile(item_path):
@@ -2103,36 +1958,13 @@ class ImageSplitter(tk.Toplevel):
                 elif os.path.isdir(item_path):
                     shutil.rmtree(item_path)
             
-            # Clear existing files in our originals backup directory
-            for item in os.listdir(self.originals_folder):
-                item_path = os.path.join(self.originals_folder, item)
-                if os.path.isfile(item_path):
-                    os.unlink(item_path)
-                elif os.path.isdir(item_path):
-                    shutil.rmtree(item_path)
+            # Copy images to temp directory
+            for file in os.listdir(self.folder_path):
+                if file.lower().endswith((".jpg", ".jpeg")):
+                    src = os.path.join(self.folder_path, file)
+                    dst = os.path.join(self.temp_folder, file)
+                    shutil.copy2(src, dst)
             
-            # Copy images to temp directory if source directory has any files
-            if os.path.exists(self.folder_path):
-                try:
-                    files_copied = 0
-                    for file in os.listdir(self.folder_path):
-                        if file.lower().endswith((".jpg", ".jpeg")):
-                            src = os.path.join(self.folder_path, file)
-                            # Copy to temp (working directory)
-                            dst = os.path.join(self.temp_folder, file)
-                            shutil.copy2(src, dst)
-                            # Also copy to originals backup
-                            orig_dst = os.path.join(self.originals_folder, file)
-                            shutil.copy2(src, orig_dst)
-                            files_copied += 1
-                    
-                    # If we didn't find any images, print a warning
-                    if files_copied == 0:
-                        print(f"Warning: No image files found in {self.folder_path}")
-                except Exception as e:
-                    print(f"Error copying files from {self.folder_path}: {e}")
-            
-            # Update folder_path to our internal temp
             self.folder_path = self.temp_folder
 
     def on_closing(self):
@@ -2141,98 +1973,15 @@ class ImageSplitter(tk.Toplevel):
             if response is None:  # Cancel
                 return
             elif response:  # Yes
-                if self.commit_changes():
-                    self.status = "saved"
-                else:
-                    # If saving failed and user wants to try again
-                    if messagebox.askyesno("Save Failed", "Failed to save changes. Try again?"):
-                        return  # Stay open for user to try again
+                self.commit_changes()
             else:  # No
                 self.status = "discarded"
-                
-                # Clean up the pass_images directory if we're discarding changes
-                try:
-                    self.ensure_pass_images_dir()  # This cleans up the directory too
-                except Exception as e:
-                    print(f"Error cleaning up pass_images directory: {e}")
-        
-        # Clean up temp folder regardless of save status
-        try:
-            if hasattr(self, 'temp_folder') and self.temp_folder and os.path.exists(self.temp_folder):
-                # List all files before removing to check if any are locked
-                for item in os.listdir(self.temp_folder):
-                    try:
-                        item_path = os.path.join(self.temp_folder, item)
-                        if os.path.isfile(item_path):
-                            os.remove(item_path)
-                        elif os.path.isdir(item_path):
-                            shutil.rmtree(item_path, ignore_errors=True)
-                    except Exception as item_err:
-                        print(f"Could not remove {item_path}: {item_err}")
-                
-                # Now try to remove the directory itself
-                try:
-                    shutil.rmtree(self.temp_folder, ignore_errors=True)
-                except Exception as dir_err:
-                    print(f"Could not completely remove temp folder: {dir_err}")
-                    # If full removal fails, at least make sure we've removed content
-                    for item in os.listdir(self.temp_folder):
-                        try:
-                            item_path = os.path.join(self.temp_folder, item)
-                            if os.path.isfile(item_path):
-                                os.chmod(item_path, 0o777)  # Try to ensure we have permission
-                                os.remove(item_path)
-                        except:
-                            pass
-                            
-            # Clean up originals backup folder
-            if hasattr(self, 'originals_folder') and self.originals_folder and os.path.exists(self.originals_folder):
-                try:
-                    # Remove all files in the originals backup directory
-                    for item in os.listdir(self.originals_folder):
-                        item_path = os.path.join(self.originals_folder, item)
-                        if os.path.isfile(item_path):
-                            os.remove(item_path)
-                        elif os.path.isdir(item_path):
-                            shutil.rmtree(item_path, ignore_errors=True)
-                    
-                    # Try to remove the directory itself
-                    shutil.rmtree(self.originals_folder, ignore_errors=True)
-                except Exception as e:
-                    print(f"Error cleaning up originals backup folder: {e}")
-        
-        except Exception as e:
-            print(f"Error during temp folder cleanup: {e}")
-        
-        self.destroy()
-
-    def ensure_pass_images_dir(self):
-        """Ensure the pass_images directory exists and is empty"""
-        try:
-            # Set up the pass_images directory
-            current_script_dir = os.path.dirname(os.path.abspath(__file__))
-            pass_images_dir = os.path.join(current_script_dir, "pass_images")
-            
-            # Create the pass_images directory if it doesn't exist
-            os.makedirs(pass_images_dir, exist_ok=True)
-
-            # Clear existing files in pass_images directory
-            for item in os.listdir(pass_images_dir):
-                item_path = os.path.join(pass_images_dir, item)
-                try:
-                    if os.path.isfile(item_path):
-                        os.unlink(item_path)
-                except Exception as e:
-                    print(f"Error deleting file {item_path}: {e}")
-                    
-            return pass_images_dir
-        except Exception as e:
-            print(f"Error ensuring pass_images directory: {e}")
-            raise
+                self.destroy()
+        else:
+            self.destroy()
 
 if __name__ == "__main__":
-    app = ImageSplitter(".")
+    app = ImageSplitter()
     app.run()
 
     
-
