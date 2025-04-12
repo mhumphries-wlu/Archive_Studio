@@ -8,6 +8,7 @@ import pandas as pd
 from tkinter import messagebox, END # Added END
 import re # Added for apply_collation_dict and natural_sort_key
 import shutil # Added for delete_current_image and process_edited_single_image
+import json # Added for determine_rotation_from_box
 
 # Helper function for natural sorting (needed by process_edited_single_image)
 def natural_sort_key(s):
@@ -458,6 +459,96 @@ class DataOperations:
             messagebox.showerror("Error", f"An error occurred while deleting the image: {str(e)}")
             # Access error_logging via self.app
             self.app.error_logging(f"Error in delete_current_image: {str(e)}")
+
+    def determine_rotation_from_box(self, index, json_response_str):
+        """Parses JSON bounding box, determines orientation, and calls rotation."""
+        print(f"DEBUG: Entered determine_rotation_from_box for index {index}")
+        try:
+            # Log the raw response
+            self.app.error_logging(f"Parsing rotation response for index {index}: {json_response_str}", level="DEBUG")
+            
+            # Parse the JSON response
+            try:
+                # --- SIMPLIFIED PARSING USING REGEX ---
+                # Just use regex to find the box_2d coordinates directly
+                box_2d_pattern = r'"box_2d"\s*:\s*\[\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\]'
+                box_match = re.search(box_2d_pattern, json_response_str)
+                
+                if not box_match:
+                    self.app.error_logging(f"Could not find box_2d coordinates in response for index {index}: {json_response_str}", level="ERROR")
+                    return # Cannot proceed without valid coordinates
+                
+                # Extract the four coordinates directly from regex groups
+                y_min = float(box_match.group(1))
+                x_min = float(box_match.group(2))
+                y_max = float(box_match.group(3))
+                x_max = float(box_match.group(4))
+                
+                # Log the extracted coordinates
+                self.app.error_logging(f"Extracted coordinates for index {index}: [{y_min}, {x_min}, {y_max}, {x_max}]", level="DEBUG")
+                # --- END SIMPLIFIED PARSING ---
+            except Exception as json_e:
+                 self.app.error_logging(f"Failed to extract box_2d coordinates for index {index}: {json_e}\nResponse: {json_response_str}", level="ERROR")
+                 return # Cannot proceed without valid coordinates
+
+            # Determine orientation from normalized box coordinates (0-1000)
+            # Note: These are normalized, no need to use image dimensions here
+            dw = x_max - x_min
+            dh = y_max - y_min
+
+            orientation = "unknown"
+            if dw > dh:  # Likely horizontal text
+                # --- CORRECTED LOGIC ---
+                if y_min < 500: # Box starts near the TOP edge
+                     orientation = "horizontal_left" # Standard
+                else: # Box starts near the BOTTOM edge
+                    orientation = "horizontal_right" # Upside down
+                # --- END CORRECTION ---
+            else: # Likely vertical text (dh >= dw)
+                # --- CORRECTED LOGIC ---
+                if x_min < 500: # Box starts near the LEFT edge
+                    orientation = "vertical_left" # Rotated 90 deg clockwise (needs -90 correction)
+                else: # Box starts near the RIGHT edge
+                     orientation = "vertical_right" # Rotated 90 deg counter-clockwise (needs +90 correction)
+                # --- END CORRECTION ---
+
+            # Calculate correction angle needed to make text upright
+            correction_angle = 0
+            if orientation == "horizontal_right":
+                correction_angle = 180
+            elif orientation == "vertical_right": # Corrected condition
+                correction_angle = 90 # Rotate clockwise to correct
+            elif orientation == "vertical_left": # Corrected condition
+                correction_angle = -90 # Rotate counter-clockwise to correct
+            # horizontal_left needs 0 correction
+            
+            self.app.error_logging(f"Index {index}: Box [{y_min:.0f}, {x_min:.0f}, {y_max:.0f}, {x_max:.0f}], dw={dw:.0f}, dh={dh:.0f} -> Orientation: {orientation}, Correction Angle: {correction_angle}", level="INFO")
+
+            # If no rotation is needed, just return
+            if correction_angle == 0:
+                 self.app.error_logging(f"No rotation needed for index {index}.", level="INFO")
+                 return
+
+            # Get the absolute image path from the DataFrame
+            image_path_rel = self.app.main_df.loc[index, 'Image_Path']
+            image_path_abs = self.app.get_full_path(image_path_rel)
+
+            if not image_path_abs or not os.path.exists(image_path_abs):
+                 self.app.error_logging(f"Image path not found or invalid for rotation at index {index}: {image_path_abs}", level="ERROR")
+                 return
+            
+            # Call the ImageHandler's rotate function with the angle
+            # Note: rotate_image now takes (image_path, angle)
+            success, error_message = self.app.image_handler.rotate_image(image_path_abs, correction_angle)
+
+            if not success:
+                 self.app.error_logging(f"Rotation failed for index {index}: {error_message}", level="ERROR")
+                 # Consider adding a messagebox or other feedback here if needed
+
+        except Exception as e:
+             self.app.error_logging(f"Error in determine_rotation_from_box for index {index}: {str(e)}", level="ERROR")
+             import traceback
+             self.app.error_logging(traceback.format_exc(), level="ERROR") # Log full traceback
 
     def process_edited_single_image(self, original_image_path_rel):
         """

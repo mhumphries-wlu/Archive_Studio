@@ -1587,3 +1587,312 @@ Traceback (most recent call last):
 AttributeError: '_tkinter.tkapp' object has no attribute 'messagebox'
 2025-04-10 13:40:57 [ERROR]: Could not parse rotation angle from response at index 0: Upside-down (180 degrees)
 
+2025-04-10 19:46:10 [ERROR]: Could not parse rotation angle from response at index 0: Upside-down (180 degrees)
+
+2025-04-10 19:49:16 [ERROR]: Could not parse rotation angle from response at index 0: Rotated 90 degrees Clockwise
+2025-04-10 19:50:20 [ERROR]: Could not parse rotation angle from response at index 0: Upside-down (180 degrees)
+2025-04-10 19:51:30 [ERROR]: Could not parse rotation angle from response at index 0: Upside-down (180 degrees)
+2025-04-10 19:51:44 [ERROR]: Could not parse rotation angle from response at index 0: Upside-down (180 degrees)
+2025-04-10 19:52:15 [ERROR]: Could not parse rotation angle from response at index 0: Upside-down (180 degrees)
+2025-04-10 19:52:48 [ERROR]: Could not parse rotation angle from response at index 0: Upside-down (180 degrees)
+
+2025-04-10 19:52:56 [ERROR]: Could not parse rotation angle from response at index 0: Upside-down (180 degrees)
+
+2025-04-10 19:53:59 [ERROR]: Could not parse rotation angle from response at index 0: Rotated 90 degrees Clockwise
+
+2025-04-10 19:54:15 [ERROR]: Could not parse rotation angle from response at index 0: Upside-down (180 degrees)
+
+2025-04-11 09:50:06 [ERROR]: Could not parse rotation angle from response at index 0: Upside-down (180 degrees)
+
+2025-04-11 09:55:28 [ERROR]: Could not parse rotation angle from response at index 1: Rotated 90 degrees Counter-Clockwise
+
+2025-04-11 09:57:44 [ERROR]: Could not parse rotation angle from response at index 0: Upside-down (180 degrees)
+
+2025-04-11 10:03:02 [ERROR]: Could not parse rotation angle from response at index 0: Rotated 90 degrees Clockwise
+
+2025-04-11 10:03:50 [ERROR]: Could not parse rotation angle from response at index 0: Upside-down (180 degrees)
+
+2025-04-11 10:10:42 [ERROR]: Could not parse rotation angle from response at index 0: A Journal of Transactions of Ash Fall by Mr. Ichn Cobb
+2025-04-11 10:11:00 [ERROR]: Could not parse rotation angle from response at index 0: A Journal of Transactions at
+2025-04-11 10:11:15 [ERROR]: Could not parse rotation angle from response at index 0: A Journal of Transactions at Ash Fall by Mr. John Cobb.
+2025-04-11 10:11:31 [ERROR]: Could not parse rotation angle from response at index 0: A Journal of Transactions at Ash Fall by Mr. Schn Cobb.
+2025-04-11 10:13:54 [ERROR]: Could not parse rotation angle from response at index 0: The first text that a human reader would read on the page is "A Journal of Transactions at".
+The text is closest to the top margin.
+2025-04-11 10:15:22 [ERROR]: Could not parse rotation angle from response at index 0: Here's my analysis:
+
+1.  **First Text:** The first text a human reader would likely read is "A Journal of Transactions at".
+2.  **Margin Alignment:** This text is closest to and aligned with the **top** margin.
+
+Therefore, the image orientation is top.
+
+2025-04-11 10:16:32 [ERROR]: Could not parse rotation angle from response at index 0: Here's my analysis:
+
+1.  **First Text:** "A Journal of Transactions at"
+2.  **Alignment:** Top
+
+2025-04-11 10:17:43 [ERROR]: Could not parse rotation angle from response at index 0: Here's the breakdown:
+
+1.  **First Text:** "A Journal of Transactions at"
+2.  **Bounding Box Coordinates:** (68, 68, 400, 130)
+3.  **Alignment:** Top
+
+2025-04-11 10:41:33 [ERROR]: Could not parse rotation angle from response at index 1: 90 degrees counter-clockwise
+2025-04-11 10:42:20 [ERROR]: Could not parse rotation angle from response at index 0: 90 degrees clockwise
+2025-04-11 10:42:48 [ERROR]: Could not parse rotation angle from response at index 0: 90 degrees counter-clockwise
+2025-04-11 10:43:55 [ERROR]: Could not parse rotation angle from response at index 0: 90 degrees counter-clockwise
+2025-04-11 10:44:31 [ERROR]: Could not parse rotation angle from response at index 1: 90 degrees counter-clockwise
+2025-04-11 16:40:07 [ERROR]: Could not parse rotation angle from response at index 2: 90 degrees counter-clockwise
+2025-04-11 21:38:44 [ERROR]: Could not find 'Orientation:' marker in response at index 1: standard
+2025-04-11 21:38:44 [ERROR]: Could not determine valid rotation angle from response at index 1: standard
+2025-04-11 21:39:09 [ERROR]: Could not find 'Orientation:' marker in response at index 1: standard
+2025-04-11 21:39:09 [ERROR]: Could not determine valid rotation angle from response at index 1: standard
+2025-04-11 21:39:32 [ERROR]: Could not find 'Orientation:' marker in response at index 0: standard
+2025-04-11 21:39:32 [ERROR]: Could not determine valid rotation angle from response at index 0: standard
+2025-04-11 21:40:10 [ERROR]: Could not find 'Orientation:' marker in response at index 1: standard
+2025-04-11 21:40:10 [ERROR]: Could not determine valid rotation angle from response at index 1: standard
+2025-04-11 21:40:48 [ERROR]: Could not find 'Orientation:' marker in response at index 1: standard
+2025-04-11 21:40:48 [ERROR]: Could not determine valid rotation angle from response at index 1: standard
+2025-04-11 21:42:11 [ERROR]: Could not parse rotation angle from response at index 1: 90 degrees counter-clockwise
+2025-04-11 21:43:58 [ERROR]: Could not parse rotation angle from response at index 0: 90 degrees counter-clockwise
+2025-04-11 21:55:26 [ERROR]: Could not find 'Orientation:' marker in response at index 0: 90 degrees counter-clockwise
+2025-04-11 21:55:26 [ERROR]: Could not determine valid rotation angle from response at index 0: 90 degrees counter-clockwise
+2025-04-11 21:56:07 [ERROR]: Could not find 'Orientation:' marker in response at index 0: right
+2025-04-11 21:56:07 [ERROR]: Could not determine valid rotation angle from response at index 0: right
+2025-04-11 21:59:05 [ERROR]: Could not find 'Orientation:' marker in response at index 0: right
+2025-04-11 21:59:05 [ERROR]: Could not determine valid rotation angle from response at index 0: right
+2025-04-11 21:59:46 [ERROR]: Could not find 'Orientation:' marker in response at index 2: top
+2025-04-11 21:59:46 [ERROR]: Could not determine valid rotation angle from response at index 2: top
+2025-04-11 22:00:16 [ERROR]: Could not find 'Orientation:' marker in response at index 3: top
+2025-04-11 22:00:16 [ERROR]: Could not determine valid rotation angle from response at index 3: top
+2025-04-11 22:16:46 [ERROR]: Could not find 'Orientation:' marker in response at index 0: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [40, 235, 142, 935], "label": "title"}
+]
+```
+2025-04-11 22:16:46 [ERROR]: Could not determine valid rotation angle from response at index 0: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [40, 235, 142, 935], "label": "title"}
+]
+```
+2025-04-11 22:17:31 [ERROR]: Could not find 'Orientation:' marker in response at index 0: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [837, 112, 935, 834], "label": "A Journal of transactions at"},
+  {"box_2d": [878, 495, 935, 706], "label": "Ichn Cobb"},
+]
+```
+2025-04-11 22:17:31 [ERROR]: Could not determine valid rotation angle from response at index 0: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [837, 112, 935, 834], "label": "A Journal of transactions at"},
+  {"box_2d": [878, 495, 935, 706], "label": "Ichn Cobb"},
+]
+```
+2025-04-11 22:18:58 [ERROR]: Could not find 'Orientation:' marker in response at index 0: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [44, 243, 135, 896], "label": "title"}
+]
+```
+2025-04-11 22:18:58 [ERROR]: Could not determine valid rotation angle from response at index 0: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [44, 243, 135, 896], "label": "title"}
+]
+```
+2025-04-11 22:23:46 [ERROR]: Could not find 'Orientation:' marker in response at index 0: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [839, 112, 935, 829], "label": "text"}
+]
+```
+2025-04-11 22:23:46 [ERROR]: Could not determine valid rotation angle from response at index 0: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [839, 112, 935, 829], "label": "text"}
+]
+```
+2025-04-11 22:34:57 [ERROR]: Could not find 'Orientation:' marker in response at index 0: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [51, 237, 140, 929], "label": "title"}
+]
+```
+2025-04-11 22:34:57 [ERROR]: Could not determine valid rotation angle from response at index 0: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [51, 237, 140, 929], "label": "title"}
+]
+```
+2025-04-11 22:47:16 [ERROR]: Failed to parse JSON or extract box_2d for index 0: Expecting value: line 1 column 1 (char 0)
+Response: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [143, 763, 740, 956], "label": "title"}
+]
+```
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 475, in determine_rotation_from_box
+    boxes_data = json.loads(json_response_str)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2025-04-11 22:50:47 [ERROR]: Failed to parse JSON or extract box_2d for index 0: Expecting value: line 1 column 1 (char 0)
+Response: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [839, 112, 935, 829], "label": "text"}
+]
+```
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 475, in determine_rotation_from_box
+    boxes_data = json.loads(json_response_str)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2025-04-11 22:51:55 [ERROR]: Failed to parse JSON or extract box_2d for index 0: Expecting value: line 1 column 1 (char 0)
+Response: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [839, 112, 935, 829], "label": "text"}
+]
+```
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 475, in determine_rotation_from_box
+    boxes_data = json.loads(json_response_str)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2025-04-11 22:53:22 [ERROR]: Failed to parse JSON or extract box_2d for index 0: Expecting value: line 1 column 1 (char 0)
+Response: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [839, 112, 935, 829], "label": "text"}
+]
+```
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 476, in determine_rotation_from_box
+    boxes_data = json.loads(json_response_str)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2025-04-11 22:59:22 [ERROR]: Failed to parse JSON or extract box_2d for index 0: Expecting value: line 3 column 1 (char 79)
+Response: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [839, 116, 935, 829], "label": "A Journal of transactions at"},
+]
+```
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 499, in determine_rotation_from_box
+    boxes_data = json.loads(potential_json)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 3 column 1 (char 79)
+2025-04-11 23:02:30 [ERROR]: Failed to parse JSON or extract box_2d for index 2: Expecting value: line 3 column 1 (char 116)
+Response: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [913, 41, 953, 958], "label": "beyond the Term of it; Your being alone, will render it impossible"},
+]
+```
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 499, in determine_rotation_from_box
+    boxes_data = json.loads(potential_json)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 3 column 1 (char 116)
+2025-04-11 23:02:31 [ERROR]: Failed to parse JSON or extract box_2d for index 1: Expecting value: line 5 column 1 (char 244)
+Response: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [915, 625, 945, 933], "label": "I will be more communicatives, in the mean time I remain."},
+  {"box_2d": [835, 625, 864, 750], "label": "Gentlemen"},
+  {"box_2d": [773, 625, 814, 933], "label": "B. The Firm of the House will"},
+]
+```
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 499, in determine_rotation_from_box
+    boxes_data = json.loads(potential_json)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 5 column 1 (char 244)
+2025-04-11 23:03:34 [ERROR]: Failed to parse JSON or extract box_2d for index 2: Expecting value: line 3 column 1 (char 116)
+Response: Here are the bounding box detections:
+```json
+[
+  {"box_2d": [913, 41, 953, 958], "label": "beyond the Term of it; Your being alone, will render it impossible"},
+]
+```
+Stack trace:
+Traceback (most recent call last):
+  File "d:\TranscriptionPearl\util\DataOperations.py", line 499, in determine_rotation_from_box
+    boxes_data = json.loads(potential_json)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 3 column 1 (char 116)

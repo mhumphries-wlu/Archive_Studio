@@ -224,15 +224,15 @@ If you don't have information for a heading or don't know, leave it blank.''',
 
             {
                 'name': "Auto_Rotate",
-                'model': "gemini-1.5-pro",
+                'model': "gemini-2.0-flash",
                 'temperature': "0.0",
-                'general_instructions': '''Describe the orientation of the handwritten text on the image from the standard reading orientation. In your response, write "Orientation:" followed only by one of the following answers: standard, rotated 90 clockwise, rotated 180 degrees, rotated 90 counter-clockwise, no text. ''',
+                'general_instructions': '''Draw a bounding box around the first line of text on the page. In your analysis include titles, headers, paragraphs, etc.''',
                 'specific_instructions': "",
                 'use_images': True,
                 'current_image': "Yes",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "Orientation:"
+                'val_text': None
             },
             {
                 'name': "Translation",

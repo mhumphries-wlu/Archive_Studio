@@ -321,8 +321,8 @@ class App(TkinterDnD.Tk):
         self.edit_menu.add_command(label="Paste",
         command=lambda: self.text_display.event_generate("<<Paste>>"))
         self.edit_menu.add_separator()
-        self.edit_menu.add_command(label="Rotate Image Clockwise", command=lambda: self.rotate_image("clockwise"))
-        self.edit_menu.add_command(label="Rotate Image Counter-clockwise", command=lambda: self.rotate_image("counter-clockwise"))
+        self.edit_menu.add_command(label="Rotate Image Clockwise", command=lambda: self.rotate_image(-90))
+        self.edit_menu.add_command(label="Rotate Image Counter-clockwise", command=lambda: self.rotate_image(90))
         self.edit_menu.add_command(label="Auto-get Rotation (Current Page)", command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag="Current Page", ai_job="Auto_Rotate"))
         self.edit_menu.add_command(label="Auto-get Rotation (All Pages)", command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag="All Pages", ai_job="Auto_Rotate"))
         self.edit_menu.add_separator()
@@ -426,8 +426,8 @@ class App(TkinterDnD.Tk):
         self.bind("<Control-End>", lambda event: self.navigate_images(2))
 
         # Rotation bindings
-        self.bind("<Control-bracketright>", lambda event: self.rotate_image("clockwise"))
-        self.bind("<Control-bracketleft>", lambda event: self.rotate_image("counter-clockwise"))
+        self.bind("<Control-bracketright>", lambda event: self.rotate_image(90))
+        self.bind("<Control-bracketleft>", lambda event: self.rotate_image(-90))
 
         # Project management bindings
         self.bind("<Control-n>", lambda event: self.project_io.create_new_project())
@@ -1376,7 +1376,9 @@ class App(TkinterDnD.Tk):
              return # Nothing to rotate
         image_path_rel = self.main_df.loc[self.page_counter, 'Image_Path']
         image_path_abs = self.get_full_path(image_path_rel)
-        success, error_message = self.image_handler.rotate_image(direction, image_path_abs)
+        # --- EDIT: Pass angle directly --- 
+        success, error_message = self.image_handler.rotate_image(image_path_abs, direction)
+        # --- END EDIT ---
         if not success:
             messagebox.showerror("Error", error_message)
 
@@ -2217,51 +2219,54 @@ class App(TkinterDnD.Tk):
              self.error_logging(f"Image path not found or invalid for rotation at index {index}: {image_path_abs}")
              return
 
-        # Dictionary mapping responses to orientation correction needed (0 means no correction).
+        # --- Start Edit: Updated Parsing Logic ---
+        # Dictionary mapping the *specific expected terms* from the prompt to rotation angles.
         # Angle represents the rotation needed to make it upright.
-        # E.g., if detected as "rotated 90 clockwise", we need to rotate -90 (or +270).
         orientation_map = {
-            "standard": 0,
-            "rotated 90 clockwise": -90, # or 270
-            "rotated 180 degrees": 180,
-            "rotated 90 counter-clockwise": 90,
-             # Handle potential variations
-            "rotated 90 degrees clockwise": -90,
-            "rotated 90 degrees counter-clockwise": 90,
-            "rotated 90° clockwise": -90,
-            "rotated 90° counter-clockwise": 90,
-            "upside down": 180,
-            "no text": 0,
-            "upright": 0,
-            "correct": 0
+            "top": 0,
+            "left": 90,
+            "right": -90, # or 270
+            "bottom": 180
         }
 
-        # Clean up the response string
-        response_clean = str(response).strip().lower().replace("degrees", "").replace("°", "").strip()
+        # Find the term after "Orientation:" (case-insensitive)
+        try:
+            # Split the response string by "Orientation:", ignoring case, taking the last part
+            parts = re.split(r'Orientation:', response, maxsplit=1, flags=re.IGNORECASE)
+            if len(parts) > 1:
+                orientation_term = parts[1].strip().lower()
+                # Remove potential trailing punctuation
+                orientation_term = re.sub(r'[.,!?;:]$', '', orientation_term).strip()
 
-        # Find the correction angle
-        correction_angle = None
-        for key, angle in orientation_map.items():
-             # Use "in" for flexibility, e.g., "image is rotated 90 clockwise"
-             if key in response_clean:
-                 correction_angle = angle
-                 break # Take the first match
+                # Find the correction angle based on the extracted term
+                correction_angle = orientation_map.get(orientation_term) # Use .get for safer lookup
 
-        # If no match found, log error and return
+            else:
+                # "Orientation:" not found in the response
+                self.error_logging(f"Could not find 'Orientation:' marker in response at index {index}: {response}")
+                correction_angle = None
+
+        except Exception as parse_error:
+            self.error_logging(f"Error parsing rotation response at index {index}: {response} | Error: {parse_error}")
+            correction_angle = None
+
+        # If no valid term found or parsing failed, log error and return
         if correction_angle is None:
-            self.error_logging(f"Could not parse rotation angle from response at index {index}: {response}")
+            self.error_logging(f"Could not determine valid rotation angle from response at index {index}: {response}")
             return
+
+        # --- End Edit ---
 
         # If no rotation needed, just log and return
         if correction_angle == 0:
+            self.error_logging(f"No rotation needed for index {index} based on response: {response}", level="INFO") # Log info level
             return
-
 
         try:
             # Open, rotate, and save the image file
             with Image.open(image_path_abs) as img:
-                # Ensure EXIF orientation is handled *before* applying AI rotation
-                img = ImageOps.exif_transpose(img)
+                # # Ensure EXIF orientation is handled *before* applying AI rotation
+                # img = ImageOps.exif_transpose(img)
                 # Apply the correction rotation
                 rotated_img = img.rotate(correction_angle, expand=True)
                  # Save back to the original path (overwrite)

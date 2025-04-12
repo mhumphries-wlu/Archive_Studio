@@ -4,7 +4,7 @@
 # the image handling for the application.
 
 import tkinter as tk
-from PIL import Image, ImageTk, ImageOps
+from PIL import Image, ImageTk, ImageOps, ExifTags
 import os
 import shutil
 
@@ -52,13 +52,24 @@ class ImageHandler:
     
     def load_image(self, image_path):
         # Load the image
-        self.original_image = Image.open(image_path)
+        img = Image.open(image_path)
         
-        # Apply the current scale to the image
-        original_width, original_height = self.original_image.size
-        new_width = int(original_width * self.current_scale)
-        new_height = int(original_height * self.current_scale)
-        self.original_image = self.original_image.resize((new_width, new_height), Image.LANCZOS)
+        # Ensure EXIF orientation is applied for display
+        img = ImageOps.exif_transpose(img)
+
+        # Apply the current display scale (if any)
+        original_width, original_height = img.size
+        # Check if scaling is actually needed (current_scale might be 1)
+        if abs(self.current_scale - 1.0) > 1e-6: # Check if scale is not effectively 1
+            new_width = int(original_width * self.current_scale)
+            new_height = int(original_height * self.current_scale)
+            # Add a minimum size check to prevent errors with tiny scales
+            if new_width > 0 and new_height > 0:
+                self.original_image = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            else:
+                self.original_image = img # Use original if scaled size is invalid
+        else:
+             self.original_image = img # Use the (exif transposed) image directly if scale is 1
         
         self.photo_image = ImageTk.PhotoImage(self.original_image)
 
@@ -69,26 +80,69 @@ class ImageHandler:
         # Update the scroll region
         self.image_display.config(scrollregion=self.image_display.bbox("all"))
 
-    def rotate_image(self, direction, current_image_path):
+    def rotate_image(self, current_image_path, angle):
+        """Rotates the image file on disk by the specified angle and updates display."""
         try:
             # Open the image fresh from disk
             with Image.open(current_image_path) as img:
-                # Rotate the image
-                if direction == "clockwise":
-                    rotated = img.rotate(-90, expand=True)
-                else:
-                    rotated = img.rotate(90, expand=True)
+                # Rotate the image by the given angle
+                # Ensure EXIF data is handled if needed (though orientation tag should be removed)
+                # img = ImageOps.exif_transpose(img) # Apply existing EXIF before rotating IF NEEDED
+                rotated = img.rotate(angle, expand=True)
                 
-                # Save directly back to the same path
-                rotated.save(current_image_path, quality=95)
+                # Save directly back to the same path, preserving quality
+                # Handle potential format issues if not JPEG originally (though processing makes it JPEG)
+                save_format = "JPEG"
+                save_kwargs = {"quality": 95}
+                if img.format and img.format != "JPEG":
+                    # If original wasn't JPEG, consider keeping format or converting
+                    # Since our processing pipeline standardizes to JPEG, saving as JPEG is fine.
+                    pass 
+                    
+                # Add logic to handle EXIF data if needed (e.g., remove orientation tag again)
+                # If the file being rotated *might* still have an orientation tag:
+                original_exif = img.info.get('exif')
+                final_exif = None
+                if original_exif:
+                    try:
+                        orientation_tag_id = next((tag for tag, name in ExifTags.TAGS.items() if name == 'Orientation'), None)
+                        if orientation_tag_id:
+                            exif_dict = Image.Exif.load(original_exif)
+                            if orientation_tag_id in exif_dict:
+                                del exif_dict[orientation_tag_id]
+                            for ifd_key in list(exif_dict.keys()):
+                                if isinstance(exif_dict[ifd_key], dict) and orientation_tag_id in exif_dict[ifd_key]:
+                                    del exif_dict[ifd_key][orientation_tag_id]
+                            if exif_dict:
+                                 final_exif = Image.Exif.dump(exif_dict)
+                        else: # Keep original if tag ID not found
+                             final_exif = original_exif
+                    except Exception as exif_error:
+                         # Log error but continue
+                         if self.app:
+                             self.app.error_logging(f"Could not process EXIF during rotation: {exif_error}", level="WARNING")
+                         final_exif = original_exif # Fallback
+                
+                if final_exif:
+                    save_kwargs["exif"] = final_exif
+                
+                rotated.save(current_image_path, format=save_format, **save_kwargs)
             
-            # Update the display
-            self.load_image(current_image_path)
+            # Update the display if this image is currently shown
+            # Check if app and current_image_path attribute exist and match
+            if self.app and hasattr(self.app, 'current_image_path') and self.app.current_image_path == current_image_path:
+                 self.load_image(current_image_path)
             
             return True, None
 
+        except FileNotFoundError:
+             error_msg = f"Image not found at {current_image_path}"
+             if self.app: self.app.error_logging(error_msg, level="ERROR")
+             return False, error_msg
         except Exception as e:
-            return False, f"An error occurred while rotating the image: {e}"
+            error_msg = f"An error occurred while rotating the image: {e}"
+            if self.app: self.app.error_logging(error_msg, level="ERROR")
+            return False, error_msg
 
     def resize_image(self, source_path, target_path, max_width=2048):
         """
@@ -102,10 +156,13 @@ class ImageHandler:
         """
         try:
             with Image.open(source_path) as img:
-                # Handle EXIF orientation
+                # Store original exif before transpose might modify/remove it
+                original_exif = img.info.get('exif')
+
+                # Apply EXIF orientation transpose to the image object in memory
                 img = ImageOps.exif_transpose(img)
 
-                # Calculate new size
+                # Calculate new size based on the (potentially rotated) image dimensions
                 img_width, img_height = img.size
                 if img_width > max_width:
                     ratio = max_width / img_width
@@ -113,15 +170,17 @@ class ImageHandler:
                     new_size = (max_width, new_height)
                     resized_img = img.resize(new_size, Image.Resampling.LANCZOS)
                 else:
-                    # No resize needed, but still need to potentially convert format
-                    resized_img = img.copy()
+                    # No resize needed, just use the correctly oriented image
+                    resized_img = img # Use img directly, no need to copy if not resizing
 
                 # Ensure image is in RGB mode for saving as JPG
-                if resized_img.mode in ('RGBA', 'LA', 'P'): # Handle transparency and palettes
+                if resized_img.mode in ('RGBA', 'LA', 'P'):
                     # Create a white background
                     background = Image.new('RGB', resized_img.size, (255, 255, 255))
                     # Paste using alpha mask if available
                     alpha_mask = None
+                    processed_img_for_paste = resized_img # Start with resized_img
+
                     if resized_img.mode == 'RGBA':
                          alpha_mask = resized_img.split()[-1]
                     elif resized_img.mode == 'LA':
@@ -129,26 +188,64 @@ class ImageHandler:
                     elif resized_img.mode == 'P':
                         # Check if palette has transparency
                         if 'transparency' in resized_img.info:
-                            # Convert to RGBA to handle transparency mask
-                            resized_img_rgba = resized_img.convert('RGBA')
-                            alpha_mask = resized_img_rgba.split()[-1]
-                            resized_img = resized_img_rgba # Use RGBA for pasting
+                             # Convert to RGBA to handle transparency mask reliably
+                            processed_img_for_paste = resized_img.convert('RGBA')
+                            alpha_mask = processed_img_for_paste.split()[-1]
+                        # else: No transparency, convert P directly to RGB later
 
                     if alpha_mask:
-                        background.paste(resized_img, (0, 0), alpha_mask)
+                        background.paste(processed_img_for_paste, (0, 0), alpha_mask)
                         final_image = background
-                    else: # No alpha mask, just convert
-                        final_image = resized_img.convert('RGB')
+                    else: # No alpha mask needed (or P without transparency)
+                         final_image = resized_img.convert('RGB')
 
                 elif resized_img.mode != 'RGB':
                     # Convert other modes (like L, CMYK) to RGB
                     final_image = resized_img.convert('RGB')
                 else:
                     # Already RGB
-                    final_image = resized_img
+                    final_image = resized_img # Use resized_img directly
 
-                # Save the final image (always as JPG for consistency in the project)
-                final_image.save(target_path, "JPEG", quality=95) # Save as JPEG
+                # Prepare EXIF data, removing orientation tag
+                final_exif = None
+                if original_exif:
+                    try:
+                        # Find the numerical ID for the Orientation tag
+                        orientation_tag_id = -1
+                        for tag, name in ExifTags.TAGS.items():
+                            if name == 'Orientation':
+                                orientation_tag_id = tag
+                                break
+
+                        if orientation_tag_id != -1:
+                            exif_dict = Image.Exif.load(original_exif)
+                            # Check and remove the orientation tag if it exists
+                            if orientation_tag_id in exif_dict:
+                                del exif_dict[orientation_tag_id]
+                            # Some EXIF data might be nested, check common IFDs (like 0th)
+                            for ifd_key in list(exif_dict.keys()):
+                                 if isinstance(exif_dict[ifd_key], dict) and orientation_tag_id in exif_dict[ifd_key]:
+                                     del exif_dict[ifd_key][orientation_tag_id]
+
+                            # Only dump if there's still data left after removing orientation
+                            if exif_dict:
+                                 final_exif = Image.Exif.dump(exif_dict)
+                        else: # Orientation tag ID not found in ExifTags? Keep original.
+                             final_exif = original_exif
+
+                    except Exception as exif_error:
+                        # Log error if needed, but proceed without crashing
+                        if self.app:
+                             self.app.error_logging(f"Could not process EXIF data from {source_path}: {exif_error}", level="WARNING")
+                        # Keep original EXIF if processing failed
+                        final_exif = original_exif
+
+                save_kwargs = {"quality": 95}
+                if final_exif:
+                    save_kwargs["exif"] = final_exif
+
+                # Save the final image (always as JPG) with potentially modified EXIF
+                final_image.save(target_path, "JPEG", **save_kwargs)
 
         except FileNotFoundError:
              self.app.error_logging(f"Resize Error: Source image not found at {source_path}", level="ERROR")

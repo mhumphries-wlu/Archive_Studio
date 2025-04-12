@@ -435,6 +435,9 @@ class AIFunctionsHandler:
                         response, idx_confirm = future.result() # Get result
                         
                         # REMOVED print(f"Response: {response}")
+                        # --- Start Edit ---
+                        print(f"Response received by ai_function for index {index}: {response}") # Added clarity
+                        # --- End Edit ---
                         
                         if idx_confirm != index:
                             self.app.error_logging(f"Index mismatch! Future for {index}, result for {idx_confirm}", level="ERROR")
@@ -457,9 +460,13 @@ class AIFunctionsHandler:
                             error_count += 1
                             self.app.error_logging(f"API returned error for index {index}, job {ai_job}", level="ERROR")
                         else:
+                            # --- ADD DEBUG PRINT --- 
+                            print(f"DEBUG: Checking condition for ai_job: '{ai_job}' at index {index}")
+                            # --- END DEBUG PRINT ---
                             # Update DF or image based on job
+                            # --- EDIT: Route Auto_Rotate to new function ---
                             if ai_job == "Auto_Rotate":
-                                self.app.update_image_rotation(index, response)
+                                self.app.data_operations.determine_rotation_from_box(index, response)
                             else:
                                 # This function now handles different jobs internally
                                 # Call the method on the DataOperations instance via self.app
@@ -642,8 +649,9 @@ class AIFunctionsHandler:
                           params['system_prompt'] = "Correct spelling and grammar errors in the following text from a historical document."
                           params['user_prompt'] = "Text:\n{text_to_process}"
                      elif ai_job == "Auto_Rotate":
-                          params['system_prompt'] = "Determine the orientation of the text in the image."
-                          params['user_prompt'] = "Is the text standard, rotated 90 clockwise, rotated 180 degrees, or rotated 90 counter-clockwise?"
+                          params['system_prompt'] = "Analyze the image and identify the bounding box coordinates for the first line of text you encounter (including titles, headers, etc.). Output ONLY a JSON list containing a single JSON object with keys 'box_2d' (a list of four numbers: [y_min, x_min, y_max, x_max] normalized 0-1000) and 'label' (e.g., 'first_line'). Example: [{'box_2d': [100, 50, 150, 800], 'label': 'first_line'}]"
+                          params['user_prompt'] = "Provide the bounding box for the first line of text in the image in the specified JSON format."
+                          params['val_text'] = '[{' # Check for start of JSON list/object
                           params['use_images'] = True
                      # Add other fallbacks as needed
 
