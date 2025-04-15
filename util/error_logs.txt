@@ -1896,3 +1896,997 @@ Traceback (most recent call last):
   File "C:\Users\mark_\anaconda3\envs\TranscriptionPearl\Lib\json\decoder.py", line 355, in raw_decode
     raise JSONDecodeError("Expecting value", s, err.value) from None
 json.decoder.JSONDecodeError: Expecting value: line 3 column 1 (char 116)
+2025-04-13 08:44:35 [ERROR]: Error processing PDF file C:/Users/mark_/OneDrive/Fur Trade Project/Collaborations/LaCloche/Sault Ste-Marie/Post Journals/B194-A-1.pdf - Additional Info: '_tkinter.tkapp' object has no attribute 'open_pdf'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 1778, in drop
+    self.open_pdf(pdf_file)
+    ^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\tkinter\__init__.py", line 2546, in __getattr__
+    return getattr(self.tk, attr)
+AttributeError: '_tkinter.tkapp' object has no attribute 'open_pdf'
+2025-04-13 08:46:22 [ERROR]: Error in open_pdf: 'ProgressBar' object has no attribute 'set_total_steps'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ProjectIO.py", line 382, in open_pdf
+    self.app.progress_bar.set_total_steps(total_pages) # Use set_total_steps
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ProgressBar' object has no attribute 'set_total_steps'
+2025-04-13 08:46:22 [ERROR]: Error processing PDF file C:/Users/mark_/OneDrive/Fur Trade Project/Collaborations/LaCloche/Sault Ste-Marie/Post Journals/B194-A-1.pdf - Additional Info: name 'traceback' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ProjectIO.py", line 382, in open_pdf
+    self.app.progress_bar.set_total_steps(total_pages) # Use set_total_steps
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ProgressBar' object has no attribute 'set_total_steps'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 1778, in drop
+    self.project_io.open_pdf(pdf_file) # <--- Corrected call
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\ProjectIO.py", line 475, in open_pdf
+    traceback.print_exc() # Print detailed traceback for debugging
+    ^^^^^^^^^
+NameError: name 'traceback' is not defined. Did you forget to import 'traceback'?
+2025-04-13 08:47:48 [ERROR]: Error in open_pdf: ProgressBar.update_progress() missing 1 required positional argument: 'total_rows'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ProjectIO.py", line 384, in open_pdf
+    self.app.progress_bar.update_progress(0) # Update progress to 0
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+TypeError: ProgressBar.update_progress() missing 1 required positional argument: 'total_rows'
+2025-04-13 08:48:31 [ERROR]: Error in open_pdf: ProgressBar.update_progress() missing 1 required positional argument: 'total_rows'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ProjectIO.py", line 389, in open_pdf
+    self.app.progress_bar.update_progress(page_num + 1)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+TypeError: ProgressBar.update_progress() missing 1 required positional argument: 'total_rows'
+2025-04-13 08:54:54 [ERROR]: API returned error for index 29, job HTR
+2025-04-13 08:54:54 [ERROR]: API returned error for index 41, job HTR
+2025-04-13 08:54:54 [ERROR]: API returned error for index 6, job HTR
+2025-04-13 08:54:54 [ERROR]: API returned error for index 35, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 37, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 22, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 9, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 15, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 1, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 30, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 38, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 31, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 21, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 40, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 19, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 23, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 4, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 20, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 8, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 25, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 36, job HTR
+2025-04-13 08:54:55 [ERROR]: API returned error for index 5, job HTR
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 0, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 1, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 2, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 3, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 4, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 5, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 6, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 7, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 8, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 9, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 10, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 11, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 12, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 13, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 14, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 15, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 16, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 17, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 18, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API Error during processing for index 19, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:28:30 [ERROR]: API returned error for index 3, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 5, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 10, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 4, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 13, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 12, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 2, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 11, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 6, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 8, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 15, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 0, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 18, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 1, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 14, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 9, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 16, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 7, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 17, job HTR
+2025-04-15 10:28:30 [ERROR]: API returned error for index 19, job HTR
+2025-04-15 10:29:40 [ERROR]: API Error during processing for index 0, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:29:40 [ERROR]: API returned error for index 0, job HTR
+2025-04-15 10:31:17 [ERROR]: API Error during processing for index 0, job HTR - Additional Info: Client.__init__() got an unexpected keyword argument 'proxies'
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 65, in route_api_call
+    return await self.handle_gpt_call(system_prompt, user_prompt, temp,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+                                   api_timeout, job_type, required_headers)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\APIHandler.py", line 136, in handle_gpt_call
+    client = OpenAI(api_key=self.openai_api_key, timeout=api_timeout)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_client.py", line 123, in __init__
+    super().__init__(
+    ~~~~~~~~~~~~~~~~^
+        version=__version__,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        _strict_response_validation=_strict_response_validation,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 857, in __init__
+    self._client = http_client or SyncHttpxClientWrapper(
+                                  ~~~~~~~~~~~~~~~~~~~~~~^
+        base_url=base_url,
+        ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        follow_redirects=True,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\openai\_base_client.py", line 755, in __init__
+    super().__init__(**kwargs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+2025-04-15 10:31:17 [ERROR]: API returned error for index 0, job HTR

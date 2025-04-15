@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import fitz  # PyMuPDF
 from tkinter import messagebox, filedialog, simpledialog
+import traceback
 
 class ProjectIO:
     def __init__(self, app):
@@ -380,12 +381,12 @@ class ProjectIO:
 
             # Update progress bar with actual total
             self.app.progress_bar.set_total_steps(total_pages) # Use set_total_steps
-            self.app.progress_bar.update_progress(0) # Update progress to 0
+            self.app.progress_bar.update_progress(0, total_pages) # Update progress to 0, pass total_pages
 
             new_rows_list = [] # Collect new rows
 
             for page_num in range(total_pages):
-                self.app.progress_bar.update_progress(page_num + 1)
+                self.app.progress_bar.update_progress(page_num + 1, total_pages)
                 progress_label.config(text=f"Processing page {page_num + 1} of {total_pages}")
                 self.app.update_idletasks() # Force UI update
 

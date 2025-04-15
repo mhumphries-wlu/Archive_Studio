@@ -1775,7 +1775,7 @@ class App(TkinterDnD.Tk):
         if pdf_files:
             for pdf_file in pdf_files:
                 try:
-                    self.open_pdf(pdf_file)
+                    self.project_io.open_pdf(pdf_file) # <--- Corrected call
                 except Exception as e:
                     self.error_logging(f"Error processing PDF file {pdf_file}", f"{e}")
                     messagebox.showerror("Error", f"Failed to process PDF file {pdf_file}: {e}")

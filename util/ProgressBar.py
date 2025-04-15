@@ -19,6 +19,16 @@ class ProgressBar:
         self.progress_bar = None
         self.progress_label = None
 
+    def set_total_steps(self, total_steps):
+        """
+        Set the maximum value for the progress bar.
+        
+        Args:
+            total_steps (int): The total number of steps (e.g., pages, files).
+        """
+        if self.progress_bar:
+            self.progress_bar['maximum'] = total_steps
+
     def create_progress_window(self, title):
         """
         Create and display a progress window with a progress bar.
@@ -62,7 +72,7 @@ class ProgressBar:
         # Calculate the progress percentage
         if total_rows > 0:
             progress = (processed_rows / total_rows) * 100
-            self.progress_bar['value'] = progress
+            self.progress_bar['value'] = processed_rows
             self.progress_label.config(text=f"{progress:.2f}%")
         
         # Update the progress bar and label
