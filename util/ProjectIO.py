@@ -42,11 +42,24 @@ class ProjectIO:
             for idx, row in save_df.iterrows():
                 # Convert Image_Path to relative path
                 if pd.notna(row['Image_Path']) and row['Image_Path']:
-                    save_df.at[idx, 'Image_Path'] = self.app.get_relative_path(row['Image_Path'])
-                
+                    # Extract the filename from the potentially absolute path stored in the row
+                    image_filename = os.path.basename(str(row['Image_Path']))
+                    # Construct the expected simple relative path
+                    expected_relative_path = os.path.join("images", image_filename)
+                    # Store the simple relative path
+                    save_df.at[idx, 'Image_Path'] = expected_relative_path
+
                 # Convert Text_Path to relative path if it exists
                 if pd.notna(row['Text_Path']) and row['Text_Path']:
-                    save_df.at[idx, 'Text_Path'] = self.app.get_relative_path(row['Text_Path'])
+                    # Apply the same logic for Text_Path if it's used and needs similar treatment
+                    text_filename = os.path.basename(str(row['Text_Path']))
+                    # Assuming text files also reside directly in the project root or a specific subdir
+                    # Adjust "textfiles" if they are stored elsewhere relative to the project root
+                    # If Text_Path should always be relative to the project root directly:
+                    expected_text_relative_path = text_filename
+                    # If Text_Path is in a subdirectory like 'texts':
+                    # expected_text_relative_path = os.path.join("texts", text_filename)
+                    save_df.at[idx, 'Text_Path'] = expected_text_relative_path
 
             # Save the updated DataFrame with relative paths to the project file
             save_df.to_csv(project_file, index=False, encoding='utf-8')

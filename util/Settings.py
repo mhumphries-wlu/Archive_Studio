@@ -302,7 +302,8 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'use_images': False,
                 'current_image': "No",
                 'num_prev_images': "0",
-                'num_after_images': "0"
+                'num_after_images': "0",
+                'val_text': "Formatted Text:"
             },
 
             {
@@ -314,7 +315,8 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'use_images': False,
                 'current_image': "No",
                 'num_prev_images': "0",
-                'num_after_images': "0"
+                'num_after_images': "0",
+                'val_text': "Formatted Text:"
             },
             {
                 'name': "Letter",
@@ -325,7 +327,8 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'use_images': False,
                 'current_image': "No",
                 'num_prev_images': "0",
-                'num_after_images': "0"
+                'num_after_images': "0",
+                'val_text': "Formatted Text:"
             }
         ]
 
@@ -478,6 +481,7 @@ If you don't have information for a heading or don't know, leave it blank.'''
             'analysis_presets': self.analysis_presets,
             'function_presets': self.function_presets,
             'chunk_text_presets': self.chunk_text_presets,
+            'format_presets': self.format_presets,
             'metadata_presets': self.metadata_presets,                                  # Add metadata presets
             'sequential_metadata_presets': self.sequential_metadata_presets,            # Add sequential metadata presets
             # Add individual metadata settings for backward compatibility
@@ -502,7 +506,9 @@ If you don't have information for a heading or don't know, leave it blank.'''
             for key, value in settings.items():
                 if hasattr(self, key):
                     setattr(self, key, value)
-                    
+            # Ensure format_presets is loaded if present in file but not in self
+            if 'format_presets' in settings:
+                self.format_presets = settings['format_presets']
         except FileNotFoundError:
             self.restore_defaults()
 

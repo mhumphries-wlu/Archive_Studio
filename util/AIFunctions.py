@@ -118,7 +118,7 @@ class AIFunctionsHandler:
 
                      if not text_to_process.strip():
                          # Fallback to find_chunk_text if selected source is empty
-                         text_to_process, _ = self.app.find_chunk_text(row)
+                         text_to_process, _ = self.app.data_operations.find_chunk_text(row)
 
                      if text_to_process.strip():
                          batch_df = self.app.main_df.loc[[row]]
@@ -132,7 +132,7 @@ class AIFunctionsHandler:
                          text = row.get(selected_text_source, "") if pd.notna(row.get(selected_text_source)) else ""
                          if text.strip(): return True
                          # Fallback check if selected source is empty
-                         fallback_text, _ = self.app.find_chunk_text(row.name)
+                         fallback_text, _ = self.app.data_operations.find_chunk_text(row.name)
                          return bool(fallback_text.strip())
 
                      batch_df = self.app.main_df[self.app.main_df.apply(page_has_chunkable_text, axis=1)]
@@ -173,7 +173,7 @@ class AIFunctionsHandler:
             # --- Standard Progress Window Setup (for non-chunking jobs) ---
             progress_title = f"Applying {ai_job.replace('_', ' ')} to {'Current Page' if all_or_one_flag == 'Current Page' else 'All Pages'}..."
             progress_window, progress_bar, progress_label = self.app.progress_bar.create_progress_window(progress_title)
-            self.app.progress_bar.update_progress(0, 1)
+            self.app.progress_bar.update_progress(0, 1) # Initial update
 
             responses_dict = {}
             futures_to_index = {}
@@ -354,6 +354,8 @@ class AIFunctionsHandler:
                 return # Exit if nothing to process
 
             # --- Setup Job Parameters and Process Batches ---
+            # Set the maximum value for the progress bar
+            self.app.progress_bar.set_total_steps(total_rows) # <--- ADDED
             # Pass the selected preset name if provided (for Metadata job)
             job_params = self.setup_job_parameters(ai_job, selected_metadata_preset=selected_metadata_preset)
 
@@ -920,6 +922,7 @@ class AIFunctionsHandler:
             self.app.progress_bar.update_progress(0, 1)
 
             total_rows = len(batch_df)
+            self.app.progress_bar.set_total_steps(total_rows) # <--- ADDED
             processed_rows = 0
             error_count = 0
             processed_indices = set()
@@ -936,7 +939,7 @@ class AIFunctionsHandler:
                      text_to_process = row_data.get(selected_text_source, "") if pd.notna(row_data.get(selected_text_source)) else ""
                      source_used = selected_text_source
                      if not text_to_process.strip():
-                          text_to_process, _ = self.app.find_chunk_text(index) # Use fallback
+                          text_to_process, _ = self.app.data_operations.find_chunk_text(index) # Use fallback
                           source_used = "Fallback (Corrected/Original)"
 
                      if not text_to_process.strip():
@@ -1080,6 +1083,7 @@ class AIFunctionsHandler:
             self.app.progress_bar.update_progress(0, 1)
 
             total_rows = len(translations_to_process_df)
+            self.app.progress_bar.set_total_steps(total_rows) # <--- ADDED
             processed_rows = 0
             error_count = 0
             processed_indices = set()
@@ -1477,6 +1481,7 @@ class AIFunctionsHandler:
 
             # Initialize counters
             total_rows = len(batch_df)
+            self.app.progress_bar.set_total_steps(total_rows) # <--- ADDED
             processed_rows = 0
             error_count = 0
             processed_indices = set()

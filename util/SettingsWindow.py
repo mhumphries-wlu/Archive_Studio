@@ -881,6 +881,12 @@ class SettingsWindow:
         self.format_specific_text.configure(yscrollcommand=specific_scrollbar.set)
         specific_scrollbar.grid(row=0, column=1, sticky="ns")
 
+        # Validation Text
+        tk.Label(instructions_frame, text="Validation Text:").grid(row=2, column=0, padx=10, pady=5, sticky="w")
+        self.format_val_entry = tk.Entry(instructions_frame, width=90)
+        self.format_val_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
+        self.bind_entry_update(self.format_val_entry, self.settings.format_presets, self.selected_format_preset_var, 'val_text')
+
         # Load initial preset if available
         if preset_names:
             self.selected_format_preset_var.set(preset_names[0])
@@ -907,7 +913,9 @@ class SettingsWindow:
             # Instructions
             self.set_text_widget(self.format_general_text, preset.get('general_instructions', ""))
             self.set_text_widget(self.format_specific_text, preset.get('specific_instructions', ""))
-            
+            # Validation Text
+            if hasattr(self, 'format_val_entry'):
+                self.set_entry_text(self.format_val_entry, preset.get('val_text', "Formatted Text:"))
             # Toggle image controls based on use_images setting
             self.toggle_image_controls()
 
@@ -957,7 +965,8 @@ class SettingsWindow:
                 'use_images': False,
                 'current_image': "No",
                 'num_prev_images': "0",
-                'num_after_images': "0"
+                'num_after_images': "0",
+                'val_text': "Formatted Text:"
             }
 
             self.settings.format_presets.append(new_preset)

@@ -271,6 +271,8 @@ class ImageSplitter(tk.Toplevel):
         edit_menu = tk.Menu(menubar, tearoff=0)
         edit_menu.add_command(label="Revert Current Image", command=self.revert_to_original)
         edit_menu.add_command(label="Revert All Images", command=self.revert_all_images)
+        edit_menu.add_separator()
+        edit_menu.add_command(label="Delete Current Image", command=self.delete_current_image)
         menubar.add_cascade(label="Edit", menu=edit_menu)
 
         # View menu
@@ -2017,14 +2019,14 @@ class ImageSplitter(tk.Toplevel):
         self.status = "changed"
         self.show_current_image()
         
-    def save_split_images(self):
+    def save_split_images(self, only_current=False):
         confirm = messagebox.askyesno("Save Images", "Are you sure you want to save the current project? This will finalize the images and cannot be undone.")
         if not confirm:
             return
         else:
-            self.commit_changes()
+            self.commit_changes(only_current=only_current)
     
-    def commit_changes(self):
+    def commit_changes(self, only_current=False):
         if not self.folder_path or self.image_data.empty:
             return False
 
@@ -2032,27 +2034,36 @@ class ImageSplitter(tk.Toplevel):
             # Set up and clean the pass_images directory
             pass_images_dir = self.ensure_pass_images_dir()
 
-            # Sort the DataFrame by Image_Index to ensure proper sequence
-            sorted_data = self.image_data.sort_values('Image_Index')
-            
+            # Determine which data to save
+            if only_current:
+                # Save only the current image's rows
+                if self.image_data.empty:
+                    return False
+                current_idx = self.current_image_index
+                # Get all rows with the same Original_Image as the current row
+                current_row = self.image_data.iloc[current_idx]
+                original_image = current_row['Original_Image']
+                data_to_save = self.image_data[self.image_data['Original_Image'] == original_image].copy()
+                # Reset index for naming
+                data_to_save = data_to_save.reset_index(drop=True)
+            else:
+                # Save all images (default behavior)
+                data_to_save = self.image_data.sort_values('Image_Index').reset_index(drop=True)
+
             # Process and save images sequentially
-            for i, row in sorted_data.iterrows():
+            for i, row in data_to_save.iterrows():
                 try:
                     # Create consistent naming scheme - use sequential numbers
                     new_name = f"{i+1:04d}.jpg"
                     new_path = os.path.join(pass_images_dir, new_name)
-                    
                     # Determine source image - prefer Split_Image over Original_Image
                     source_path = row['Split_Image'] if pd.notna(row['Split_Image']) else row['Original_Image']
-                    
                     # Copy and optimize image
                     with Image.open(source_path) as img:
                         img = img.convert('RGB')
                         img.save(new_path, 'JPEG', quality=95, optimize=True)
-                        
                     # Keep track of the mapping between old and new paths
-                    self.image_data.at[i, 'Final_Path'] = new_path
-                    
+                    row['Final_Path'] = new_path
                 except Exception as e:
                     print(f"Error processing image {i+1}: {e}")
                     continue
@@ -2065,7 +2076,7 @@ class ImageSplitter(tk.Toplevel):
             messagebox.showerror("Error", f"Failed to save images: {str(e)}")
             print(f"Error in commit_changes: {e}")
             return False
-        
+
     def run(self):
         self.mainloop()
 
@@ -2141,7 +2152,11 @@ class ImageSplitter(tk.Toplevel):
             if response is None:  # Cancel
                 return
             elif response:  # Yes
-                if self.commit_changes():
+                # If only one image in the temp folder, treat as single-image edit
+                only_current = False
+                if hasattr(self, 'image_data') and len(self.image_data['Original_Image'].unique()) == 1:
+                    only_current = True
+                if self.commit_changes(only_current=only_current):
                     self.status = "saved"
                 else:
                     # If saving failed and user wants to try again
@@ -2149,7 +2164,6 @@ class ImageSplitter(tk.Toplevel):
                         return  # Stay open for user to try again
             else:  # No
                 self.status = "discarded"
-                
                 # Clean up the pass_images directory if we're discarding changes
                 try:
                     self.ensure_pass_images_dir()  # This cleans up the directory too
