@@ -492,7 +492,7 @@ If you don't have information for a heading or don't know, leave it blank.'''
             'analysis_presets': self.analysis_presets,
             'function_presets': self.function_presets,
             'chunk_text_presets': self.chunk_text_presets,
-            'format_presets': self.format_presets,
+            'format_presets': self.format_presets,                                      # Ensure format_presets are saved
             'metadata_presets': self.metadata_presets,                                  # Add metadata presets
             'sequential_metadata_presets': self.sequential_metadata_presets,            # Add sequential metadata presets
             # Add individual metadata settings for backward compatibility
