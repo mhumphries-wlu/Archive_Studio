@@ -2179,6 +2179,7 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'analysis_presets': self.settings.analysis_presets,
                 'function_presets': self.settings.function_presets,
                 'chunk_text_presets': self.settings.chunk_text_presets,
+                'format_presets': self.settings.format_presets,  # <-- Add this line
                 'ghost_system_prompt': self.settings.ghost_system_prompt,
                 'ghost_user_prompt': self.settings.ghost_user_prompt,
                 'ghost_val_text': self.settings.ghost_val_text,
@@ -2238,6 +2239,9 @@ If you don't have information for a heading or don't know, leave it blank.''',
             for key, value in imported_settings.items():
                 if hasattr(self.settings, key):
                     setattr(self.settings, key, value)
+                # Ensure format_presets is restored even if not present in self.settings
+                if key == 'format_presets':
+                    self.settings.format_presets = value
                     
             # Save the imported settings
             self.settings.save_settings()
