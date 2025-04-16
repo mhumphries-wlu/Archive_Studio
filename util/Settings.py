@@ -462,13 +462,24 @@ If you don't have information for a heading or don't know, leave it blank.'''
         self.metadata_user_prompt = '''Text to analyze:\n\n{text_to_process}'''
         self.metadata_val_text = "Metadata:"
         self.metadata_headers = "Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary"
-        self.metadata_preset = "Standard Metadata"  # Store the selected preset name
+        self.metadata_preset = "Standard Metadata"  # Store the selected preset
 
         self.ghost_system_prompt = ""
         self.ghost_user_prompt = ""
         self.ghost_val_text = ""
         self.ghost_model = "gpt-4o"
         self.ghost_temp = 0.2
+
+        # --- Add robust default initialization for translation settings ---
+        self.translation_system_prompt = "You translate historical documents from other languages into English. In your response, write 'Translation:' followed by a faithful, accurate translation of the document."
+        self.translation_user_prompt = "Text to translate:\n\n{text_to_process}"
+        self.translation_val_text = "Translation:"
+        self.translation_model = "claude-3-7-sonnet-20250219"
+
+        # --- Add robust default initialization for query settings ---
+        self.query_system_prompt = "You answer questions about historical documents. In your response, write 'Answer:' followed by a concise, accurate answer to the user's question."
+        self.query_val_text = "Answer:"
+        self.query_model = "claude-3-7-sonnet-20250219"
 
     def save_settings(self):
         settings = {
@@ -491,7 +502,15 @@ If you don't have information for a heading or don't know, leave it blank.'''
             'metadata_user_prompt': self.metadata_user_prompt,
             'metadata_val_text': self.metadata_val_text,
             'metadata_headers': self.metadata_headers,
-            'metadata_preset': self.metadata_preset                                     # Store selected preset
+            'metadata_preset': self.metadata_preset,                                    # Store selected preset
+            # Add translation and query settings
+            'translation_system_prompt': self.translation_system_prompt,
+            'translation_user_prompt': self.translation_user_prompt,
+            'translation_val_text': self.translation_val_text,
+            'translation_model': self.translation_model,
+            'query_system_prompt': self.query_system_prompt,
+            'query_val_text': self.query_val_text,
+            'query_model': self.query_model
         }
         
         with open(self.settings_file_path, 'w') as f:
@@ -509,6 +528,12 @@ If you don't have information for a heading or don't know, leave it blank.'''
             # Ensure format_presets is loaded if present in file but not in self
             if 'format_presets' in settings:
                 self.format_presets = settings['format_presets']
+            # Ensure translation and query fields are loaded even if missing from self
+            for field in [
+                'translation_system_prompt', 'translation_user_prompt', 'translation_val_text', 'translation_model',
+                'query_system_prompt', 'query_val_text', 'query_model']:
+                if field in settings:
+                    setattr(self, field, settings[field])
         except FileNotFoundError:
             self.restore_defaults()
 
