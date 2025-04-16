@@ -675,6 +675,7 @@ class App(TkinterDnD.Tk):
 
         # Add format preset selection for Format_Text
         format_frame = None
+        additional_info_text = None  # Will hold the text widget for additional info
         if ai_job == "Format_Text":
             format_frame = tk.Frame(source_window)
             format_frame.pack(pady=10)
@@ -699,6 +700,16 @@ class App(TkinterDnD.Tk):
             # Set default to first format preset
             if format_options:
                 self.format_preset_var.set(format_options[0])
+
+            # --- Add additional info text box at the bottom ---
+            additional_info_frame = tk.Frame(source_window)
+            additional_info_frame.pack(fill="x", padx=10, pady=(10, 0))
+            additional_info_label = tk.Label(additional_info_frame, text="Add any additional information for the model about your document to use for formatting:")
+            additional_info_label.pack(anchor="w")
+            self.format_additional_info_text = tk.Text(additional_info_frame, height=4, width=40, wrap="word")
+            self.format_additional_info_text.pack(fill="x", expand=True)
+        else:
+            self.format_additional_info_text = None
 
         # Create the text source selection dropdown
         dropdown_frame = tk.Frame(source_window)
@@ -783,6 +794,11 @@ class App(TkinterDnD.Tk):
 
         # Function to handle OK button
         def on_ok():
+            # For Format_Text, store the additional info in an attribute
+            if ai_job == "Format_Text" and self.format_additional_info_text is not None:
+                self.format_additional_info = self.format_additional_info_text.get("1.0", "end-1c").strip()
+            else:
+                self.format_additional_info = None
             # Close the window
             source_window.destroy()
             # Run the AI function with the selected parameters using the handler

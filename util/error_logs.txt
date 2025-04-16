@@ -3040,3 +3040,133 @@ _tkinter.TclError: invalid command name ".!toplevel10.!label"
 2025-04-15 12:36:14 [ERROR]: Adding/overwriting with sequential headers: ['Date', 'Place']
 2025-04-15 12:36:14 [ERROR]: Adding 'Citation' column.
 2025-04-15 12:36:14 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Place', 'Original_Text', 'Citation']
+2025-04-15 14:18:22 [ERROR]: Error in ai_function orchestration for job Format_Text: name 'additional_info' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\AIFunctions.py", line 395, in ai_function
+    if additional_info:
+       ^^^^^^^^^^^^^^^
+NameError: name 'additional_info' is not defined
+2025-04-15 14:33:09 [ERROR]: Resolved 'Current Display' to actual column: Separated_Text
+2025-04-15 14:33:36 [ERROR]: Starting CSV export process
+2025-04-15 14:33:36 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-15 14:33:36 [ERROR]: Added missing column: Text
+2025-04-15 14:33:36 [ERROR]: Added missing column: Place_of_Creation
+2025-04-15 14:33:36 [ERROR]: Using resolved text source column: Separated_Text
+2025-04-15 14:33:36 [ERROR]: Reset index for temp_df. New length: 25
+2025-04-15 14:34:03 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-15 14:34:03 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-15 14:34:03 [ERROR]: Added essential column: Creation_Place
+2025-04-15 14:34:03 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-15 14:34:03 [ERROR]: Copied 25 values for column: Document_Type
+2025-04-15 14:34:03 [ERROR]: Copied 25 values for column: Author
+2025-04-15 14:34:03 [ERROR]: Copied 25 values for column: Correspondent
+2025-04-15 14:34:03 [ERROR]: Copied 25 values for column: Correspondent_Place
+2025-04-15 14:34:03 [ERROR]: Copied 25 values for column: Date
+2025-04-15 14:34:03 [ERROR]: Copied 25 values for column: Place_of_Creation
+2025-04-15 14:34:03 [ERROR]: Copied 25 values for column: People
+2025-04-15 14:34:03 [ERROR]: Copied 25 values for column: Places
+2025-04-15 14:34:03 [ERROR]: Copied 25 values for column: Summary
+2025-04-15 14:34:03 [ERROR]: Copied 25 values for column: Creation_Place
+2025-04-15 14:34:03 [ERROR]: Single author specified: Angus Bethune
+2025-04-15 14:34:03 [ERROR]: Citation specified: HBCA, B194-A-2
+2025-04-15 14:34:03 [ERROR]: Starting date and place analysis sequence using preset: Sequence_Dates
+2025-04-15 14:34:03 [ERROR]: Using required headers from sequential preset: ['Place']
+2025-04-15 14:34:03 [ERROR]: Clearing existing values for fresh date analysis
+2025-04-15 14:34:03 [ERROR]: Added legacy Creation_Place column to date_df
+2025-04-15 14:34:03 [ERROR]: Created date analysis dataframe with 25 rows and columns: ['Page', 'Text', 'Place', 'Creation_Place']
+2025-04-15 14:34:03 [ERROR]: Using specified sequential preset: Sequence_Dates
+2025-04-15 14:34:03 [ERROR]: Found required headers in sequence preset: ['Place']
+2025-04-15 14:34:03 [ERROR]: Setting active sequential preset to: Sequence_Dates
+2025-04-15 14:34:43 [ERROR]: Date analysis result dataframe has columns: ['Page', 'Text', 'Place', 'Creation_Place']
+2025-04-15 14:34:43 [ERROR]: Date analysis result dataframe has 25 rows
+2025-04-15 14:34:43 [ERROR]: Error in asyncio loop: 'Date'
+Stack trace:
+Traceback (most recent call last):
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\indexes\base.py", line 3805, in get_loc
+    return self._engine.get_loc(casted_key)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 7081, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 7089, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'Date'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 1044, in _run_date_analysis
+    date_count = sum(result['Date'].notna() & (result['Date'] != ""))
+                     ~~~~~~^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\frame.py", line 4102, in __getitem__
+    indexer = self.columns.get_loc(key)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\indexes\base.py", line 3812, in get_loc
+    raise KeyError(key) from err
+KeyError: 'Date'
+2025-04-15 14:34:43 [ERROR]: Traceback: Traceback (most recent call last):
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\indexes\base.py", line 3805, in get_loc
+    return self._engine.get_loc(casted_key)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 7081, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 7089, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'Date'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 1044, in _run_date_analysis
+    date_count = sum(result['Date'].notna() & (result['Date'] != ""))
+                     ~~~~~~^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\frame.py", line 4102, in __getitem__
+    indexer = self.columns.get_loc(key)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\indexes\base.py", line 3812, in get_loc
+    raise KeyError(key) from err
+KeyError: 'Date'
+
+Stack trace:
+Traceback (most recent call last):
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\indexes\base.py", line 3805, in get_loc
+    return self._engine.get_loc(casted_key)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 7081, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 7089, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'Date'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 1044, in _run_date_analysis
+    date_count = sum(result['Date'].notna() & (result['Date'] != ""))
+                     ~~~~~~^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\frame.py", line 4102, in __getitem__
+    indexer = self.columns.get_loc(key)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\indexes\base.py", line 3812, in get_loc
+    raise KeyError(key) from err
+KeyError: 'Date'
+2025-04-15 14:34:43 [ERROR]: Date and place analysis failed: invalid command name ".!toplevel15.!label"
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 846, in _analyze_dates_sequentially
+    progress_label.config(text="Finalizing date and place analysis...")
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\tkinter\__init__.py", line 1822, in configure
+    return self._configure('configure', cnf, kw)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\tkinter\__init__.py", line 1812, in _configure
+    self.tk.call(_flatten((self._w, cmd)) + self._options(cnf))
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_tkinter.TclError: invalid command name ".!toplevel15.!label"
+2025-04-15 14:34:44 [ERROR]: Sequential preset headers: ['Place']
+2025-04-15 14:34:44 [ERROR]: Preparing export dataframe. Text source: Separated_Text
+2025-04-15 14:34:44 [ERROR]: Using column 'Separated_Text' for text
+2025-04-15 14:34:44 [ERROR]: Dropped original text source column: Separated_Text
+2025-04-15 14:34:44 [ERROR]: Overriding 'Author' column with single author: Angus Bethune
+2025-04-15 14:34:44 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-15 14:34:44 [ERROR]: Adding/overwriting with sequential headers: ['Place']
+2025-04-15 14:34:44 [ERROR]: Sequential header 'Place' not found in compiled data.
+2025-04-15 14:34:44 [ERROR]: Adding 'Citation' column.
+2025-04-15 14:34:44 [ERROR]: Final ordered columns for export: ['Page', 'Author', 'Document_Type', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Original_Text', 'Citation']

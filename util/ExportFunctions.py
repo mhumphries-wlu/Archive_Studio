@@ -267,7 +267,7 @@ class ExportManager:
         # Create the export window
         export_window = tk.Toplevel(self.app)
         export_window.title("Export...")
-        export_window.geometry("400x300")
+        export_window.geometry("400x400")
         export_window.transient(self.app)  # Make window modal
         export_window.grab_set()  # Make window modal
 

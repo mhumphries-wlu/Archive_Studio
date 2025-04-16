@@ -85,7 +85,6 @@ class AIFunctionsHandler:
              job_params_setup = self.setup_job_parameters(ai_job)
              batch_size = job_params_setup.get('batch_size', 50) # Use job-specific batch size or default
 
-
         self.app.toggle_button_state()
         error_count = 0
         processed_indices = set()
@@ -93,6 +92,10 @@ class AIFunctionsHandler:
         total_rows = 0
         processed_rows = 0
 
+        # --- Ensure additional_info is always defined ---
+        additional_info = None
+        if ai_job == "Format_Text":
+            additional_info = getattr(self, 'temp_format_additional_info', None)
 
         try:
             # --- Chunk_Text Handling ---
@@ -391,6 +394,11 @@ class AIFunctionsHandler:
                         elif pd.notna(row_data.get('Original_Text')) and row_data.get('Original_Text',"").strip():
                              source_col_used = 'Original_Text'
                         text_to_process = row_data.get(source_col_used, "") if source_col_used else ""
+                        # --- Prepend additional info if present ---
+                        if additional_info:
+                            text_to_process = (
+                                f"Here is some additional context from the user about the document to use: \n\n{additional_info}.\n\nHere is the  document to process: \n\n{text_to_process}"
+                            )
                     elif ai_job == "Get_Names_and_Places":
                         text_to_process = self.app.data_operations.find_right_text(index) # Use best available text
                         source_col_used = "Best Available" # Indicate how source was chosen
@@ -1355,17 +1363,21 @@ class AIFunctionsHandler:
             self.temp_selected_source = self.app.text_source_var.get()
             self.app.error_logging(f"Stored temp source: {self.temp_selected_source}", level="DEBUG")
 
-
-            # For Format_Text, also get and store the selected format preset
+            # For Format_Text, also get and store the selected format preset and additional info
             if ai_job == "Format_Text":
-                 if hasattr(self.app, 'format_preset_var') and self.app.format_preset_var.get():
-                     self.temp_format_preset = self.app.format_preset_var.get()
-                     self.app.error_logging(f"Stored temp format preset: {self.temp_format_preset}", level="DEBUG")
-                 else:
-                      # Handle case where format preset might be missing (e.g., no presets defined)
-                      self.temp_format_preset = None
-                      self.app.error_logging("Format preset variable not found or empty.", level="WARNING")
-
+                if hasattr(self.app, 'format_preset_var') and self.app.format_preset_var.get():
+                    self.temp_format_preset = self.app.format_preset_var.get()
+                    self.app.error_logging(f"Stored temp format preset: {self.temp_format_preset}", level="DEBUG")
+                else:
+                    self.temp_format_preset = None
+                    self.app.error_logging("Format preset variable not found or empty.", level="WARNING")
+                # Store additional info if present
+                if hasattr(self.app, 'format_additional_info'):
+                    self.temp_format_additional_info = self.app.format_additional_info
+                else:
+                    self.temp_format_additional_info = None
+            else:
+                self.temp_format_additional_info = None
 
             # Now call the main AI function - it will use the temp attributes
             self.ai_function(all_or_one_flag=all_or_one_flag, ai_job=ai_job)
