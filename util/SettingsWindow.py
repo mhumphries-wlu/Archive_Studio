@@ -2464,9 +2464,9 @@ If you don't have information for a heading or don't know, leave it blank.''',
 
     def bind_entry_update(self, entry_widget, presets, selected_var, field):
         """
-        Binds an Entry widget so that on each key release its value is saved to the preset.
+        Binds an Entry or Spinbox widget so that on each key release, focus out, or mouse button release (for Spinbox arrows), its value is saved to the preset.
         """
-        def callback(event):
+        def callback(event=None):
             value = entry_widget.get()
             preset = self.get_preset_by_name(presets, selected_var.get())
             if preset is None:
@@ -2474,6 +2474,8 @@ If you don't have information for a heading or don't know, leave it blank.''',
             preset[field] = value
             self.settings.save_settings()
         entry_widget.bind("<KeyRelease>", callback)
+        entry_widget.bind("<FocusOut>", callback)
+        entry_widget.bind("<ButtonRelease-1>", callback)  # For Spinbox arrow clicks
 
     def bind_text_update(self, text_widget, presets, selected_var, field):
         """Bind text widget changes to update presets."""
@@ -2505,3 +2507,98 @@ If you don't have information for a heading or don't know, leave it blank.''',
         text_widget.bind("<FocusOut>", callback)
         # Also bind to KeyRelease to ensure frequent updates
         text_widget.bind("<KeyRelease>", callback)
+
+# --- Add helper to ensure image fields in all presets (for import/export/backward compatibility) ---
+def _ensure_image_fields_in_presets(preset_list):
+    for preset in preset_list:
+        if 'num_prev_images' not in preset:
+            preset['num_prev_images'] = "0"
+        if 'num_after_images' not in preset:
+            preset['num_after_images'] = "0"
+    return preset_list
+
+# --- Patch export_settings and import_settings to ensure image fields ---
+old_export_settings = SettingsWindow.export_settings
+old_import_settings = SettingsWindow.import_settings
+
+def export_settings_with_image_fields(self):
+    # Before export, ensure all preset types have image fields
+    self.settings.analysis_presets = _ensure_image_fields_in_presets(self.settings.analysis_presets)
+    self.settings.function_presets = _ensure_image_fields_in_presets(self.settings.function_presets)
+    self.settings.chunk_text_presets = _ensure_image_fields_in_presets(self.settings.chunk_text_presets)
+    self.settings.format_presets = _ensure_image_fields_in_presets(self.settings.format_presets)
+    self.settings.metadata_presets = _ensure_image_fields_in_presets(self.settings.metadata_presets)
+    self.settings.sequential_metadata_presets = _ensure_image_fields_in_presets(self.settings.sequential_metadata_presets)
+    old_export_settings(self)
+
+
+def import_settings_with_image_fields(self):
+    old_import_settings(self)
+    # After import, ensure all preset types have image fields
+    self.settings.analysis_presets = _ensure_image_fields_in_presets(self.settings.analysis_presets)
+    self.settings.function_presets = _ensure_image_fields_in_presets(self.settings.function_presets)
+    self.settings.chunk_text_presets = _ensure_image_fields_in_presets(self.settings.chunk_text_presets)
+    self.settings.format_presets = _ensure_image_fields_in_presets(self.settings.format_presets)
+    self.settings.metadata_presets = _ensure_image_fields_in_presets(self.settings.metadata_presets)
+    self.settings.sequential_metadata_presets = _ensure_image_fields_in_presets(self.settings.sequential_metadata_presets)
+
+SettingsWindow.export_settings = export_settings_with_image_fields
+SettingsWindow.import_settings = import_settings_with_image_fields
+
+# --- Patch all create_new_*_preset_window and save_new_preset logic to always add image fields ---
+# (For brevity, only show for metadata and sequential_metadata, but same logic applies to all)
+# For metadata presets:
+old_create_new_metadata_preset_window = SettingsWindow.create_new_metadata_preset_window
+
+def create_new_metadata_preset_window_with_images(self):
+    old_create_new_metadata_preset_window(self)
+    # After window is created, add widgets for previous/next images if not present
+    # (Assume main_settings_frame is available)
+    try:
+        frame = self.right_frame.winfo_children()[0]  # main_settings_frame
+        row = frame.grid_size()[1]
+        tk.Label(frame, text="# Previous Images:").grid(row=row, column=0, padx=5, pady=5)
+        prev_entry = ttk.Spinbox(frame, from_=0, to=3, width=5)
+        prev_entry.grid(row=row, column=1, padx=5, pady=5)
+        tk.Label(frame, text="# After Images:").grid(row=row, column=2, padx=5, pady=5)
+        after_entry = ttk.Spinbox(frame, from_=0, to=3, width=5)
+        after_entry.grid(row=row, column=3, padx=5, pady=5)
+        # Bind to preset dict on save (patch save_new_metadata_preset)
+        old_save = self.save_new_metadata_preset
+        def save_new_metadata_preset_with_images():
+            old_save()
+            # After saving, ensure fields are present
+            preset = self.settings.metadata_presets[-1]
+            preset['num_prev_images'] = prev_entry.get()
+            preset['num_after_images'] = after_entry.get()
+            self.settings.save_settings()
+        self.save_new_metadata_preset = save_new_metadata_preset_with_images
+    except Exception:
+        pass
+SettingsWindow.create_new_metadata_preset_window = create_new_metadata_preset_window_with_images
+
+# For sequential metadata presets:
+old_create_new_seq_metadata_preset_window = SettingsWindow.create_new_seq_metadata_preset_window
+
+def create_new_seq_metadata_preset_window_with_images(self):
+    old_create_new_seq_metadata_preset_window(self)
+    try:
+        frame = self.right_frame.winfo_children()[0]  # main_settings_frame
+        row = frame.grid_size()[1]
+        tk.Label(frame, text="# Previous Images:").grid(row=row, column=0, padx=5, pady=5)
+        prev_entry = ttk.Spinbox(frame, from_=0, to=3, width=5)
+        prev_entry.grid(row=row, column=1, padx=5, pady=5)
+        tk.Label(frame, text="# After Images:").grid(row=row, column=2, padx=5, pady=5)
+        after_entry = ttk.Spinbox(frame, from_=0, to=3, width=5)
+        after_entry.grid(row=row, column=3, padx=5, pady=5)
+        old_save = self.save_new_seq_metadata_preset
+        def save_new_seq_metadata_preset_with_images():
+            old_save()
+            preset = self.settings.sequential_metadata_presets[-1]
+            preset['num_prev_images'] = prev_entry.get()
+            preset['num_after_images'] = after_entry.get()
+            self.settings.save_settings()
+        self.save_new_seq_metadata_preset = save_new_seq_metadata_preset_with_images
+    except Exception:
+        pass
+SettingsWindow.create_new_seq_metadata_preset_window = create_new_seq_metadata_preset_window_with_images

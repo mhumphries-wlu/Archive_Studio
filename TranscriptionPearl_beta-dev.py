@@ -256,6 +256,11 @@ class App(TkinterDnD.Tk):
         # Initialize the Highlight Handler <<<<<<<<<<<<<<<<<<<<<< NEW
         self.highlight_handler = HighlightHandler(self)
 
+        # Variables to store last selected dropdown values <--- ADDED
+        self.last_selected_format_preset = None
+        self.last_selected_chunking_strategy = None
+        # <--- END ADDED
+
         # Configure highlight tags
         self.text_display.tag_config("name_highlight", background="lightblue")
         self.text_display.tag_config("place_highlight", background="wheat1")
@@ -697,9 +702,12 @@ class App(TkinterDnD.Tk):
                                          width=20)
             format_dropdown.pack(side="left", padx=5)
 
-            # Set default to first format preset
-            if format_options:
+            # Set default to last selected format preset if available, else first <--- MODIFIED
+            if self.last_selected_format_preset and self.last_selected_format_preset in format_options:
+                self.format_preset_var.set(self.last_selected_format_preset)
+            elif format_options: # Fallback to first if no last selection or invalid
                 self.format_preset_var.set(format_options[0])
+            # <--- END MODIFIED
 
             # --- Add additional info text box at the bottom ---
             additional_info_frame = tk.Frame(source_window)
@@ -750,43 +758,19 @@ class App(TkinterDnD.Tk):
                                     width=20)
         source_dropdown.pack(side="left", padx=5)
 
-        # Set a sensible default based on the AI job
-        if "Correct_Text" == ai_job:
-            # For correction, prefer Original_Text
-            if "Original_Text" in source_options:
-                self.text_source_var.set("Original_Text")
-            elif source_options:
-                self.text_source_var.set(source_options[0])
-        elif "Translation" == ai_job:
-            # For translation, prefer Corrected_Text, then Formatted_Text, then Original_Text
-            if "Corrected_Text" in source_options:
-                self.text_source_var.set("Corrected_Text")
-            elif "Formatted_Text" in source_options:
-                self.text_source_var.set("Formatted_Text")
-            elif "Original_Text" in source_options:
-                self.text_source_var.set("Original_Text")
-            elif source_options:
-                self.text_source_var.set(source_options[0])
-        elif "Identify_Errors" == ai_job:
-            # For error identification, prefer Corrected_Text
-            if "Corrected_Text" in source_options:
-                self.text_source_var.set("Corrected_Text")
-            elif "Formatted_Text" in source_options:
-                self.text_source_var.set("Formatted_Text")
-            elif source_options:
-                self.text_source_var.set(source_options[0])
-        elif "Format_Text" == ai_job:
-            # For formatting, prefer Corrected_Text, then Original_Text
-            if "Corrected_Text" in source_options:
-                self.text_source_var.set("Corrected_Text")
-            elif "Original_Text" in source_options:
-                self.text_source_var.set("Original_Text")
-            elif source_options:
-                self.text_source_var.set(source_options[0])
-        else:
-            # Default to first option
-            if source_options:
-                self.text_source_var.set(source_options[0])
+        # Define the desired hierarchy for default selection
+        hierarchy = ["Separated_Text", "Translation", "Formatted_Text", "Corrected_Text", "Original_Text"]
+
+        # Set the default based on the hierarchy
+        default_set = False
+        for text_type in hierarchy:
+            if text_type in source_options:
+                self.text_source_var.set(text_type)
+                default_set = True
+                break
+        # Fallback if no hierarchical match (should not happen if options exist)
+        if not default_set and source_options:
+            self.text_source_var.set(source_options[0])
 
         # Buttons frame
         button_frame = tk.Frame(source_window)
@@ -794,11 +778,17 @@ class App(TkinterDnD.Tk):
 
         # Function to handle OK button
         def on_ok():
-            # For Format_Text, store the additional info in an attribute
-            if ai_job == "Format_Text" and self.format_additional_info_text is not None:
-                self.format_additional_info = self.format_additional_info_text.get("1.0", "end-1c").strip()
+            # For Format_Text, store the additional info and update last selection <--- MODIFIED
+            if ai_job == "Format_Text":
+                if self.format_additional_info_text is not None:
+                    self.format_additional_info = self.format_additional_info_text.get("1.0", "end-1c").strip()
+                # Store the selected format preset <--- ADDED
+                if hasattr(self, 'format_preset_var'): # Ensure var exists
+                    self.last_selected_format_preset = self.format_preset_var.get()
+                # <--- END ADDED
             else:
                 self.format_additional_info = None
+            # <--- END MODIFIED
             # Close the window
             source_window.destroy()
             # Run the AI function with the selected parameters using the handler
@@ -867,9 +857,12 @@ class App(TkinterDnD.Tk):
                                       width=30)
         chunking_dropdown.pack(side="left", padx=5)
 
-        # Set a default value if available
-        if preset_names and not window_chunking_var.get():
+        # Set a default value if available, prioritizing last selection <--- MODIFIED
+        if self.last_selected_chunking_strategy and self.last_selected_chunking_strategy in preset_names:
+            window_chunking_var.set(self.last_selected_chunking_strategy)
+        elif preset_names and not window_chunking_var.get(): # Fallback to first if no last selection or current isn't set
             window_chunking_var.set(preset_names[0])
+        # <--- END MODIFIED
 
         # Add a new frame for text source selection
         text_source_frame = tk.Frame(chunk_window)
@@ -909,12 +902,19 @@ class App(TkinterDnD.Tk):
                                          width=20)
         text_source_dropdown.pack(side="left", padx=5)
 
-        # Set default to Corrected_Text (most common use case)
-        if "Corrected_Text" in source_options:
-             self.chunk_text_source_var.set("Corrected_Text")
-        elif source_options:
-            self.chunk_text_source_var.set(source_options[0])
+        # Define the desired hierarchy for default selection
+        hierarchy = ["Separated_Text", "Translation", "Formatted_Text", "Corrected_Text", "Original_Text"]
 
+        # Set the default based on the hierarchy
+        default_set = False
+        for text_type in hierarchy:
+            if text_type in source_options:
+                self.chunk_text_source_var.set(text_type)
+                default_set = True
+                break
+        # Fallback if no hierarchical match (should not happen if options exist)
+        if not default_set and source_options:
+            self.chunk_text_source_var.set(source_options[0])
 
         # Buttons frame
         button_frame = tk.Frame(chunk_window)
@@ -924,6 +924,9 @@ class App(TkinterDnD.Tk):
         def on_ok():
             # Set the main window's chunking strategy variable
             self.chunking_strategy_var.set(window_chunking_var.get())
+            # Store the selected chunking strategy <--- ADDED
+            self.last_selected_chunking_strategy = window_chunking_var.get()
+            # <--- END ADDED
             # Close the window
             chunk_window.destroy()
             # Run the AI function with the selected parameters using the handler
@@ -2104,9 +2107,6 @@ class App(TkinterDnD.Tk):
     def on_text_display_change(self, event=None):
         if self.main_df.empty or self.page_counter >= len(self.main_df):
             return
-
-        # Update the DataFrame with current text before switching
-        self.data_operations.update_df()
 
         # Get new selection and update toggle
         index = self.page_counter

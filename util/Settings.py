@@ -489,12 +489,12 @@ If you don't have information for a heading or don't know, leave it blank.'''
             'model_list': self.model_list,                                              # List of models
             'batch_size': self.batch_size,                                              # Batch size for processing
             'check_orientation': self.check_orientation,                                # Check orientation of text
-            'analysis_presets': self.analysis_presets,
-            'function_presets': self.function_presets,
-            'chunk_text_presets': self.chunk_text_presets,
-            'format_presets': self.format_presets,                                      # Ensure format_presets are saved
-            'metadata_presets': self.metadata_presets,                                  # Add metadata presets
-            'sequential_metadata_presets': self.sequential_metadata_presets,            # Add sequential metadata presets
+            'analysis_presets': self._ensure_image_fields(self.analysis_presets),
+            'function_presets': self._ensure_image_fields(self.function_presets),
+            'chunk_text_presets': self._ensure_image_fields(self.chunk_text_presets),
+            'format_presets': self._ensure_image_fields(self.format_presets),
+            'metadata_presets': self._ensure_image_fields(self.metadata_presets),
+            'sequential_metadata_presets': self._ensure_image_fields(self.sequential_metadata_presets),
             # Add individual metadata settings for backward compatibility
             'metadata_model': self.metadata_model,
             'metadata_temp': self.metadata_temp,
@@ -524,10 +524,13 @@ If you don't have information for a heading or don't know, leave it blank.'''
             # Load all settings using get() to provide defaults
             for key, value in settings.items():
                 if hasattr(self, key):
-                    setattr(self, key, value)
+                    if key.endswith('_presets') and isinstance(value, list):
+                        setattr(self, key, self._ensure_image_fields(value))
+                    else:
+                        setattr(self, key, value)
             # Ensure format_presets is loaded if present in file but not in self
             if 'format_presets' in settings:
-                self.format_presets = settings['format_presets']
+                self.format_presets = self._ensure_image_fields(settings['format_presets'])
             # Ensure translation and query fields are loaded even if missing from self
             for field in [
                 'translation_system_prompt', 'translation_user_prompt', 'translation_val_text', 'translation_model',
@@ -536,6 +539,15 @@ If you don't have information for a heading or don't know, leave it blank.'''
                     setattr(self, field, settings[field])
         except FileNotFoundError:
             self.restore_defaults()
+
+    def _ensure_image_fields(self, presets):
+        # Helper to ensure num_prev_images and num_after_images are present in all presets
+        for preset in presets:
+            if 'num_prev_images' not in preset:
+                preset['num_prev_images'] = "0"
+            if 'num_after_images' not in preset:
+                preset['num_after_images'] = "0"
+        return presets
 
     def clear_temp_directories(self):
         """Clear all temporary directories"""

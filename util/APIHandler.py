@@ -61,6 +61,18 @@ class APIHandler:
         # Extract required headers for metadata validation if applicable
         required_headers = job_params.get("required_headers") if job_type == "Metadata" and job_params else None
         
+        # Debug print for image context
+        if image_data:
+            if isinstance(image_data, list):
+                try:
+                    print(f"[DEBUG] APIHandler.route_api_call received {len(image_data)} images: {[l for _, l in image_data]}")
+                except Exception:
+                    print(f"[DEBUG] APIHandler.route_api_call received image_data (list) but could not extract labels.")
+            else:
+                print(f"[DEBUG] APIHandler.route_api_call received image_data of type {type(image_data)}")
+        else:
+            print(f"[DEBUG] APIHandler.route_api_call received no image_data.")
+        
         if "gpt" in engine.lower() or "o1" in engine.lower() or "o3" in engine.lower():
             return await self.handle_gpt_call(system_prompt, user_prompt, temp, 
                                            image_data, text_to_process, val_text, 

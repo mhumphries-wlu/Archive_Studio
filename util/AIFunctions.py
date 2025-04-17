@@ -570,7 +570,9 @@ class AIFunctionsHandler:
                         "user_prompt": preset.get('specific_instructions', ''),
                         "system_prompt": preset.get('general_instructions', ''),
                         "use_images": preset.get('use_images', False),
-                        "current_image": preset.get("current_image", "Yes")
+                        "current_image": preset.get("current_image", "Yes"),
+                        "num_prev_images": int(preset.get("num_prev_images", 0)),
+                        "num_after_images": int(preset.get("num_after_images", 0)),
                     })
                 else:
                     self.app.error_logging(f"Chunk text preset '{selected_strategy_name}' not found. Using defaults.", level="WARNING")
@@ -603,7 +605,9 @@ class AIFunctionsHandler:
                          "system_prompt": preset.get('general_instructions', 'Extract metadata.'),
                          "use_images": preset.get('use_images', False),
                          "current_image": preset.get("current_image", "Yes"),
-                         "headers": headers
+                         "headers": headers,
+                         "num_prev_images": int(preset.get("num_prev_images", 0)),
+                         "num_after_images": int(preset.get("num_after_images", 0)),
                      })
                      self.app.error_logging(f"Using metadata preset '{preset_name_to_use}' with headers: {headers}", level="DEBUG")
                  else:
@@ -624,7 +628,9 @@ class AIFunctionsHandler:
                          "user_prompt": preset.get('specific_instructions', 'Text to format:\n\n{text_to_process}'),
                          "system_prompt": preset.get('general_instructions', 'Format the text clearly.'),
                          "use_images": preset.get('use_images', False),
-                         "current_image": preset.get("current_image", "Yes")
+                         "current_image": preset.get("current_image", "Yes"),
+                         "num_prev_images": int(preset.get("num_prev_images", 0)),
+                         "num_after_images": int(preset.get("num_after_images", 0)),
                      })
                  else:
                      self.app.error_logging(f"Format preset '{format_preset_name}' not found. Using defaults.", level="WARNING")
@@ -643,7 +649,9 @@ class AIFunctionsHandler:
                          "user_prompt": preset.get('specific_instructions', ''),
                          "system_prompt": preset.get('general_instructions', ''),
                          "use_images": preset.get('use_images', False),
-                         "current_image": preset.get("current_image", "Yes")
+                         "current_image": preset.get("current_image", "Yes"),
+                         "num_prev_images": int(preset.get("num_prev_images", 0)),
+                         "num_after_images": int(preset.get("num_after_images", 0)),
                      })
                      # Override use_images specifically for HTR and Auto_Rotate if not set in preset
                      if ai_job in ["HTR", "Auto_Rotate"] and not preset.get('use_images'):
@@ -688,38 +696,50 @@ class AIFunctionsHandler:
         try:
             # Check if this job uses images based on job_params
             if not job_params.get("use_images", False):
-                # self.app.error_logging(f"Job {ai_job} does not use images.", level="DEBUG")
                 return []
 
+            # --- Get Previous Images ---
+            num_prev = int(job_params.get("num_prev_images", 0))
+            for offset in range(num_prev, 0, -1):
+                prev_index = index - offset
+                if prev_index >= 0 and prev_index < len(self.app.main_df):
+                    prev_img_rel = self.app.main_df.loc[prev_index].get('Image_Path', "")
+                    if prev_img_rel:
+                        prev_img_abs = self.app.get_full_path(prev_img_rel)
+                        if prev_img_abs and os.path.exists(prev_img_abs):
+                            label = f"Previous Page -{offset}:"
+                            images_to_prepare.append((prev_img_abs, label))
+
             # --- Get Current Image ---
-            if job_params.get("current_image", "Yes") == "Yes": # Check if current image is needed
-                 current_image_rel = row_data.get('Image_Path', "")
-                 if not current_image_rel:
-                     self.app.error_logging(f"Empty primary image path at index {index}", level="WARNING")
-                 else:
+            if job_params.get("current_image", "Yes") == "Yes":
+                current_image_rel = row_data.get('Image_Path', "")
+                if not current_image_rel:
+                    self.app.error_logging(f"Empty primary image path at index {index}", level="WARNING")
+                else:
                     current_image_abs = self.app.get_full_path(current_image_rel)
                     if not current_image_abs or not os.path.exists(current_image_abs):
                         self.app.error_logging(f"Primary image file not found at index {index}: {current_image_abs}", level="WARNING")
                     else:
-                        # Add the primary image with a generic description
                         images_to_prepare.append((current_image_abs, "Document Image:"))
 
-            # --- Get Additional Context Images (if applicable) ---
-            # Example: Get previous/next image if context setting is enabled
-            # Add logic here based on settings if needed, e.g.,
-            # if job_params.get("image_context", "None") == "Previous":
-            #     prev_index = index - 1
-            #     if prev_index >= 0 and prev_index < len(self.app.main_df): # Check bounds
-            #          prev_img_rel = self.app.main_df.loc[prev_index].get('Image_Path', "")
-            #          if prev_img_rel:
-            #               prev_img_abs = self.app.get_full_path(prev_img_rel)
-            #               if prev_img_abs and os.path.exists(prev_img_abs):
-            #                   images_to_prepare.insert(0, (prev_img_abs, "Previous Page:")) # Insert previous before current
+            # --- Get Next Images ---
+            num_next = int(job_params.get("num_after_images", 0))
+            for offset in range(1, num_next + 1):
+                next_index = index + offset
+                if next_index < len(self.app.main_df):
+                    next_img_rel = self.app.main_df.loc[next_index].get('Image_Path', "")
+                    if next_img_rel:
+                        next_img_abs = self.app.get_full_path(next_img_rel)
+                        if next_img_abs and os.path.exists(next_img_abs):
+                            label = f"Next Page +{offset}:"
+                            images_to_prepare.append((next_img_abs, label))
 
-            # --- Prepare Image Data for API ---
+            # Debug print for image context
+            print(f"[DEBUG] Images for index {index}, job {ai_job}: {[{'path': p, 'label': l} for p, l in images_to_prepare]}")
+
             if not images_to_prepare:
-                 self.app.error_logging(f"No valid images found to prepare for index {index}, job {ai_job}", level="DEBUG")
-                 return []
+                self.app.error_logging(f"No valid images found to prepare for index {index}, job {ai_job}", level="DEBUG")
+                return []
 
             # Determine encoding based on engine
             default_model = self.app.settings.model_list[0] if self.app.settings.model_list else "default"
@@ -727,17 +747,15 @@ class AIFunctionsHandler:
             is_base64_needed = "gemini" not in engine_name
 
             prepared_data = self.app.api_handler.prepare_image_data(
-                 images_to_prepare,
-                 engine_name,
-                 is_base64_needed
-             )
+                images_to_prepare,
+                engine_name,
+                is_base64_needed
+            )
             self.app.error_logging(f"Prepared {len(prepared_data)} images for index {index}, job {ai_job}", level="DEBUG")
             return prepared_data
 
-
         except Exception as e:
             self.app.error_logging(f"Critical error in get_images_for_job at index {index}: {str(e)}", level="ERROR")
-            # REMOVED traceback.print_exc()
             return []  # Return empty list as safe fallback
 
     def collate_names_and_places(self):

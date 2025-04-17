@@ -44,7 +44,7 @@ class ExportManager:
             
             # Combine all the text values into a single string
             for index, row in self.app.main_df.iterrows():
-                text = self.app.find_right_text(index)
+                text = self.app.data_operations.find_right_text(index)
                 
                 # Add appropriate spacing between entries
                 if text:
@@ -84,7 +84,7 @@ class ExportManager:
         
         # Combine all the processed_text values into a single string
         for index, row in self.app.main_df.iterrows():
-            text = self.app.find_right_text(index)
+            text = self.app.data_operations.find_right_text(index)
             if text and text[0].isalpha():
                 combined_text += text
             else:
@@ -134,7 +134,7 @@ class ExportManager:
                     self.app.progress_bar.update_progress(index + 1, total_pages)
 
                     # Get the text using existing function
-                    text = self.app.find_right_text(index)
+                    text = self.app.data_operations.find_right_text(index)
 
                     # Create filename with sequential numbering
                     filename = f"{base_filename}_{index+1:04d}.txt"
@@ -201,7 +201,7 @@ class ExportManager:
                     image_path = self.app.get_full_path(image_path)
 
                     # Get associated text based on Text_Toggle
-                    text = self.app.find_right_text(index)
+                    text = self.app.data_operations.find_right_text(index)
 
                     # Create new page at A4 size
                     page = doc.new_page(width=595, height=842)  # A4 size in points
@@ -500,7 +500,7 @@ class ExportManager:
             pages_with_separators = []
             
             for index, row in self.app.main_df.iterrows():
-                text = self.app.find_right_text(index)
+                text = self.app.data_operations.find_right_text(index)
                 if "*****" in text:
                     separator_count += text.count("*****")
                     pages_with_separators.append(index)
@@ -1210,7 +1210,7 @@ class ExportManager:
                     # Use the original index from main_df if possible
                     main_idx = idx if idx < len(self.app.main_df) else -1
                     if main_idx != -1:
-                         text_values.append(self.app.find_right_text(main_idx))
+                         text_values.append(self.app.data_operations.find_right_text(main_idx))
                     else:
                          # Fallback if index mapping is unclear (e.g., custom separation)
                          text_values.append(export_df.at[idx, 'Text'] if 'Text' in export_df.columns else "")
@@ -1339,7 +1339,7 @@ class ExportManager:
             # Check if any text contains the separator
             combined_text = ""
             for index, row in self.app.main_df.iterrows():
-                text = self.app.find_right_text(index)
+                text = self.app.data_operations.find_right_text(index)
                 combined_text += text + " "
             
             documents_separated = "*****" in combined_text
