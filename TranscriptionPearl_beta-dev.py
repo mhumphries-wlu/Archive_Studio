@@ -358,9 +358,6 @@ class App(TkinterDnD.Tk):
             offvalue=False
         )
 
-
-        # Process Menu
-
         self.process_menu.add_cascade(label="Processing Mode", menu=mode_menu)
         self.process_menu.add_separator()
         self.process_menu.add_command(label="Recognize Text",
@@ -372,14 +369,6 @@ class App(TkinterDnD.Tk):
         self.process_menu.add_separator()
         self.process_menu.add_command(label="Translate Text",
                                      command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Translation"))
-        self.process_menu.add_separator()
-        self.process_menu.add_command(label="Get Names and Places",
-                                     command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Get_Names_and_Places"))
-        self.process_menu.add_separator()
-        self.process_menu.add_command(label="Identify Document Separators",
-                                     command=lambda: self.create_chunk_text_window(self.process_mode.get()))
-        self.process_menu.add_command(label="Apply Document Separation",
-                                     command=self.apply_document_separation)
         self.process_menu.add_separator()
         self.process_menu.add_command(label="Find Errors",
                                      command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Identify_Errors"))
@@ -414,8 +403,22 @@ class App(TkinterDnD.Tk):
         self.tools_menu.add_command(label="Edit All Images", command=self.edit_all_images)
         self.tools_menu.add_separator()
         self.tools_menu.add_command(
+            label="Get Names and Places",
+            command=lambda: self.ai_functions_handler.ai_function(all_or_one_flag=self.process_mode.get(), ai_job="Get_Names_and_Places")
+        )
+        self.tools_menu.add_separator()
+        self.tools_menu.add_command(
             label="Edit Names & Places",
             command=self.names_places_handler.initiate_collation_and_show_window
+        )
+        self.tools_menu.add_separator()
+        self.tools_menu.add_command(
+            label="Identify Document Separators",
+            command=lambda: self.create_chunk_text_window(self.process_mode.get())
+        )
+        self.tools_menu.add_command(
+            label="Apply Document Separation",
+            command=self.apply_document_separation
         )
         self.tools_menu.add_separator()
         self.tools_menu.add_command(

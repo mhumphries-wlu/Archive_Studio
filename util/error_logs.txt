@@ -129,3 +129,5 @@ AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
 2025-04-18 13:11:53 [ERROR]: Enabled Places highlighting due to existing Places data
 2025-04-18 13:16:54 [ERROR]: Enabled Names highlighting due to existing People data
 2025-04-18 13:16:54 [ERROR]: Enabled Places highlighting due to existing Places data
+2025-04-18 13:29:48 [ERROR]: Enabled Names highlighting due to existing People data
+2025-04-18 13:29:48 [ERROR]: Enabled Places highlighting due to existing Places data
