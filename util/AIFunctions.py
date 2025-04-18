@@ -700,6 +700,7 @@ class AIFunctionsHandler:
 
             # --- Get Previous Images ---
             num_prev = int(job_params.get("num_prev_images", 0))
+            prev_indices = []
             for offset in range(num_prev, 0, -1):
                 prev_index = index - offset
                 if prev_index >= 0 and prev_index < len(self.app.main_df):
@@ -707,8 +708,13 @@ class AIFunctionsHandler:
                     if prev_img_rel:
                         prev_img_abs = self.app.get_full_path(prev_img_rel)
                         if prev_img_abs and os.path.exists(prev_img_abs):
-                            label = f"Previous Page -{offset}:"
-                            images_to_prepare.append((prev_img_abs, label))
+                            prev_indices.append((prev_img_abs, offset))
+            # Label logic for previous images
+            if len(prev_indices) == 1:
+                images_to_prepare.append((prev_indices[0][0], "Previous Page:"))
+            elif len(prev_indices) > 1:
+                for img_abs, offset in prev_indices:
+                    images_to_prepare.append((img_abs, f"Previous Page -{offset}:"))
 
             # --- Get Current Image ---
             if job_params.get("current_image", "Yes") == "Yes":
@@ -720,10 +726,11 @@ class AIFunctionsHandler:
                     if not current_image_abs or not os.path.exists(current_image_abs):
                         self.app.error_logging(f"Primary image file not found at index {index}: {current_image_abs}", level="WARNING")
                     else:
-                        images_to_prepare.append((current_image_abs, "Document Image:"))
+                        images_to_prepare.append((current_image_abs, "Current Page:"))
 
             # --- Get Next Images ---
             num_next = int(job_params.get("num_after_images", 0))
+            next_indices = []
             for offset in range(1, num_next + 1):
                 next_index = index + offset
                 if next_index < len(self.app.main_df):
@@ -731,8 +738,13 @@ class AIFunctionsHandler:
                     if next_img_rel:
                         next_img_abs = self.app.get_full_path(next_img_rel)
                         if next_img_abs and os.path.exists(next_img_abs):
-                            label = f"Next Page +{offset}:"
-                            images_to_prepare.append((next_img_abs, label))
+                            next_indices.append((next_img_abs, offset))
+            # Label logic for next images
+            if len(next_indices) == 1:
+                images_to_prepare.append((next_indices[0][0], "Next Page:"))
+            elif len(next_indices) > 1:
+                for img_abs, offset in next_indices:
+                    images_to_prepare.append((img_abs, f"Next Page +{offset}:"))
 
             # Debug print for image context
             print(f"[DEBUG] Images for index {index}, job {ai_job}: {[{'path': p, 'label': l} for p, l in images_to_prepare]}")
@@ -845,7 +857,7 @@ class AIFunctionsHandler:
                     text_for_llm = "\n".join(items)
                     # Choose engine - consider context window size for large lists
                     # Use a capable model like Sonnet or Opus if lists are potentially very long
-                    engine = "claude-3-5-sonnet-20240620" # A strong model
+                    engine = "gemini-2.5-pro-preview-03-25" # A strong model
                     # engine = "gemini-1.5-flash-latest" # Faster/cheaper alternative if lists are smaller
                     user_prompt_text = f"Collate the following list of {label}. Ensure every item appears in the output. Format according to the rules provided.\n\nList:\n{text_for_llm}"
 

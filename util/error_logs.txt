@@ -115,3 +115,5 @@ Traceback (most recent call last):
     return getattr(self.tk, attr)
            ^^^^^^^^^^^^^^^^^^^^^^
 AttributeError: '_tkinter.tkapp' object has no attribute 'find_right_text'
+2025-04-18 09:13:17 [ERROR]: Enabled Names highlighting due to existing People data
+2025-04-18 09:26:47 [ERROR]: Enabled Names highlighting due to existing People data
