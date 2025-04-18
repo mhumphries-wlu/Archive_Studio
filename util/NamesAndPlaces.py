@@ -17,10 +17,21 @@ class NamesAndPlacesHandler:
         """
         First collects names and places from the LLM, then shows the GUI for user editing.
         """
+        # Gather unique names and places first
+        unique_names = self.gather_unique_items('People')
+        unique_places = self.gather_unique_items('Places')
+
+        # Debug: Print gathered unique names and places
+        print(f"DEBUG: unique_names={unique_names}")
+        print(f"DEBUG: unique_places={unique_places}")
+
         # 1) Collect suggestions from the LLM automatically using the app's AI handler
         # Make sure the collate function exists in AIFunctionsHandler
         if hasattr(self.app.ai_functions_handler, 'collate_names_and_places'):
-            self.app.ai_functions_handler.collate_names_and_places()
+            self.app.ai_functions_handler.collate_names_and_places(unique_names, unique_places)
+            # Debug: Print the raw collation results after API call
+            print(f"DEBUG: collated_names_raw={getattr(self.app.ai_functions_handler, 'collated_names_raw', None)}")
+            print(f"DEBUG: collated_places_raw={getattr(self.app.ai_functions_handler, 'collated_places_raw', None)}")
         else:
             self.app.error_logging("collate_names_and_places method not found in AIFunctionsHandler", level="ERROR")
             messagebox.showerror("Error", "Internal error: Collation function not found.")
@@ -31,12 +42,13 @@ class NamesAndPlacesHandler:
 
     def create_collate_names_places_window(self):
         """
-        A larger window with two text boxes for the collated lines from the LLM.
+        A larger window with two spreadsheet-like areas for the collated lines from the LLM.
+        Each area has two columns: Consolidated Term and Terms to Consolidate.
         The user can manually edit or remove lines before applying replacements.
         """
         window = tk.Toplevel(self.app) # Use self.app as parent
         window.title("Collate Names & Places")
-        window.geometry("600x500")
+        window.geometry("800x600")
         window.grab_set()
 
         # Frame for labels
@@ -46,28 +58,55 @@ class NamesAndPlacesHandler:
         names_label = tk.Label(lbl_frame, text="Collated Names (edit as needed):")
         names_label.pack(anchor="w", padx=5)
 
-        # Text display for Names - Store reference in handler
-        self.names_textbox = tk.Text(window, wrap="word", height=10)
-        self.names_textbox.pack(fill="both", expand=True, padx=5, pady=(0,10))
-        # Access collated data via the app's AI handler
+        # Treeview for Names
+        names_frame = tk.Frame(window)
+        names_frame.pack(fill="both", expand=True, padx=5, pady=(0,10))
+        self.names_tree = ttk.Treeview(names_frame, columns=("Consolidated Term", "Terms to Consolidate"), show="headings", height=8, selectmode="extended")
+        self.names_tree.heading("Consolidated Term", text="Consolidated Term")
+        self.names_tree.heading("Terms to Consolidate", text="Terms to Consolidate")
+        self.names_tree.column("Consolidated Term", width=200)
+        self.names_tree.column("Terms to Consolidate", width=500)
+        self.names_tree.pack(fill="both", expand=True, side="left")
+
+        # Populate names treeview
         collated_names = getattr(self.app.ai_functions_handler, 'collated_names_raw', "")
-        self.names_textbox.insert("1.0", collated_names)
+        names_dict = self.parse_collation_response(collated_names)
+        for consolidated, variants in names_dict.items():
+            self.names_tree.insert("", "end", values=(consolidated, "; ".join(variants)))
+
+        # Enable in-place editing for names_tree
+        self.names_tree.bind('<Double-1>', lambda event: self._edit_treeview_cell(event, self.names_tree))
+        # Bind Delete key for names_tree
+        self.names_tree.bind('<Delete>', lambda event: self.delete_selected_name_row())
 
         places_label = tk.Label(window, text="Collated Places (edit as needed):")
         places_label.pack(anchor="w", padx=5)
 
-        # Text display for Places - Store reference in handler
-        self.places_textbox = tk.Text(window, wrap="word", height=10)
-        self.places_textbox.pack(fill="both", expand=True, padx=5, pady=(0,10))
-        # Access collated data via the app's AI handler
+        # Treeview for Places
+        places_frame = tk.Frame(window)
+        places_frame.pack(fill="both", expand=True, padx=5, pady=(0,10))
+        self.places_tree = ttk.Treeview(places_frame, columns=("Consolidated Term", "Terms to Consolidate"), show="headings", height=8, selectmode="extended")
+        self.places_tree.heading("Consolidated Term", text="Consolidated Term")
+        self.places_tree.heading("Terms to Consolidate", text="Terms to Consolidate")
+        self.places_tree.column("Consolidated Term", width=200)
+        self.places_tree.column("Terms to Consolidate", width=500)
+        self.places_tree.pack(fill="both", expand=True, side="left")
+
+        # Populate places treeview
         collated_places = getattr(self.app.ai_functions_handler, 'collated_places_raw', "")
-        self.places_textbox.insert("1.0", collated_places)
+        places_dict = self.parse_collation_response(collated_places)
+        for consolidated, variants in places_dict.items():
+            self.places_tree.insert("", "end", values=(consolidated, "; ".join(variants)))
+
+        # Enable in-place editing for places_tree
+        self.places_tree.bind('<Double-1>', lambda event: self._edit_treeview_cell(event, self.places_tree))
+        # Bind Delete key for places_tree
+        self.places_tree.bind('<Delete>', lambda event: self.delete_selected_place_row())
 
         # Buttons at bottom
         btn_frame = tk.Frame(window)
         btn_frame.pack(side="bottom", pady=10)
 
-        # Buttons now call methods within this handler instance
         btn_names = tk.Button(btn_frame, text="Replace Names", command=self.replace_names_button)
         btn_names.pack(side="left", padx=10)
 
@@ -77,33 +116,73 @@ class NamesAndPlacesHandler:
         btn_cancel = tk.Button(btn_frame, text="Cancel", command=window.destroy)
         btn_cancel.pack(side="left", padx=10)
 
-        # Wait for the window (optional, but good practice if modal)
         self.app.wait_window(window)
 
+    def _edit_treeview_cell(self, event, tree):
+        region = tree.identify('region', event.x, event.y)
+        if region != 'cell':
+            return
+        row_id = tree.identify_row(event.y)
+        col = tree.identify_column(event.x)
+        if not row_id or not col:
+            return
+        col_index = int(col.replace('#', '')) - 1
+        x, y, width, height = tree.bbox(row_id, col)
+        value = tree.item(row_id, 'values')[col_index]
+
+        # Destroy any previous active entry
+        if hasattr(self, '_active_entry') and self._active_entry is not None:
+            self._active_entry.destroy()
+            self._active_entry = None
+            self._active_entry_save = None
+
+        entry = tk.Entry(tree)
+        entry.place(x=x, y=y, width=width, height=height)
+        entry.insert(0, value)
+        entry.focus_set()
+        self._active_entry = entry
+
+        def save_edit(event=None):
+            new_value = entry.get()
+            values = list(tree.item(row_id, 'values'))
+            values[col_index] = new_value
+            tree.item(row_id, values=values)
+            entry.destroy()
+            self._active_entry = None
+            self._active_entry_save = None
+
+        self._active_entry_save = save_edit
+        entry.bind('<Return>', save_edit)
+        entry.bind('<FocusOut>', save_edit)
+
     def replace_names_button(self):
-        """
-        Parse the user-edited names from self.names_textbox,
-        then do the find-and-replace in the active text.
-        """
-        if not self.names_textbox:
-             self.app.error_logging("Names textbox not initialized.", level="ERROR")
-             return
-        raw = self.names_textbox.get("1.0", tk.END)
-        collated_dict = self.parse_collation_response(raw)
-        # Call the method on the DataOperations instance via self.app
+        # Commit any open edit before reading the treeview
+        if hasattr(self, '_active_entry') and self._active_entry is not None and self._active_entry_save:
+            self._active_entry_save()
+        if not hasattr(self, 'names_tree'):
+            self.app.error_logging("Names treeview not initialized.", level="ERROR")
+            return
+        collated_dict = {}
+        for row in self.names_tree.get_children():
+            consolidated, variants = self.names_tree.item(row, 'values')
+            variant_list = [v.strip() for v in variants.split(';') if v.strip()]
+            if consolidated and variant_list:
+                collated_dict[consolidated] = variant_list
         self.app.data_operations.apply_collation_dict(collated_dict, is_names=True)
 
     def replace_places_button(self):
-        """
-        Parse the user-edited places from self.places_textbox,
-        then do the find-and-replace in the active text.
-        """
-        if not self.places_textbox:
-            self.app.error_logging("Places textbox not initialized.", level="ERROR")
+        # Commit any open edit before reading the treeview
+        if hasattr(self, '_active_entry') and self._active_entry is not None and self._active_entry_save:
+            self._active_entry_save()
+        if not hasattr(self, 'places_tree'):
+            self.app.error_logging("Places treeview not initialized.", level="ERROR")
             return
-        raw = self.places_textbox.get("1.0", tk.END)
-        collated_dict = self.parse_collation_response(raw)
-        # Call the method on the DataOperations instance via self.app
+        collated_dict = {}
+        for row in self.places_tree.get_children():
+            consolidated, variants = self.places_tree.item(row, 'values')
+            variant_list = [v.strip() for v in variants.split(';') if v.strip()]
+            if consolidated and variant_list:
+                collated_dict[consolidated] = variant_list
         self.app.data_operations.apply_collation_dict(collated_dict, is_names=False)
 
     def parse_collation_response(self, response_text):
@@ -182,6 +261,38 @@ class NamesAndPlacesHandler:
         except Exception as e:
             self.app.error_logging(f"Error parsing collation response: {str(e)}") # Use app's logger
             return {}
+
+    def gather_unique_items(self, column_name):
+        """Helper function to gather unique items from a DataFrame column"""
+        all_items = set() # Use a set for efficiency
+        if column_name in self.app.main_df.columns:
+            try:
+                series = self.app.main_df[column_name].dropna().astype(str) # Ensure string type
+                split_items = series.str.split(';').explode().str.strip()
+                all_items.update(split_items[split_items != ''].tolist())
+            except Exception as e:
+                self.app.error_logging(f"Error during vectorized gathering from {column_name}: {e}. Falling back to iteration.", level="WARNING")
+                all_items = set()
+                for idx, val in self.app.main_df[column_name].dropna().items():
+                    if isinstance(val, str) and val.strip():
+                        entries = [x.strip() for x in val.split(';') if x.strip()]
+                        all_items.update(entries)
+
+        unique_items = sorted(list(all_items), key=str.lower)
+        self.app.error_logging(f"Total unique {column_name}: {len(unique_items)}", level="DEBUG")
+        return unique_items
+
+    def delete_selected_name_row(self):
+        if hasattr(self, 'names_tree'):
+            selected = self.names_tree.selection()
+            for item in selected:
+                self.names_tree.delete(item)
+
+    def delete_selected_place_row(self):
+        if hasattr(self, 'places_tree'):
+            selected = self.places_tree.selection()
+            for item in selected:
+                self.places_tree.delete(item)
 
 
 

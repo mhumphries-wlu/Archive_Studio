@@ -152,7 +152,9 @@ class DataOperations:
         if not isinstance(response, str): # Ensure response is a string
              self.app.error_logging(f"Invalid response type for parsing: {type(response)}", level="WARNING")
              return "", ""
-        lines = response.replace('\\r\\n', '\\n').split('\\n')
+        lines = response.replace('\r\n', '\n').split('\n')
+
+        print(f"DEBUG: parse_names_places_response raw response=\n{response}")
 
         for line in lines:
             line_strip = line.strip()
@@ -190,6 +192,9 @@ class DataOperations:
         names = "; ".join(sorted(list(set(names_list)), key=str.lower))
         places = "; ".join(sorted(list(set(places_list)), key=str.lower))
 
+        print(f"DEBUG: parse_names_places_response parsed names={names}")
+        print(f"DEBUG: parse_names_places_response parsed places={places}")
+
         return names, places
 
     def update_df_with_ai_job_response(self, ai_job, index, response):
@@ -197,47 +202,22 @@ class DataOperations:
         if self.app.main_df.empty or index >= len(self.app.main_df):
              self.app.error_logging(f"Skipping DF update for invalid index {index}", level="WARNING")
              return
-
         try:
-            if response == "Error" or pd.isna(response): # Handle potential None/NaN response
-                self.app.error_logging(f"Received error or empty response for job {ai_job} index {index}", level="WARNING")
-                return
-
-            # Clean the response text
-            cleaned_response = self.clean_text(str(response)) # Ensure it's a string
-
-            # Update based on job type
+            cleaned_response = str(response).strip() if response is not None else ""
             target_column = None
             new_toggle = None
             highlight_changes = False
             highlight_names_places = False
             highlight_errors_flag = False
 
-            if ai_job == "HTR":
-                target_column = 'Original_Text'
-                new_toggle = "Original_Text"
-            elif ai_job == "Correct_Text":
-                target_column = 'Corrected_Text'
-                new_toggle = "Corrected_Text"
-                highlight_changes = True
-            elif ai_job == "Format_Text":
-                 target_column = 'Formatted_Text'
-                 new_toggle = "Formatted_Text"
-                 highlight_changes = True
-            elif ai_job == "Translation":
-                 target_column = 'Translation'
-                 new_toggle = "Translation"
-                 highlight_changes = True
-            elif ai_job == "Separated_Text" or ai_job == "Chunk_Text": # Handle chunking results
-                 target_column = 'Separated_Text'
-                 new_toggle = "Separated_Text"
-            elif ai_job == "Get_Names_and_Places":
+            if ai_job == "Get_Names_and_Places":
                 # Ensure columns exist
                 if 'People' not in self.app.main_df.columns: self.app.main_df['People'] = ""
                 if 'Places' not in self.app.main_df.columns: self.app.main_df['Places'] = ""
 
                 # Use robust parsing - NOW CALLS LOCAL METHOD
                 names, places = self.parse_names_places_response(cleaned_response)
+                print(f"DEBUG: update_df_with_ai_job_response writing People='{names}' Places='{places}' at index={index}")
                 self.app.main_df.loc[index, 'People'] = names
                 self.app.main_df.loc[index, 'Places'] = places
 
@@ -342,8 +322,16 @@ class DataOperations:
                 pattern_str = r'\b(' + '|'.join(escaped_variants) + r')\b'
                 pattern = re.compile(pattern_str, re.IGNORECASE)
 
+                # Debug print for each replacement attempt
+                print(f"DEBUG: Row {idx}, Col '{active_col}': Replacing variants {variants} with '{correct_term}'")
+                print(f"DEBUG: Old text before replacement:\n{old_text}")
+
                 # Replace all occurrences of any variant with the correct term
                 new_text = pattern.sub(correct_term, new_text)
+
+            # Debug print after all replacements for this row
+            if new_text != old_text:
+                print(f"DEBUG: New text after replacement:\n{new_text}")
 
             # Update DataFrame only if text changed
             if new_text != old_text:
@@ -365,7 +353,6 @@ class DataOperations:
             else: # If active column somehow doesn't exist, still try to load
                  self.app.load_text()
                  self.app.counter_update()
-
 
         messagebox.showinfo("Replacement Complete", f"Replaced variations in {modified_count} page(s).")
 

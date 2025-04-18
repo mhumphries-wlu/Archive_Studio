@@ -770,9 +770,9 @@ class AIFunctionsHandler:
             self.app.error_logging(f"Critical error in get_images_for_job at index {index}: {str(e)}", level="ERROR")
             return []  # Return empty list as safe fallback
 
-    def collate_names_and_places(self):
+    def collate_names_and_places(self, unique_names, unique_places):
         """
-        Gather unique names & places, call the LLM for normalization, and
+        Gather unique names & places (now passed as arguments), call the LLM for normalization, and
         store the raw 'Response:' text in self.collated_names_raw and
         self.collated_places_raw. Does NOT do final replacements.
         """
@@ -785,40 +785,6 @@ class AIFunctionsHandler:
             progress_window, progress_bar, progress_label = self.app.progress_bar.create_progress_window("Collating Names and Places")
             self.app.progress_bar.update_progress(5, 100)
 
-            def gather_unique_items(column_name):
-                """Helper function to gather unique items from a DataFrame column"""
-                all_items = set() # Use a set for efficiency
-                if column_name in self.app.main_df.columns:
-                     # Use .dropna() and .str.split() for vectorized operation
-                     try:
-                          series = self.app.main_df[column_name].dropna().astype(str) # Ensure string type
-                          # Split each string by ';', flatten the list of lists, strip whitespace
-                          split_items = series.str.split(';').explode().str.strip()
-                          # Add non-empty items to the set
-                          all_items.update(split_items[split_items != ''].tolist())
-                     except Exception as e:
-                          self.app.error_logging(f"Error during vectorized gathering from {column_name}: {e}. Falling back to iteration.", level="WARNING")
-                          # Fallback to row-by-row iteration if vectorized fails
-                          all_items = set()
-                          for idx, val in self.app.main_df[column_name].dropna().items():
-                              if isinstance(val, str) and val.strip():
-                                  entries = [x.strip() for x in val.split(';') if x.strip()]
-                                  all_items.update(entries)
-
-                unique_items = sorted(list(all_items), key=str.lower)
-                self.app.error_logging(f"Total unique {column_name}: {len(unique_items)}", level="DEBUG")
-                return unique_items
-
-
-            # Gather unique names and places
-            self.app.error_logging("Starting to gather unique names", level="DEBUG")
-            unique_names = gather_unique_items('People')
-            self.app.progress_bar.update_progress(15, 100)
-
-            self.app.error_logging("Starting to gather unique places", level="DEBUG")
-            unique_places = gather_unique_items('Places')
-            self.app.progress_bar.update_progress(25, 100)
-
             self.app.error_logging(f"Found {len(unique_names)} unique names and {len(unique_places)} unique places", level="INFO")
             if not unique_names and not unique_places:
                 self.app.error_logging("No names or places to collate", level="INFO")
@@ -828,23 +794,10 @@ class AIFunctionsHandler:
 
             # --- Prepare API Call ---
             tasks = []
-            if unique_names: tasks.append(("names", unique_names))
-            if unique_places: tasks.append(("places", unique_places))
-
-            system_message = (
-                "You are given a list of historical names or places potentially containing spelling variations or OCR errors. "
-                "Your task is to group variants of the same entity together and choose the most complete or correct spelling as the primary entry. "
-                "Format the output STRICTLY as follows, starting each line with the chosen primary spelling, followed by '=', then all identified variants (including the primary spelling itself) separated by semicolons.\n\n"
-                "Rules:\n"
-                "- Group variants based on likely identity (similar spelling, OCR errors, phonetic similarity).\n"
-                "- Ignore minor variations like titles (Mr, Mrs, Dr) unless they differentiate people.\n"
-                "- If first names/initials differ significantly, consider them separate entries unless context strongly suggests otherwise.\n"
-                "- Every single item from the input list MUST appear as a variant in exactly one group in your output.\n"
-                "- Output only the grouped lists in the specified format, starting immediately with the first primary spelling.\n\n"
-                "Format Example:\n"
-                "John Smith = John Smith; Jon Smyth; J. Smith\n"
-                "London = London; Londn; london\n"
-            )
+            if unique_names:
+                tasks.append(("names", unique_names, "Collate_Names"))
+            if unique_places:
+                tasks.append(("places", unique_places, "Collate_Places"))
 
             self.app.progress_bar.update_progress(35, 100)
 
@@ -852,28 +805,55 @@ class AIFunctionsHandler:
             results = {}
             with ThreadPoolExecutor(max_workers=2) as executor: # Can run names/places in parallel
                 futures_to_label = {}
-                for label, items in tasks:
+                for label, items, preset_name in tasks:
                     self.app.error_logging(f"Preparing {label} task with {len(items)} items", level="DEBUG")
                     text_for_llm = "\n".join(items)
-                    # Choose engine - consider context window size for large lists
-                    # Use a capable model like Sonnet or Opus if lists are potentially very long
-                    engine = "gemini-2.5-pro-preview-03-25" # A strong model
-                    # engine = "gemini-1.5-flash-latest" # Faster/cheaper alternative if lists are smaller
-                    user_prompt_text = f"Collate the following list of {label}. Ensure every item appears in the output. Format according to the rules provided.\n\nList:\n{text_for_llm}"
+                    # Get the correct preset for this label
+                    preset = next((p for p in self.app.settings.analysis_presets if p.get('name') == preset_name), None)
+                    if not preset:
+                        self.app.error_logging(f"{preset_name} analysis preset not found in settings. Using safe defaults.", level="ERROR")
+                        # Safe fallback defaults
+                        preset = {
+                            'model': "gemini-2.5-pro-preview-03-25",
+                            'temperature': 0.2,
+                            'general_instructions': f"Collate {label}.",
+                            'specific_instructions': f'Collate the following list of {label}.\\n\\nList:\\n{{text_for_llm}}',
+                            'val_text': '',
+                            'use_images': False,
+                            'current_image': "No",
+                            'num_prev_images': "0",
+                            'num_after_images': "0"
+                        }
+                    system_message = preset.get('general_instructions', '')
+                    temp = float(preset.get('temperature', 0.2))
+                    engine = preset.get('model', self.app.settings.model_list[0] if self.app.settings.model_list else 'default')
+                    val_text = preset.get('val_text', '')
+                    use_images = preset.get('use_images', False)
+                    current_image = preset.get('current_image', "No")
+                    num_prev_images = int(preset.get('num_prev_images', 0))
+                    num_after_images = int(preset.get('num_after_images', 0))
+                    user_prompt_template = preset.get('specific_instructions', '')
+                    user_prompt_text = user_prompt_template.replace("{text_for_llm}", text_for_llm)
 
                     future = executor.submit(
                         asyncio.run,
                         self.process_api_request(
                             system_prompt=system_message,
                             user_prompt=user_prompt_text,
-                            temp=0.2, # Low temp for consistency
+                            temp=temp,
                             image_data=[],
                             text_to_process="", # Input is in the user prompt
-                            val_text="", # Parser looks for the format 'key = val; val...'
+                            val_text=val_text,
                             engine=engine,
                             index=0, # Index not relevant for this task
                             is_base64=False, # No images
-                            ai_job="Collation" # Custom job type for logging/debugging
+                            ai_job="Collation", # Custom job type for logging/debugging
+                            job_params={
+                                'use_images': use_images,
+                                'current_image': current_image,
+                                'num_prev_images': num_prev_images,
+                                'num_after_images': num_after_images
+                            }
                         )
                     )
                     futures_to_label[future] = label
