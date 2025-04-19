@@ -417,8 +417,7 @@ Current Document to Analyze: {text_to_process}''',
                 'current_image': "No",  
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "None",
-                'required_headers': "Date;Place"
+                'val_text': "None"
             },
             {
                 'name': "Sequence_Diary",
@@ -443,8 +442,7 @@ Current Diary Entry to Analyze: {text_to_process}''',
                 'current_image': "No",  
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "None",
-                'required_headers': "Date;Place;Author"
+                'val_text': "None"
             }
         ]
 

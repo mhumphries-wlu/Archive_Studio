@@ -1293,22 +1293,10 @@ class SettingsWindow:
         self.seq_metadata_specific_text.configure(yscrollcommand=specific_scrollbar.set)
         specific_scrollbar.grid(row=0, column=1, sticky="ns")
 
-        # Required Headers
-        tk.Label(instructions_frame, text="Required Headers:").grid(row=2, column=0, padx=10, pady=5, sticky="nw")
-        headers_frame = ttk.Frame(instructions_frame)
-        headers_frame.grid(row=2, column=1, padx=10, pady=5, sticky="w")
-        self.seq_metadata_headers_text = tk.Text(headers_frame, height=5, width=90, wrap=tk.WORD)
-        self.seq_metadata_headers_text.grid(row=0, column=0, sticky="nsew")
-        self.bind_text_update(self.seq_metadata_headers_text, self.settings.sequential_metadata_presets, 
-                           self.selected_seq_metadata_preset_var, 'required_headers')
-        headers_scrollbar = ttk.Scrollbar(headers_frame, orient="vertical", command=self.seq_metadata_headers_text.yview)
-        self.seq_metadata_headers_text.configure(yscrollcommand=headers_scrollbar.set)
-        headers_scrollbar.grid(row=0, column=1, sticky="ns")
-
         # Validation Text
-        tk.Label(instructions_frame, text="Validation Text:").grid(row=3, column=0, padx=10, pady=5, sticky="w")
+        tk.Label(instructions_frame, text="Validation Text:").grid(row=2, column=0, padx=10, pady=5, sticky="w")
         self.seq_metadata_val_entry = tk.Entry(instructions_frame, width=90)
-        self.seq_metadata_val_entry.grid(row=3, column=1, padx=10, pady=5, sticky="w")
+        self.seq_metadata_val_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
         self.bind_entry_update(self.seq_metadata_val_entry, self.settings.sequential_metadata_presets, 
                             self.selected_seq_metadata_preset_var, 'val_text')
 

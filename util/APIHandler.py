@@ -242,6 +242,12 @@ class APIHandler:
                 parts.append(types.Part.from_text(text=populated_user_prompt))
                 contents = [types.Content(role="user", parts=parts)]
 
+                # Print debug info for Gemini API call
+                print("\n[GEMINI API CALL]")
+                print(f"Model: {engine}")
+                print(f"System Prompt: {system_prompt}")
+                print(f"User Prompt: {populated_user_prompt}")
+
                 # Stream response and collect text
                 response_text = ""
                 for chunk in client.models.generate_content_stream(
@@ -252,7 +258,7 @@ class APIHandler:
                     if hasattr(chunk, 'text') and chunk.text is not None:
                         response_text += chunk.text
                 
-                print(response_text)
+                print(f"[Gemini API Raw Response]:\n{response_text}\n")
 
                 validation_result = self._validate_response(response_text, val_text, index, job_type, required_headers)
                 
@@ -267,6 +273,7 @@ class APIHandler:
                 return validation_result
 
             except Exception as e:
+                print(f"[Gemini API Exception]: {e}")
                 self.log_error(f"Gemini API Error with {engine} for index {index}", f"{str(e)}")
                 retries += 1
                 if retries == max_retries:
