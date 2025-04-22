@@ -36,6 +36,9 @@ class Settings:
         if os.path.exists(self.settings_file_path):
             self.load_settings()
 
+        # Add sequential batch size
+        self.sequential_batch_size = 25 # Default
+
     def restore_defaults(self):
         # Save current API keys
         saved_openai_key = getattr(self, 'openai_api_key', "")
@@ -532,7 +535,8 @@ If you don't have information for a heading or don't know, leave it blank.'''
             'translation_model': self.translation_model,
             'query_system_prompt': self.query_system_prompt,
             'query_val_text': self.query_val_text,
-            'query_model': self.query_model
+            'query_model': self.query_model,
+            'sequential_batch_size': self.sequential_batch_size,                     # Sequential Batch Size
         }
         
         with open(self.settings_file_path, 'w') as f:
@@ -553,6 +557,9 @@ If you don't have information for a heading or don't know, leave it blank.'''
             # Ensure format_presets is loaded if present in file but not in self
             if 'format_presets' in settings:
                 self.format_presets = self._ensure_image_fields(settings['format_presets'])
+            # Ensure sequential_batch_size is loaded if present
+            if 'sequential_batch_size' in settings:
+                self.sequential_batch_size = settings['sequential_batch_size']
             # Ensure translation and query fields are loaded even if missing from self
             for field in [
                 'translation_system_prompt', 'translation_user_prompt', 'translation_val_text', 'translation_model',

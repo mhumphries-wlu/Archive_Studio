@@ -1265,6 +1265,15 @@ class SettingsWindow:
         self.bind_entry_update(self.seq_metadata_temp_entry, self.settings.sequential_metadata_presets, 
                            self.selected_seq_metadata_preset_var, 'temperature')
 
+        # Sequential Batch Size
+        tk.Label(main_settings_frame, text="Batch Size:").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        self.seq_batch_size_entry = tk.Entry(main_settings_frame, width=10)
+        self.seq_batch_size_entry.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        # Bind this entry to the global sequential_batch_size setting
+        self.seq_batch_size_entry.insert(0, str(self.settings.sequential_batch_size))
+        self.seq_batch_size_entry.bind("<KeyRelease>", self._update_sequential_batch_size)
+        self.seq_batch_size_entry.bind("<FocusOut>", self._update_sequential_batch_size)
+
         # Instructions Frame
         instructions_frame = ttk.LabelFrame(self.right_frame, text="Instructions")
         instructions_frame.grid(row=2, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
@@ -1330,10 +1339,32 @@ class SettingsWindow:
             else:
                 required_headers_str = required_headers
                 
-            self.set_text_widget(self.seq_metadata_headers_text, required_headers_str)
+            # Use the correct Entry widget for headers
+            self.set_entry_text(self.seq_metadata_headers_entry, required_headers_str) 
             
             # Validation Text
             self.set_entry_text(self.seq_metadata_val_entry, preset.get('val_text', "None"))
+
+            # Update the display of the global batch size (though it doesn't change per preset)
+            self.set_entry_text(self.seq_batch_size_entry, self.settings.sequential_batch_size)
+
+    def _update_sequential_batch_size(self, event=None):
+        """Update the global sequential batch size setting."""
+        try:
+            value = int(self.seq_batch_size_entry.get())
+            if value > 0:
+                self.settings.sequential_batch_size = value
+                self.settings.save_settings()
+            else:
+                # Optionally reset to default or show warning
+                self.seq_batch_size_entry.delete(0, tk.END)
+                self.seq_batch_size_entry.insert(0, str(self.settings.sequential_batch_size))
+                messagebox.showwarning("Invalid Value", "Batch size must be a positive integer.", parent=self.settings_window)
+        except ValueError:
+            # Handle non-integer input
+            self.seq_batch_size_entry.delete(0, tk.END)
+            self.seq_batch_size_entry.insert(0, str(self.settings.sequential_batch_size))
+            messagebox.showwarning("Invalid Value", "Batch size must be an integer.", parent=self.settings_window)
 
 # Preset Creation Functions
 
@@ -2174,7 +2205,8 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'ghost_model': self.settings.ghost_model,
                 'ghost_temp': self.settings.ghost_temp,
                 'metadata_presets': self.settings.metadata_presets,
-                'sequential_metadata_presets': self.settings.sequential_metadata_presets
+                'sequential_metadata_presets': self.settings.sequential_metadata_presets,
+                'sequential_batch_size': self.settings.sequential_batch_size,
             }
             
             with open(file_path, 'w') as f:
@@ -2230,6 +2262,9 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 # Ensure format_presets is restored even if not present in self.settings
                 if key == 'format_presets':
                     self.settings.format_presets = value
+                # Ensure sequential_batch_size is loaded if present
+                if key == 'sequential_batch_size':
+                    self.settings.sequential_batch_size = value
                     
             # Save the imported settings
             self.settings.save_settings()

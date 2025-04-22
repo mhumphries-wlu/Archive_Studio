@@ -20,6 +20,12 @@ class ThresholdAdjuster(tk.Toplevel):
         
         # Load the image
         self.original_image = cv2.imread(image_path)
+        # --- ADDED: Check if image loaded successfully ---
+        if self.original_image is None:
+            messagebox.showerror("Error", f"Failed to load image: {os.path.basename(image_path)}\\nPlease ensure the file exists and is a valid image.", parent=self)
+            self.destroy() # Close the adjuster window
+            return # Stop initialization
+        # --- END ADDED ---
         self.height, self.width = self.original_image.shape[:2]
         
         # Calculate preview scale to ensure window isn't too tall

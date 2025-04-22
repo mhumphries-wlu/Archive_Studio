@@ -798,21 +798,85 @@ class ExportManager:
                 self.app.error_logging("Sequential API calls/parsing failed to produce results DataFrame.", level="ERROR")
                 return compiled_df, new_sequential_columns # Return original df and empty new columns list
 
+            # --- Improved Debug Logging ---
+            self.app.error_logging(f"Sequential API returned DataFrame with {len(result_df)} rows", level="INFO")
+            if 'index' in result_df.columns:
+                self.app.error_logging(f"Index range in result_df: Min={result_df['index'].min()}, Max={result_df['index'].max()}", level="INFO")
+            
+            # Check for indices in compiled_df that are missing in result_df
+            if 'index' in result_df.columns:
+                compiled_indices = set(compiled_df.index)
+                result_indices = set(result_df['index'])
+                missing_indices = compiled_indices - result_indices
+                if missing_indices:
+                    self.app.error_logging(f"Warning: {len(missing_indices)} indices from compiled_df missing in result_df: {sorted(missing_indices)}", level="WARNING")
+            # --- End Improved Debug Logging ---
+
             # Ensure the result_df index is set correctly if 'index' column exists
             if 'index' in result_df.columns:
+                 # Validate index values before setting
+                 if result_df['index'].isna().any():
+                     self.app.error_logging("Warning: NaN values found in 'index' column, these will be dropped when setting index", level="WARNING")
+                 if result_df['index'].duplicated().any():
+                     self.app.error_logging("Warning: Duplicate values found in 'index' column, later entries will override earlier ones", level="WARNING")
+                     
                  result_df = result_df.set_index('index')
             else:
-                 # If no 'index' column came back, we can't reliably merge. Log error.
                  self.app.error_logging("Sequential API result DataFrame missing 'index' column for merging.", level="ERROR")
                  return compiled_df, new_sequential_columns
-                 
+
+            # --- Add Debug Logging --- 
+            self.app.error_logging(f"Compiled DF length: {len(compiled_df)}, Result DF length: {len(result_df)}", level="INFO")
+            self.app.error_logging(f"Indices in compiled_df: {sorted(compiled_df.index.tolist())[:10]} {'...' if len(compiled_df.index) > 10 else ''}", level="DEBUG")
+            self.app.error_logging(f"Indices in result_df: {sorted(result_df.index.tolist())[:10]} {'...' if len(result_df.index) > 10 else ''}", level="DEBUG")
+            self.app.error_logging(f"Compiled DF tail BEFORE update:\n{compiled_df.tail(3)}", level="DEBUG")
+            self.app.error_logging(f"Result DF (from API) BEFORE update:\n{result_df.tail(3)}", level="DEBUG")
+            # --- End Debug Logging ---
+
             # Identify new columns before merging
             new_sequential_columns = [col for col in result_df.columns if col not in original_columns]
             
-            # Merge the results back into the compiled_df based on index
-            # Use update for efficiency: Overwrites existing cols, adds new ones implicitly if aligned
-            compiled_df.update(result_df)
+            # --- Revised Merge Strategy --- 
+            # Preserve original compiled_df index
+            compiled_df_original_index = compiled_df.index
+
+            # Ensure compiled_df index is unique before merging
+            if compiled_df.index.has_duplicates:
+                self.app.error_logging(f"Warning: Duplicate indices found in compiled_df before merging sequential results. Keeping first occurrence.", level="WARNING")
+                compiled_df = compiled_df[~compiled_df.index.duplicated(keep='first')]
+
+            # Create a copy of the DataFrame before merging
+            pre_merge_df = compiled_df.copy()
+
+            # Perform a left merge on the index
+            compiled_df = compiled_df.merge(result_df, how='left', left_index=True, right_index=True, suffixes=('', '_api'))
+
+            # Prioritize API results for columns present in result_df
+            for col in result_df.columns:
+                api_col = col + '_api'
+                if api_col in compiled_df.columns:
+                    # Copy API data where it's not null, otherwise keep original
+                    compiled_df[col] = compiled_df[api_col].combine_first(compiled_df[col])
+                    # Drop the temporary API column
+                    compiled_df = compiled_df.drop(columns=[api_col])
+
+            # Check for rows that should have data but don't
+            expected_rows = compiled_df_original_index.tolist()
+            expected_cols = new_sequential_columns
+            has_missing = False
             
+            for idx in expected_rows:
+                for col in expected_cols:
+                    if idx in compiled_df.index and idx in result_df.index:
+                        if pd.isna(compiled_df.loc[idx, col]) and not pd.isna(result_df.loc[idx, col]):
+                            self.app.error_logging(f"Warning: Row {idx}, column {col} has no value in result despite being in API result", level="WARNING")
+                            compiled_df.loc[idx, col] = result_df.loc[idx, col] # Direct fix
+                            has_missing = True
+            
+            if has_missing:
+                self.app.error_logging("Fixed missing values after merge", level="INFO")
+            # --- End Revised Merge Strategy --- 
+
             # Explicitly add columns that were completely new (not in original_columns)
             # This handles cases where `update` might not add columns if the index doesn't perfectly align initially
             # or if the new column was all NaN initially in compiled_df (though unlikely here)
@@ -821,6 +885,10 @@ class ExportManager:
                       compiled_df[col] = result_df[col]
             
             self.app.error_logging(f"Successfully merged sequential analysis results. New columns added: {new_sequential_columns}")
+
+            # --- Add Debug Logging --- 
+            self.app.error_logging(f"Compiled DF tail AFTER update:\n{compiled_df.tail(3)}", level="DEBUG")
+            # --- End Debug Logging ---
 
         except Exception as e:
             self.app.error_logging(f"Error during sequential data analysis or merge: {str(e)}\n{traceback.format_exc()}", level="ERROR")
@@ -1262,8 +1330,8 @@ class ExportManager:
         print(f"Exported CSV with {len(export_df)} rows and {len(export_df.columns)} columns")
         print(f"Exported columns: {', '.join(export_df.columns.tolist())}")
         
-        print("\nSample of exported data (first 3 rows):")
-        sample_df = export_df.head(3) if len(export_df) >= 3 else export_df
+        print("\nSample of exported data (last 3 rows):")
+        sample_df = export_df.tail(3) if len(export_df) >= 3 else export_df
         
         for idx, row in sample_df.iterrows():
             print(f"\nRow {idx} content:")

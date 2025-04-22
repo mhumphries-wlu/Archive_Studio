@@ -41,7 +41,7 @@ class ProjectIO:
             # Convert all absolute paths to relative paths
             for idx, row in save_df.iterrows():
                 # Convert Image_Path to relative path
-                if pd.notna(row['Image_Path']) and row['Image_Path']:
+                if pd.notna(row['Image_Path']) and str(row['Image_Path']).strip():
                     # Extract the filename from the potentially absolute path stored in the row
                     image_filename = os.path.basename(str(row['Image_Path']))
                     # Construct the expected simple relative path

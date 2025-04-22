@@ -1420,13 +1420,17 @@ class AIFunctionsHandler:
             self.app.main_df.loc[index, 'Separated_Text'] = separated_text
             # Set the toggle to Separated_Text so it becomes the default view
             self.app.main_df.loc[index, 'Text_Toggle'] = "Separated_Text"
+            
+            # --- ADDED --- Call UI update handler
+            self.app.update_display_after_ai(index, 'Separated_Text')
+            # --- END ADDED ---
 
             self.app.error_logging(f"Chunk_Text processed from '{source_text_type}' and saved to Separated_Text for index {index}", level="DEBUG")
 
-            # Update display ONLY if this is the current page
-            if index == self.app.page_counter:
-                self.app.text_display_var.set("Separated_Text")
-                # load_text will be called by the main ai_function's finally block
+            # Update display ONLY if this is the current page - Handled by update_display_after_ai
+            # if index == self.app.page_counter:
+            #     self.app.text_display_var.set("Separated_Text")
+            #     # load_text will be called by the main ai_function's finally block
 
 
         except Exception as e:

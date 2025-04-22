@@ -941,3 +941,1149 @@ json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
 2025-04-18 22:41:30 [ERROR]: Using column 'Original_Text' for text
 2025-04-18 22:41:30 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
 2025-04-18 22:41:30 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Place_Note']
+2025-04-21 11:01:55 [ERROR]: Error in edit_all_images: bad menu entry index "Apply Document Separation"
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2461, in edit_all_images
+    self.reset_application() # Clear existing DF and state
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "c:\Programs\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 1042, in reset_application
+    self.update_separation_menu_state("normal")
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2224, in update_separation_menu_state
+    self.process_menu.entryconfig("Apply Document Separation", state="normal")
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\tkinter\__init__.py", line 3572, in entryconfigure
+    return self._configure(('entryconfigure', index), cnf, kw)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\tkinter\__init__.py", line 1812, in _configure
+    self.tk.call(_flatten((self._w, cmd)) + self._options(cnf))
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_tkinter.TclError: bad menu entry index "Apply Document Separation"
+2025-04-21 11:04:28 [ERROR]: Error in edit_all_images: bad menu entry index "Apply Document Separation"
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2461, in edit_all_images
+    self.reset_application() # Clear existing DF and state
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "c:\Programs\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 1042, in reset_application
+    self.update_separation_menu_state("normal")
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2224, in update_separation_menu_state
+    self.process_menu.entryconfig("Apply Document Separation", state="normal")
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\tkinter\__init__.py", line 3572, in entryconfigure
+    return self._configure(('entryconfigure', index), cnf, kw)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\tkinter\__init__.py", line 1812, in _configure
+    self.tk.call(_flatten((self._w, cmd)) + self._options(cnf))
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_tkinter.TclError: bad menu entry index "Apply Document Separation"
+2025-04-21 11:07:38 [ERROR]: Error in edit_all_images: bad menu entry index "Apply Document Separation"
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2461, in edit_all_images
+    self.reset_application() # Clear existing DF and state
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "c:\Programs\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 1042, in reset_application
+    self.update_separation_menu_state("normal")
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\TranscriptionPearl_beta-dev.py", line 2224, in update_separation_menu_state
+    self.process_menu.entryconfig("Apply Document Separation", state="normal")
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\tkinter\__init__.py", line 3572, in entryconfigure
+    return self._configure(('entryconfigure', index), cnf, kw)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\tkinter\__init__.py", line 1812, in _configure
+    self.tk.call(_flatten((self._w, cmd)) + self._options(cnf))
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_tkinter.TclError: bad menu entry index "Apply Document Separation"
+2025-04-21 14:53:00 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 14:53:19 [ERROR]: Starting CSV export process
+2025-04-21 14:53:19 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 14:53:19 [ERROR]: Added missing column: Text
+2025-04-21 14:53:19 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 14:53:19 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 14:53:19 [ERROR]: Reset index for temp_df. New length: 336
+2025-04-21 14:53:56 [ERROR]: API returned error for index 151, job Metadata
+2025-04-21 14:53:56 [ERROR]: API returned error for index 152, job Metadata
+2025-04-21 14:53:57 [ERROR]: API returned error for index 153, job Metadata
+2025-04-21 14:53:57 [ERROR]: API returned error for index 154, job Metadata
+2025-04-21 14:53:57 [ERROR]: API returned error for index 155, job Metadata
+2025-04-21 14:53:57 [ERROR]: API returned error for index 156, job Metadata
+2025-04-21 14:53:57 [ERROR]: API returned error for index 157, job Metadata
+2025-04-21 14:53:57 [ERROR]: API returned error for index 158, job Metadata
+2025-04-21 14:53:57 [ERROR]: API returned error for index 159, job Metadata
+2025-04-21 14:53:58 [ERROR]: API returned error for index 160, job Metadata
+2025-04-21 14:53:58 [ERROR]: API returned error for index 161, job Metadata
+2025-04-21 14:53:58 [ERROR]: API returned error for index 162, job Metadata
+2025-04-21 14:53:58 [ERROR]: API returned error for index 163, job Metadata
+2025-04-21 14:53:58 [ERROR]: API returned error for index 165, job Metadata
+2025-04-21 14:53:58 [ERROR]: API returned error for index 164, job Metadata
+2025-04-21 14:53:59 [ERROR]: API returned error for index 166, job Metadata
+2025-04-21 14:53:59 [ERROR]: API returned error for index 167, job Metadata
+2025-04-21 14:53:59 [ERROR]: API returned error for index 168, job Metadata
+2025-04-21 14:53:59 [ERROR]: API returned error for index 169, job Metadata
+2025-04-21 14:53:59 [ERROR]: API returned error for index 170, job Metadata
+2025-04-21 14:54:00 [ERROR]: API returned error for index 171, job Metadata
+2025-04-21 14:54:00 [ERROR]: API returned error for index 172, job Metadata
+2025-04-21 14:54:00 [ERROR]: API returned error for index 173, job Metadata
+2025-04-21 14:54:00 [ERROR]: API returned error for index 174, job Metadata
+2025-04-21 14:54:00 [ERROR]: API returned error for index 175, job Metadata
+2025-04-21 14:54:00 [ERROR]: API returned error for index 176, job Metadata
+2025-04-21 14:54:00 [ERROR]: API returned error for index 177, job Metadata
+2025-04-21 14:54:00 [ERROR]: API returned error for index 178, job Metadata
+2025-04-21 14:54:01 [ERROR]: API returned error for index 179, job Metadata
+2025-04-21 14:54:01 [ERROR]: API returned error for index 181, job Metadata
+2025-04-21 14:54:01 [ERROR]: API returned error for index 180, job Metadata
+2025-04-21 14:54:01 [ERROR]: API returned error for index 182, job Metadata
+2025-04-21 14:54:02 [ERROR]: API returned error for index 183, job Metadata
+2025-04-21 14:54:02 [ERROR]: API returned error for index 184, job Metadata
+2025-04-21 14:54:02 [ERROR]: API returned error for index 185, job Metadata
+2025-04-21 14:54:02 [ERROR]: API returned error for index 186, job Metadata
+2025-04-21 14:54:02 [ERROR]: API returned error for index 187, job Metadata
+2025-04-21 14:54:03 [ERROR]: API returned error for index 188, job Metadata
+2025-04-21 14:54:03 [ERROR]: API returned error for index 189, job Metadata
+2025-04-21 14:54:03 [ERROR]: API returned error for index 190, job Metadata
+2025-04-21 14:54:03 [ERROR]: API returned error for index 191, job Metadata
+2025-04-21 14:54:03 [ERROR]: API returned error for index 192, job Metadata
+2025-04-21 14:54:03 [ERROR]: API returned error for index 193, job Metadata
+2025-04-21 14:54:03 [ERROR]: API returned error for index 194, job Metadata
+2025-04-21 14:54:04 [ERROR]: API returned error for index 195, job Metadata
+2025-04-21 14:54:04 [ERROR]: API returned error for index 196, job Metadata
+2025-04-21 14:54:04 [ERROR]: API returned error for index 197, job Metadata
+2025-04-21 14:54:05 [ERROR]: API returned error for index 198, job Metadata
+2025-04-21 14:54:05 [ERROR]: API returned error for index 199, job Metadata
+2025-04-21 14:54:07 [ERROR]: API returned error for index 200, job Metadata
+2025-04-21 14:54:09 [ERROR]: API returned error for index 202, job Metadata
+2025-04-21 14:54:10 [ERROR]: API returned error for index 203, job Metadata
+2025-04-21 14:54:10 [ERROR]: API returned error for index 204, job Metadata
+2025-04-21 14:54:10 [ERROR]: API returned error for index 205, job Metadata
+2025-04-21 14:54:10 [ERROR]: API returned error for index 206, job Metadata
+2025-04-21 14:54:11 [ERROR]: API returned error for index 208, job Metadata
+2025-04-21 14:54:11 [ERROR]: API returned error for index 207, job Metadata
+2025-04-21 14:54:11 [ERROR]: API returned error for index 209, job Metadata
+2025-04-21 14:54:11 [ERROR]: API returned error for index 210, job Metadata
+2025-04-21 14:54:11 [ERROR]: API returned error for index 211, job Metadata
+2025-04-21 14:54:11 [ERROR]: API returned error for index 212, job Metadata
+2025-04-21 14:54:11 [ERROR]: API returned error for index 213, job Metadata
+2025-04-21 14:54:11 [ERROR]: API returned error for index 215, job Metadata
+2025-04-21 14:54:11 [ERROR]: API returned error for index 214, job Metadata
+2025-04-21 14:54:12 [ERROR]: API returned error for index 216, job Metadata
+2025-04-21 14:54:12 [ERROR]: API returned error for index 217, job Metadata
+2025-04-21 14:54:12 [ERROR]: API returned error for index 219, job Metadata
+2025-04-21 14:54:12 [ERROR]: API returned error for index 218, job Metadata
+2025-04-21 14:54:13 [ERROR]: API returned error for index 221, job Metadata
+2025-04-21 14:54:13 [ERROR]: API returned error for index 220, job Metadata
+2025-04-21 14:54:13 [ERROR]: API returned error for index 222, job Metadata
+2025-04-21 14:54:13 [ERROR]: API returned error for index 223, job Metadata
+2025-04-21 14:54:13 [ERROR]: API returned error for index 224, job Metadata
+2025-04-21 14:54:13 [ERROR]: API returned error for index 225, job Metadata
+2025-04-21 14:54:13 [ERROR]: API returned error for index 226, job Metadata
+2025-04-21 14:54:14 [ERROR]: API returned error for index 227, job Metadata
+2025-04-21 14:54:14 [ERROR]: API returned error for index 228, job Metadata
+2025-04-21 14:54:14 [ERROR]: API returned error for index 229, job Metadata
+2025-04-21 14:54:14 [ERROR]: API returned error for index 230, job Metadata
+2025-04-21 14:54:14 [ERROR]: API returned error for index 231, job Metadata
+2025-04-21 14:54:15 [ERROR]: API returned error for index 232, job Metadata
+2025-04-21 14:54:15 [ERROR]: API returned error for index 233, job Metadata
+2025-04-21 14:54:15 [ERROR]: API returned error for index 234, job Metadata
+2025-04-21 14:54:15 [ERROR]: API returned error for index 235, job Metadata
+2025-04-21 14:54:15 [ERROR]: API returned error for index 237, job Metadata
+2025-04-21 14:54:15 [ERROR]: API returned error for index 236, job Metadata
+2025-04-21 14:54:16 [ERROR]: API returned error for index 238, job Metadata
+2025-04-21 14:54:16 [ERROR]: API returned error for index 239, job Metadata
+2025-04-21 14:54:16 [ERROR]: API returned error for index 240, job Metadata
+2025-04-21 14:54:16 [ERROR]: API returned error for index 241, job Metadata
+2025-04-21 14:54:16 [ERROR]: API returned error for index 242, job Metadata
+2025-04-21 14:54:16 [ERROR]: API returned error for index 243, job Metadata
+2025-04-21 14:54:17 [ERROR]: API returned error for index 245, job Metadata
+2025-04-21 14:54:17 [ERROR]: API returned error for index 244, job Metadata
+2025-04-21 14:54:17 [ERROR]: API returned error for index 246, job Metadata
+2025-04-21 14:54:17 [ERROR]: API returned error for index 247, job Metadata
+2025-04-21 14:54:17 [ERROR]: API returned error for index 248, job Metadata
+2025-04-21 14:54:18 [ERROR]: API returned error for index 249, job Metadata
+2025-04-21 14:54:18 [ERROR]: API returned error for index 250, job Metadata
+2025-04-21 14:54:20 [ERROR]: API returned error for index 251, job Metadata
+2025-04-21 14:54:23 [ERROR]: API returned error for index 253, job Metadata
+2025-04-21 14:54:23 [ERROR]: API returned error for index 254, job Metadata
+2025-04-21 14:54:23 [ERROR]: API returned error for index 255, job Metadata
+2025-04-21 14:54:46 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 14:54:46 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 14:54:46 [ERROR]: Added essential column: Creation_Place
+2025-04-21 14:54:46 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 14:54:46 [ERROR]: Copied 336 values for column: Document_Type
+2025-04-21 14:54:46 [ERROR]: Copied 336 values for column: Author
+2025-04-21 14:54:46 [ERROR]: Copied 336 values for column: Correspondent
+2025-04-21 14:54:46 [ERROR]: Copied 336 values for column: Correspondent_Place
+2025-04-21 14:54:46 [ERROR]: Copied 336 values for column: Date
+2025-04-21 14:54:46 [ERROR]: Copied 336 values for column: Place_of_Creation
+2025-04-21 14:54:46 [ERROR]: Copied 336 values for column: People
+2025-04-21 14:54:46 [ERROR]: Copied 336 values for column: Places
+2025-04-21 14:54:46 [ERROR]: Copied 336 values for column: Summary
+2025-04-21 14:54:46 [ERROR]: Copied 336 values for column: Creation_Place
+2025-04-21 14:54:46 [ERROR]: Single author specified: Angus Bethune
+2025-04-21 14:54:46 [ERROR]: Citation specified: HBCA, B194-A-2
+2025-04-21 14:55:11 [ERROR]: Error during sequential data analysis or merge: cannot reindex on an axis with duplicate labels
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 814, in _analyze_sequential_data
+    compiled_df.update(result_df)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\frame.py", line 9003, in update
+    other = other.reindex(self.index)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\frame.py", line 5378, in reindex
+    return super().reindex(
+           ~~~~~~~~~~~~~~~^
+        labels=labels,
+        ^^^^^^^^^^^^^^
+    ...<8 lines>...
+        tolerance=tolerance,
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\generic.py", line 5610, in reindex
+    return self._reindex_axes(
+           ~~~~~~~~~~~~~~~~~~^
+        axes, level, limit, tolerance, method, fill_value, copy
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).__finalize__(self, method="reindex")
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\generic.py", line 5633, in _reindex_axes
+    new_index, indexer = ax.reindex(
+                         ~~~~~~~~~~^
+        labels, level=level, limit=limit, tolerance=tolerance, method=method
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\indexes\base.py", line 4429, in reindex
+    raise ValueError("cannot reindex on an axis with duplicate labels")
+ValueError: cannot reindex on an axis with duplicate labels
+
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 814, in _analyze_sequential_data
+    compiled_df.update(result_df)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\frame.py", line 9003, in update
+    other = other.reindex(self.index)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\frame.py", line 5378, in reindex
+    return super().reindex(
+           ~~~~~~~~~~~~~~~^
+        labels=labels,
+        ^^^^^^^^^^^^^^
+    ...<8 lines>...
+        tolerance=tolerance,
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\generic.py", line 5610, in reindex
+    return self._reindex_axes(
+           ~~~~~~~~~~~~~~~~~~^
+        axes, level, limit, tolerance, method, fill_value, copy
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).__finalize__(self, method="reindex")
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\generic.py", line 5633, in _reindex_axes
+    new_index, indexer = ax.reindex(
+                         ~~~~~~~~~~^
+        labels, level=level, limit=limit, tolerance=tolerance, method=method
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\indexes\base.py", line 4429, in reindex
+    raise ValueError("cannot reindex on an axis with duplicate labels")
+ValueError: cannot reindex on an axis with duplicate labels
+2025-04-21 14:55:11 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['document_indices', 'location', 'entries', 'documents', 'indices', 'Entries', 'Location', 'place', 'Indices']
+2025-04-21 14:55:11 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 14:55:11 [ERROR]: Applying single author override: Angus Bethune
+2025-04-21 14:55:11 [ERROR]: Applying citation override: HBCA, B194-A-2
+2025-04-21 14:55:11 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 14:55:11 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 15:18:40 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 15:18:47 [ERROR]: Starting CSV export process
+2025-04-21 15:18:47 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 15:18:47 [ERROR]: Added missing column: Text
+2025-04-21 15:18:47 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 15:18:47 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 15:18:47 [ERROR]: Reset index for temp_df. New length: 337
+2025-04-21 15:19:30 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 15:19:30 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 15:19:30 [ERROR]: Added essential column: Creation_Place
+2025-04-21 15:19:30 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 15:19:30 [ERROR]: Copied 337 values for column: Document_Type
+2025-04-21 15:19:30 [ERROR]: Copied 337 values for column: Author
+2025-04-21 15:19:30 [ERROR]: Copied 337 values for column: Correspondent
+2025-04-21 15:19:30 [ERROR]: Copied 337 values for column: Correspondent_Place
+2025-04-21 15:19:30 [ERROR]: Copied 337 values for column: Date
+2025-04-21 15:19:30 [ERROR]: Copied 337 values for column: Place_of_Creation
+2025-04-21 15:19:30 [ERROR]: Copied 337 values for column: People
+2025-04-21 15:19:30 [ERROR]: Copied 337 values for column: Places
+2025-04-21 15:19:30 [ERROR]: Copied 337 values for column: Summary
+2025-04-21 15:19:30 [ERROR]: Copied 337 values for column: Creation_Place
+2025-04-21 15:19:30 [ERROR]: Single author specified: Angus Bethune
+2025-04-21 15:19:30 [ERROR]: Citation specified: HBCA, B194-A-2
+2025-04-21 15:19:55 [ERROR]: Error decoding JSON chunk: Expecting value: line 1 column 1 (char 0)
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\SequentialData.py", line 140, in call_sequential_api
+    parsed_chunk_data = json.loads(cleaned_json)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\json\decoder.py", line 344, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\json\decoder.py", line 362, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2025-04-21 15:19:58 [ERROR]: Error decoding JSON chunk: Expecting value: line 1 column 1 (char 0)
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\SequentialData.py", line 140, in call_sequential_api
+    parsed_chunk_data = json.loads(cleaned_json)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\json\decoder.py", line 344, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\json\decoder.py", line 362, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2025-04-21 15:20:05 [ERROR]: Error decoding JSON chunk: Expecting value: line 1 column 1 (char 0)
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\SequentialData.py", line 140, in call_sequential_api
+    parsed_chunk_data = json.loads(cleaned_json)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\json\decoder.py", line 344, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\json\decoder.py", line 362, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2025-04-21 15:20:05 [ERROR]: Successfully merged sequential analysis results. New columns added: ['date', 'day_of_week', 'weather', 'activities', 'people', 'individuals', 'day', 'notes', 'time', 'weather_change', 'wind', 'status', 'employment', 'event']
+2025-04-21 15:20:05 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['date', 'day_of_week', 'weather', 'activities', 'people', 'individuals', 'day', 'notes', 'time', 'weather_change', 'wind', 'status', 'employment', 'event']
+2025-04-21 15:20:05 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 15:20:05 [ERROR]: Applying single author override: Angus Bethune
+2025-04-21 15:20:05 [ERROR]: Applying citation override: HBCA, B194-A-2
+2025-04-21 15:20:05 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 15:20:05 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'date', 'day_of_week', 'weather', 'activities', 'people', 'individuals', 'day', 'notes', 'time', 'weather_change', 'wind', 'status', 'employment', 'event']
+2025-04-21 15:21:55 [ERROR]: Failed to save project: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ProjectIO.py", line 44, in save_project
+    if pd.notna(row['Image_Path']) and row['Image_Path']:
+       ~~~~~~~~^^^^^^^^^^^^^^^^^^^
+ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
+2025-04-21 15:29:38 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 15:29:41 [ERROR]: Starting CSV export process
+2025-04-21 15:29:41 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 15:29:41 [ERROR]: Added missing column: Text
+2025-04-21 15:29:41 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 15:29:41 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 15:29:41 [ERROR]: Reset index for temp_df. New length: 337
+2025-04-21 15:30:28 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 15:30:28 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 15:30:28 [ERROR]: Added essential column: Creation_Place
+2025-04-21 15:30:28 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 15:30:28 [ERROR]: Copied 337 values for column: Document_Type
+2025-04-21 15:30:28 [ERROR]: Copied 337 values for column: Author
+2025-04-21 15:30:28 [ERROR]: Copied 337 values for column: Correspondent
+2025-04-21 15:30:28 [ERROR]: Copied 337 values for column: Correspondent_Place
+2025-04-21 15:30:28 [ERROR]: Copied 337 values for column: Date
+2025-04-21 15:30:28 [ERROR]: Copied 337 values for column: Place_of_Creation
+2025-04-21 15:30:28 [ERROR]: Copied 337 values for column: People
+2025-04-21 15:30:28 [ERROR]: Copied 337 values for column: Places
+2025-04-21 15:30:28 [ERROR]: Copied 337 values for column: Summary
+2025-04-21 15:30:28 [ERROR]: Copied 337 values for column: Creation_Place
+2025-04-21 15:30:28 [ERROR]: Single author specified: Angus Bethune
+2025-04-21 15:30:28 [ERROR]: Citation specified: HBCA, B194-A-2
+2025-04-21 15:30:39 [ERROR]: Sequential API calls/parsing failed to produce results DataFrame.
+2025-04-21 15:30:39 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: []
+2025-04-21 15:30:39 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 15:30:39 [ERROR]: Applying single author override: Angus Bethune
+2025-04-21 15:30:39 [ERROR]: Applying citation override: HBCA, B194-A-2
+2025-04-21 15:30:39 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 15:30:39 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 15:30:56 [ERROR]: CSV export error: [Errno 13] Permission denied: 'C:/Users/mark_/OneDrive/Fur Trade Project/Collaborations/Fur_Trade_AI_Database/HBCA/Saulte Ste Marie/B194-A-2 - 1826-27 Post Journal/B194-A-2 - 1826-27 Post Journal.csv'
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 465, in export_as_csv
+    export_df.to_csv(file_path, index=False, encoding='utf-8')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\util\_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\generic.py", line 3967, in to_csv
+    return DataFrameRenderer(formatter).to_csv(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        path_or_buf,
+        ^^^^^^^^^^^^
+    ...<14 lines>...
+        storage_options=storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\format.py", line 1014, in to_csv
+    csv_formatter.save()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\csvs.py", line 251, in save
+    with get_handle(
+         ~~~~~~~~~~^
+        self.filepath_or_buffer,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        storage_options=self.storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ) as handles:
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\common.py", line 873, in get_handle
+    handle = open(
+        handle,
+    ...<3 lines>...
+        newline="",
+    )
+PermissionError: [Errno 13] Permission denied: 'C:/Users/mark_/OneDrive/Fur Trade Project/Collaborations/Fur_Trade_AI_Database/HBCA/Saulte Ste Marie/B194-A-2 - 1826-27 Post Journal/B194-A-2 - 1826-27 Post Journal.csv'
+
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 465, in export_as_csv
+    export_df.to_csv(file_path, index=False, encoding='utf-8')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\util\_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\generic.py", line 3967, in to_csv
+    return DataFrameRenderer(formatter).to_csv(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        path_or_buf,
+        ^^^^^^^^^^^^
+    ...<14 lines>...
+        storage_options=storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\format.py", line 1014, in to_csv
+    csv_formatter.save()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\csvs.py", line 251, in save
+    with get_handle(
+         ~~~~~~~~~~^
+        self.filepath_or_buffer,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        storage_options=self.storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ) as handles:
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\common.py", line 873, in get_handle
+    handle = open(
+        handle,
+    ...<3 lines>...
+        newline="",
+    )
+PermissionError: [Errno 13] Permission denied: 'C:/Users/mark_/OneDrive/Fur Trade Project/Collaborations/Fur_Trade_AI_Database/HBCA/Saulte Ste Marie/B194-A-2 - 1826-27 Post Journal/B194-A-2 - 1826-27 Post Journal.csv'
+2025-04-21 15:34:36 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 15:34:39 [ERROR]: Starting CSV export process
+2025-04-21 15:34:39 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 15:34:39 [ERROR]: Added missing column: Text
+2025-04-21 15:34:39 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 15:34:39 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 15:34:39 [ERROR]: Reset index for temp_df. New length: 337
+2025-04-21 15:35:19 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 15:35:19 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 15:35:19 [ERROR]: Added essential column: Creation_Place
+2025-04-21 15:35:19 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 15:35:19 [ERROR]: Copied 337 values for column: Document_Type
+2025-04-21 15:35:19 [ERROR]: Copied 337 values for column: Author
+2025-04-21 15:35:19 [ERROR]: Copied 337 values for column: Correspondent
+2025-04-21 15:35:19 [ERROR]: Copied 337 values for column: Correspondent_Place
+2025-04-21 15:35:19 [ERROR]: Copied 337 values for column: Date
+2025-04-21 15:35:19 [ERROR]: Copied 337 values for column: Place_of_Creation
+2025-04-21 15:35:19 [ERROR]: Copied 337 values for column: People
+2025-04-21 15:35:19 [ERROR]: Copied 337 values for column: Places
+2025-04-21 15:35:19 [ERROR]: Copied 337 values for column: Summary
+2025-04-21 15:35:19 [ERROR]: Copied 337 values for column: Creation_Place
+2025-04-21 15:35:19 [ERROR]: Single author specified: Angus Bethune
+2025-04-21 15:35:19 [ERROR]: Citation specified: HBCA, B194-A-2
+2025-04-21 15:35:35 [ERROR]: Sequential API calls/parsing failed to produce results DataFrame.
+2025-04-21 15:35:35 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: []
+2025-04-21 15:35:35 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 15:35:35 [ERROR]: Applying single author override: Angus Bethune
+2025-04-21 15:35:35 [ERROR]: Applying citation override: HBCA, B194-A-2
+2025-04-21 15:35:35 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 15:35:35 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 15:43:02 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 15:43:06 [ERROR]: Starting CSV export process
+2025-04-21 15:43:06 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 15:43:06 [ERROR]: Added missing column: Text
+2025-04-21 15:43:06 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 15:43:06 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 15:43:06 [ERROR]: Reset index for temp_df. New length: 337
+2025-04-21 15:43:47 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 15:43:47 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 15:43:47 [ERROR]: Added essential column: Creation_Place
+2025-04-21 15:43:47 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 15:43:47 [ERROR]: Copied 337 values for column: Document_Type
+2025-04-21 15:43:47 [ERROR]: Copied 337 values for column: Author
+2025-04-21 15:43:47 [ERROR]: Copied 337 values for column: Correspondent
+2025-04-21 15:43:47 [ERROR]: Copied 337 values for column: Correspondent_Place
+2025-04-21 15:43:47 [ERROR]: Copied 337 values for column: Date
+2025-04-21 15:43:47 [ERROR]: Copied 337 values for column: Place_of_Creation
+2025-04-21 15:43:47 [ERROR]: Copied 337 values for column: People
+2025-04-21 15:43:47 [ERROR]: Copied 337 values for column: Places
+2025-04-21 15:43:47 [ERROR]: Copied 337 values for column: Summary
+2025-04-21 15:43:47 [ERROR]: Copied 337 values for column: Creation_Place
+2025-04-21 15:43:47 [ERROR]: Single author specified: Angus
+2025-04-21 15:43:47 [ERROR]: Citation specified: dfd
+2025-04-21 15:44:02 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 15:44:02 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 15:44:02 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 15:44:02 [ERROR]: Applying single author override: Angus
+2025-04-21 15:44:02 [ERROR]: Applying citation override: dfd
+2025-04-21 15:44:02 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 15:44:02 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Location']
+2025-04-21 20:48:49 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 20:48:56 [ERROR]: Starting CSV export process
+2025-04-21 20:48:56 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 20:48:56 [ERROR]: Added missing column: Text
+2025-04-21 20:48:56 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 20:48:56 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 20:48:56 [ERROR]: Reset index for temp_df. New length: 337
+2025-04-21 20:52:31 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 20:52:31 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 20:52:31 [ERROR]: Added essential column: Creation_Place
+2025-04-21 20:52:31 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 20:52:31 [ERROR]: Copied 337 values for column: Document_Type
+2025-04-21 20:52:31 [ERROR]: Copied 337 values for column: Author
+2025-04-21 20:52:31 [ERROR]: Copied 337 values for column: Correspondent
+2025-04-21 20:52:31 [ERROR]: Copied 337 values for column: Correspondent_Place
+2025-04-21 20:52:31 [ERROR]: Copied 337 values for column: Date
+2025-04-21 20:52:31 [ERROR]: Copied 337 values for column: Place_of_Creation
+2025-04-21 20:52:31 [ERROR]: Copied 337 values for column: People
+2025-04-21 20:52:31 [ERROR]: Copied 337 values for column: Places
+2025-04-21 20:52:31 [ERROR]: Copied 337 values for column: Summary
+2025-04-21 20:52:31 [ERROR]: Copied 337 values for column: Creation_Place
+2025-04-21 20:52:31 [ERROR]: Single author specified: a
+2025-04-21 20:52:31 [ERROR]: Citation specified: aa
+2025-04-21 20:52:44 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 20:52:44 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 20:52:44 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 20:52:44 [ERROR]: Applying single author override: a
+2025-04-21 20:52:44 [ERROR]: Applying citation override: aa
+2025-04-21 20:52:44 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 20:52:44 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Location']
+2025-04-21 20:53:40 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 20:53:43 [ERROR]: Starting CSV export process
+2025-04-21 20:53:43 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 20:53:43 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 20:53:43 [ERROR]: Added missing column: Text
+2025-04-21 20:53:43 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 20:53:43 [ERROR]: Reset index for temp_df. New length: 337
+2025-04-21 20:54:24 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 20:54:24 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 20:54:24 [ERROR]: Added essential column: Creation_Place
+2025-04-21 20:54:24 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 20:54:24 [ERROR]: Copied 337 values for column: Document_Type
+2025-04-21 20:54:24 [ERROR]: Copied 337 values for column: Author
+2025-04-21 20:54:24 [ERROR]: Copied 337 values for column: Correspondent
+2025-04-21 20:54:24 [ERROR]: Copied 337 values for column: Correspondent_Place
+2025-04-21 20:54:24 [ERROR]: Copied 337 values for column: Date
+2025-04-21 20:54:24 [ERROR]: Copied 337 values for column: Place_of_Creation
+2025-04-21 20:54:24 [ERROR]: Copied 337 values for column: People
+2025-04-21 20:54:24 [ERROR]: Copied 337 values for column: Places
+2025-04-21 20:54:24 [ERROR]: Copied 337 values for column: Summary
+2025-04-21 20:54:24 [ERROR]: Copied 337 values for column: Creation_Place
+2025-04-21 20:54:24 [ERROR]: Single author specified: a
+2025-04-21 20:54:24 [ERROR]: Citation specified: aa
+2025-04-21 20:56:07 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 20:56:07 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 20:56:07 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 20:56:07 [ERROR]: Applying single author override: a
+2025-04-21 20:56:07 [ERROR]: Applying citation override: aa
+2025-04-21 20:56:07 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 20:56:07 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Location']
+2025-04-21 21:10:16 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 21:10:19 [ERROR]: Starting CSV export process
+2025-04-21 21:10:19 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 21:10:19 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 21:10:19 [ERROR]: Added missing column: Text
+2025-04-21 21:10:19 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 21:10:19 [ERROR]: Reset index for temp_df. New length: 337
+2025-04-21 21:11:59 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 21:11:59 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 21:11:59 [ERROR]: Added essential column: Creation_Place
+2025-04-21 21:11:59 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 21:11:59 [ERROR]: Copied 337 values for column: Document_Type
+2025-04-21 21:11:59 [ERROR]: Copied 337 values for column: Author
+2025-04-21 21:11:59 [ERROR]: Copied 337 values for column: Correspondent
+2025-04-21 21:11:59 [ERROR]: Copied 337 values for column: Correspondent_Place
+2025-04-21 21:11:59 [ERROR]: Copied 337 values for column: Date
+2025-04-21 21:11:59 [ERROR]: Copied 337 values for column: Place_of_Creation
+2025-04-21 21:11:59 [ERROR]: Copied 337 values for column: People
+2025-04-21 21:11:59 [ERROR]: Copied 337 values for column: Places
+2025-04-21 21:11:59 [ERROR]: Copied 337 values for column: Summary
+2025-04-21 21:11:59 [ERROR]: Copied 337 values for column: Creation_Place
+2025-04-21 21:11:59 [ERROR]: Single author specified: a
+2025-04-21 21:11:59 [ERROR]: Citation specified: aa
+2025-04-21 21:12:49 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 21:12:49 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 21:12:49 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 21:12:49 [ERROR]: Applying single author override: a
+2025-04-21 21:12:49 [ERROR]: Applying citation override: aa
+2025-04-21 21:12:49 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 21:12:49 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Location']
+2025-04-21 21:18:15 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 21:18:18 [ERROR]: Starting CSV export process
+2025-04-21 21:18:18 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 21:18:18 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 21:18:18 [ERROR]: Added missing column: Text
+2025-04-21 21:18:18 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 21:18:18 [ERROR]: Reset index for temp_df. New length: 337
+2025-04-21 21:19:00 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 21:19:00 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 21:19:00 [ERROR]: Added essential column: Creation_Place
+2025-04-21 21:19:00 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 21:19:00 [ERROR]: Copied 337 values for column: Document_Type
+2025-04-21 21:19:00 [ERROR]: Copied 337 values for column: Author
+2025-04-21 21:19:00 [ERROR]: Copied 337 values for column: Correspondent
+2025-04-21 21:19:00 [ERROR]: Copied 337 values for column: Correspondent_Place
+2025-04-21 21:19:00 [ERROR]: Copied 337 values for column: Date
+2025-04-21 21:19:00 [ERROR]: Copied 337 values for column: Place_of_Creation
+2025-04-21 21:19:00 [ERROR]: Copied 337 values for column: People
+2025-04-21 21:19:00 [ERROR]: Copied 337 values for column: Places
+2025-04-21 21:19:00 [ERROR]: Copied 337 values for column: Summary
+2025-04-21 21:19:00 [ERROR]: Copied 337 values for column: Creation_Place
+2025-04-21 21:19:00 [ERROR]: Single author specified: Angus Bethune
+2025-04-21 21:19:00 [ERROR]: Citation specified: HBCA, B194-A-2
+2025-04-21 21:20:42 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 21:20:42 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 21:20:42 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 21:20:42 [ERROR]: Applying single author override: Angus Bethune
+2025-04-21 21:20:42 [ERROR]: Applying citation override: HBCA, B194-A-2
+2025-04-21 21:20:42 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 21:20:42 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Location']
+2025-04-21 21:30:30 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 21:30:33 [ERROR]: Starting CSV export process
+2025-04-21 21:30:33 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 21:30:33 [ERROR]: Added missing column: Text
+2025-04-21 21:30:33 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 21:30:33 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 21:30:33 [ERROR]: Reset index for temp_df. New length: 337
+2025-04-21 21:32:57 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 21:32:57 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 21:32:57 [ERROR]: Added essential column: Creation_Place
+2025-04-21 21:32:57 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 21:32:57 [ERROR]: Copied 337 values for column: Document_Type
+2025-04-21 21:32:57 [ERROR]: Copied 337 values for column: Author
+2025-04-21 21:32:57 [ERROR]: Copied 337 values for column: Correspondent
+2025-04-21 21:32:57 [ERROR]: Copied 337 values for column: Correspondent_Place
+2025-04-21 21:32:57 [ERROR]: Copied 337 values for column: Date
+2025-04-21 21:32:57 [ERROR]: Copied 337 values for column: Place_of_Creation
+2025-04-21 21:32:57 [ERROR]: Copied 337 values for column: People
+2025-04-21 21:32:57 [ERROR]: Copied 337 values for column: Places
+2025-04-21 21:32:57 [ERROR]: Copied 337 values for column: Summary
+2025-04-21 21:32:57 [ERROR]: Copied 337 values for column: Creation_Place
+2025-04-21 21:32:57 [ERROR]: Single author specified: Angus Bethune
+2025-04-21 21:32:57 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: []
+2025-04-21 21:32:57 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 21:32:57 [ERROR]: Applying single author override: Angus Bethune
+2025-04-21 21:32:57 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 21:32:57 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 21:42:09 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 21:42:15 [ERROR]: Starting CSV export process
+2025-04-21 21:42:15 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 21:42:15 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 21:42:15 [ERROR]: Added missing column: Text
+2025-04-21 21:42:15 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 21:42:15 [ERROR]: Reset index for temp_df. New length: 337
+2025-04-21 21:43:34 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 21:43:34 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 21:43:34 [ERROR]: Added essential column: Creation_Place
+2025-04-21 21:43:34 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 21:43:34 [ERROR]: Copied 337 values for column: Document_Type
+2025-04-21 21:43:34 [ERROR]: Copied 337 values for column: Author
+2025-04-21 21:43:34 [ERROR]: Copied 337 values for column: Correspondent
+2025-04-21 21:43:34 [ERROR]: Copied 337 values for column: Correspondent_Place
+2025-04-21 21:43:34 [ERROR]: Copied 337 values for column: Date
+2025-04-21 21:43:34 [ERROR]: Copied 337 values for column: Place_of_Creation
+2025-04-21 21:43:34 [ERROR]: Copied 337 values for column: People
+2025-04-21 21:43:34 [ERROR]: Copied 337 values for column: Places
+2025-04-21 21:43:34 [ERROR]: Copied 337 values for column: Summary
+2025-04-21 21:43:34 [ERROR]: Copied 337 values for column: Creation_Place
+2025-04-21 21:43:34 [ERROR]: Single author specified: a
+2025-04-21 21:43:34 [ERROR]: Citation specified: aa
+2025-04-21 21:45:20 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 21:45:20 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 21:45:20 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 21:45:20 [ERROR]: Applying single author override: a
+2025-04-21 21:45:20 [ERROR]: Applying citation override: aa
+2025-04-21 21:45:20 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 21:45:20 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Location']
+2025-04-21 21:51:23 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 21:51:28 [ERROR]: Starting CSV export process
+2025-04-21 21:51:28 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 21:51:28 [ERROR]: Added missing column: Text
+2025-04-21 21:51:28 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 21:51:28 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 21:51:28 [ERROR]: Reset index for temp_df. New length: 337
+2025-04-21 21:52:47 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 21:52:47 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 21:52:47 [ERROR]: Added essential column: Creation_Place
+2025-04-21 21:52:47 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 21:52:47 [ERROR]: Copied 337 values for column: Document_Type
+2025-04-21 21:52:47 [ERROR]: Copied 337 values for column: Author
+2025-04-21 21:52:47 [ERROR]: Copied 337 values for column: Correspondent
+2025-04-21 21:52:47 [ERROR]: Copied 337 values for column: Correspondent_Place
+2025-04-21 21:52:47 [ERROR]: Copied 337 values for column: Date
+2025-04-21 21:52:47 [ERROR]: Copied 337 values for column: Place_of_Creation
+2025-04-21 21:52:47 [ERROR]: Copied 337 values for column: People
+2025-04-21 21:52:47 [ERROR]: Copied 337 values for column: Places
+2025-04-21 21:52:47 [ERROR]: Copied 337 values for column: Summary
+2025-04-21 21:52:47 [ERROR]: Copied 337 values for column: Creation_Place
+2025-04-21 21:52:47 [ERROR]: Single author specified: Angus Bethune
+2025-04-21 21:52:47 [ERROR]: Citation specified: HBCA, B194-A-2
+2025-04-21 21:53:34 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 21:53:34 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 21:53:34 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 21:53:34 [ERROR]: Applying single author override: Angus Bethune
+2025-04-21 21:53:34 [ERROR]: Applying citation override: HBCA, B194-A-2
+2025-04-21 21:53:34 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 21:53:34 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Location']
+2025-04-21 21:55:06 [ERROR]: CSV export error: [Errno 13] Permission denied: 'C:/Users/mark_/OneDrive/Fur Trade Project/Collaborations/Fur_Trade_AI_Database/HBCA/Saulte Ste Marie/B194-A-2 - 1826-27 Post Journal/B194-A-2 - 1826-27 Post Journal.csv'
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 465, in export_as_csv
+    export_df.to_csv(file_path, index=False, encoding='utf-8')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\util\_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\generic.py", line 3967, in to_csv
+    return DataFrameRenderer(formatter).to_csv(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        path_or_buf,
+        ^^^^^^^^^^^^
+    ...<14 lines>...
+        storage_options=storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\format.py", line 1014, in to_csv
+    csv_formatter.save()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\csvs.py", line 251, in save
+    with get_handle(
+         ~~~~~~~~~~^
+        self.filepath_or_buffer,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        storage_options=self.storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ) as handles:
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\common.py", line 873, in get_handle
+    handle = open(
+        handle,
+    ...<3 lines>...
+        newline="",
+    )
+PermissionError: [Errno 13] Permission denied: 'C:/Users/mark_/OneDrive/Fur Trade Project/Collaborations/Fur_Trade_AI_Database/HBCA/Saulte Ste Marie/B194-A-2 - 1826-27 Post Journal/B194-A-2 - 1826-27 Post Journal.csv'
+
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 465, in export_as_csv
+    export_df.to_csv(file_path, index=False, encoding='utf-8')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\util\_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\generic.py", line 3967, in to_csv
+    return DataFrameRenderer(formatter).to_csv(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        path_or_buf,
+        ^^^^^^^^^^^^
+    ...<14 lines>...
+        storage_options=storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\format.py", line 1014, in to_csv
+    csv_formatter.save()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\csvs.py", line 251, in save
+    with get_handle(
+         ~~~~~~~~~~^
+        self.filepath_or_buffer,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        storage_options=self.storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ) as handles:
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\common.py", line 873, in get_handle
+    handle = open(
+        handle,
+    ...<3 lines>...
+        newline="",
+    )
+PermissionError: [Errno 13] Permission denied: 'C:/Users/mark_/OneDrive/Fur Trade Project/Collaborations/Fur_Trade_AI_Database/HBCA/Saulte Ste Marie/B194-A-2 - 1826-27 Post Journal/B194-A-2 - 1826-27 Post Journal.csv'
+2025-04-21 21:55:26 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 21:55:29 [ERROR]: Starting CSV export process
+2025-04-21 21:55:29 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 21:55:29 [ERROR]: Added missing column: Text
+2025-04-21 21:55:29 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 21:55:29 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 21:55:29 [ERROR]: Reset index for temp_df. New length: 337
+2025-04-21 21:56:12 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 21:56:12 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 21:56:12 [ERROR]: Added essential column: Creation_Place
+2025-04-21 21:56:12 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 21:56:12 [ERROR]: Copied 337 values for column: Document_Type
+2025-04-21 21:56:12 [ERROR]: Copied 337 values for column: Author
+2025-04-21 21:56:12 [ERROR]: Copied 337 values for column: Correspondent
+2025-04-21 21:56:12 [ERROR]: Copied 337 values for column: Correspondent_Place
+2025-04-21 21:56:12 [ERROR]: Copied 337 values for column: Date
+2025-04-21 21:56:12 [ERROR]: Copied 337 values for column: Place_of_Creation
+2025-04-21 21:56:12 [ERROR]: Copied 337 values for column: People
+2025-04-21 21:56:12 [ERROR]: Copied 337 values for column: Places
+2025-04-21 21:56:12 [ERROR]: Copied 337 values for column: Summary
+2025-04-21 21:56:12 [ERROR]: Copied 337 values for column: Creation_Place
+2025-04-21 21:56:12 [ERROR]: Single author specified: Angus Bethune
+2025-04-21 21:56:12 [ERROR]: Citation specified: HBCA, B194-A-2
+2025-04-21 21:56:55 [ERROR]: Error decoding JSON chunk: Expecting value: line 1 column 1 (char 0)
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\SequentialData.py", line 168, in call_sequential_api
+    parsed_chunk_data = json.loads(cleaned_json)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\json\decoder.py", line 344, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\json\decoder.py", line 362, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2025-04-21 21:57:24 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 21:57:24 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 21:57:24 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 21:57:24 [ERROR]: Applying single author override: Angus Bethune
+2025-04-21 21:57:24 [ERROR]: Applying citation override: HBCA, B194-A-2
+2025-04-21 21:57:24 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 21:57:24 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Location']
+2025-04-21 22:01:24 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 22:01:33 [ERROR]: Starting CSV export process
+2025-04-21 22:01:33 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 22:01:33 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 22:01:33 [ERROR]: Added missing column: Text
+2025-04-21 22:01:33 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 22:01:33 [ERROR]: Reset index for temp_df. New length: 11
+2025-04-21 22:01:39 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 22:01:39 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 22:01:39 [ERROR]: Added essential column: Creation_Place
+2025-04-21 22:01:39 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 22:01:39 [ERROR]: Copied 11 values for column: Document_Type
+2025-04-21 22:01:39 [ERROR]: Copied 11 values for column: Author
+2025-04-21 22:01:39 [ERROR]: Copied 11 values for column: Correspondent
+2025-04-21 22:01:39 [ERROR]: Copied 11 values for column: Correspondent_Place
+2025-04-21 22:01:39 [ERROR]: Copied 11 values for column: Date
+2025-04-21 22:01:39 [ERROR]: Copied 11 values for column: Place_of_Creation
+2025-04-21 22:01:39 [ERROR]: Copied 11 values for column: People
+2025-04-21 22:01:39 [ERROR]: Copied 11 values for column: Places
+2025-04-21 22:01:39 [ERROR]: Copied 11 values for column: Summary
+2025-04-21 22:01:39 [ERROR]: Copied 11 values for column: Creation_Place
+2025-04-21 22:01:39 [ERROR]: Single author specified: a
+2025-04-21 22:01:39 [ERROR]: Citation specified: aa
+2025-04-21 22:01:43 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 22:01:43 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 22:01:43 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 22:01:43 [ERROR]: Applying single author override: a
+2025-04-21 22:01:43 [ERROR]: Applying citation override: aa
+2025-04-21 22:01:43 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 22:01:43 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'People', 'Places', 'Summary', 'Location']
+2025-04-21 22:09:41 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 22:09:43 [ERROR]: Starting CSV export process
+2025-04-21 22:09:43 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 22:09:43 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 22:09:43 [ERROR]: Added missing column: Text
+2025-04-21 22:09:43 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 22:09:43 [ERROR]: Reset index for temp_df. New length: 11
+2025-04-21 22:10:09 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 22:10:09 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 22:10:09 [ERROR]: Added essential column: Creation_Place
+2025-04-21 22:10:09 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 22:10:09 [ERROR]: Copied 11 values for column: Document_Type
+2025-04-21 22:10:09 [ERROR]: Copied 11 values for column: Author
+2025-04-21 22:10:09 [ERROR]: Copied 11 values for column: Correspondent
+2025-04-21 22:10:09 [ERROR]: Copied 11 values for column: Correspondent_Place
+2025-04-21 22:10:09 [ERROR]: Copied 11 values for column: Date
+2025-04-21 22:10:09 [ERROR]: Copied 11 values for column: Place_of_Creation
+2025-04-21 22:10:09 [ERROR]: Copied 11 values for column: People
+2025-04-21 22:10:09 [ERROR]: Copied 11 values for column: Places
+2025-04-21 22:10:09 [ERROR]: Copied 11 values for column: Summary
+2025-04-21 22:10:09 [ERROR]: Copied 11 values for column: Creation_Place
+2025-04-21 22:10:09 [ERROR]: Single author specified: a
+2025-04-21 22:10:09 [ERROR]: Citation specified: aa
+2025-04-21 22:10:15 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 22:10:15 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 22:10:15 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 22:10:15 [ERROR]: Applying single author override: a
+2025-04-21 22:10:15 [ERROR]: Applying citation override: aa
+2025-04-21 22:10:15 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 22:10:15 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'People', 'Places', 'Summary', 'Location']
+2025-04-21 22:10:20 [ERROR]: CSV export error: [Errno 13] Permission denied: 'C:/Users/mark_/OneDrive/Test/next_new_test/test.csv'
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 465, in export_as_csv
+    export_df.to_csv(file_path, index=False, encoding='utf-8')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\util\_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\generic.py", line 3967, in to_csv
+    return DataFrameRenderer(formatter).to_csv(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        path_or_buf,
+        ^^^^^^^^^^^^
+    ...<14 lines>...
+        storage_options=storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\format.py", line 1014, in to_csv
+    csv_formatter.save()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\csvs.py", line 251, in save
+    with get_handle(
+         ~~~~~~~~~~^
+        self.filepath_or_buffer,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        storage_options=self.storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ) as handles:
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\common.py", line 873, in get_handle
+    handle = open(
+        handle,
+    ...<3 lines>...
+        newline="",
+    )
+PermissionError: [Errno 13] Permission denied: 'C:/Users/mark_/OneDrive/Test/next_new_test/test.csv'
+
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 465, in export_as_csv
+    export_df.to_csv(file_path, index=False, encoding='utf-8')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\util\_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\generic.py", line 3967, in to_csv
+    return DataFrameRenderer(formatter).to_csv(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        path_or_buf,
+        ^^^^^^^^^^^^
+    ...<14 lines>...
+        storage_options=storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\format.py", line 1014, in to_csv
+    csv_formatter.save()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\csvs.py", line 251, in save
+    with get_handle(
+         ~~~~~~~~~~^
+        self.filepath_or_buffer,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        storage_options=self.storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ) as handles:
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\common.py", line 873, in get_handle
+    handle = open(
+        handle,
+    ...<3 lines>...
+        newline="",
+    )
+PermissionError: [Errno 13] Permission denied: 'C:/Users/mark_/OneDrive/Test/next_new_test/test.csv'
+2025-04-21 22:10:31 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 22:10:34 [ERROR]: Starting CSV export process
+2025-04-21 22:10:34 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 22:10:34 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 22:10:34 [ERROR]: Added missing column: Text
+2025-04-21 22:10:34 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 22:10:34 [ERROR]: Reset index for temp_df. New length: 11
+2025-04-21 22:20:42 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 22:20:42 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 22:20:42 [ERROR]: Added essential column: Creation_Place
+2025-04-21 22:20:42 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 22:20:42 [ERROR]: Copied 11 values for column: Document_Type
+2025-04-21 22:20:42 [ERROR]: Copied 11 values for column: Author
+2025-04-21 22:20:42 [ERROR]: Copied 11 values for column: Correspondent
+2025-04-21 22:20:42 [ERROR]: Copied 11 values for column: Correspondent_Place
+2025-04-21 22:20:42 [ERROR]: Copied 11 values for column: Date
+2025-04-21 22:20:42 [ERROR]: Copied 11 values for column: Place_of_Creation
+2025-04-21 22:20:42 [ERROR]: Copied 11 values for column: People
+2025-04-21 22:20:42 [ERROR]: Copied 11 values for column: Places
+2025-04-21 22:20:42 [ERROR]: Copied 11 values for column: Summary
+2025-04-21 22:20:42 [ERROR]: Copied 11 values for column: Creation_Place
+2025-04-21 22:20:42 [ERROR]: Single author specified: a
+2025-04-21 22:20:42 [ERROR]: Citation specified: aa
+2025-04-21 22:20:46 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 22:20:46 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 22:20:46 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 22:20:46 [ERROR]: Applying single author override: a
+2025-04-21 22:20:46 [ERROR]: Applying citation override: aa
+2025-04-21 22:20:46 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 22:20:46 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'People', 'Places', 'Summary', 'Location']
+2025-04-21 22:24:22 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 22:24:26 [ERROR]: Starting CSV export process
+2025-04-21 22:24:26 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 22:24:26 [ERROR]: Added missing column: Text
+2025-04-21 22:24:26 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 22:24:26 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 22:24:26 [ERROR]: Reset index for temp_df. New length: 11
+2025-04-21 22:24:31 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 22:24:31 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 22:24:31 [ERROR]: Added essential column: Creation_Place
+2025-04-21 22:24:31 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 22:24:31 [ERROR]: Copied 11 values for column: Document_Type
+2025-04-21 22:24:31 [ERROR]: Copied 11 values for column: Author
+2025-04-21 22:24:31 [ERROR]: Copied 11 values for column: Correspondent
+2025-04-21 22:24:31 [ERROR]: Copied 11 values for column: Correspondent_Place
+2025-04-21 22:24:31 [ERROR]: Copied 11 values for column: Date
+2025-04-21 22:24:31 [ERROR]: Copied 11 values for column: Place_of_Creation
+2025-04-21 22:24:31 [ERROR]: Copied 11 values for column: People
+2025-04-21 22:24:31 [ERROR]: Copied 11 values for column: Places
+2025-04-21 22:24:31 [ERROR]: Copied 11 values for column: Summary
+2025-04-21 22:24:31 [ERROR]: Copied 11 values for column: Creation_Place
+2025-04-21 22:24:36 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 22:24:36 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 22:24:36 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 22:24:36 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 22:24:36 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Date', 'People', 'Places', 'Summary', 'Location']
+2025-04-21 22:34:35 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 22:34:38 [ERROR]: Starting CSV export process
+2025-04-21 22:34:38 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 22:34:38 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 22:34:38 [ERROR]: Added missing column: Text
+2025-04-21 22:34:38 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 22:34:38 [ERROR]: Reset index for temp_df. New length: 11
+2025-04-21 22:34:46 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 22:34:46 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 22:34:46 [ERROR]: Added essential column: Creation_Place
+2025-04-21 22:34:46 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 22:34:46 [ERROR]: Copied 11 values for column: Document_Type
+2025-04-21 22:34:46 [ERROR]: Copied 11 values for column: Author
+2025-04-21 22:34:46 [ERROR]: Copied 11 values for column: Correspondent
+2025-04-21 22:34:46 [ERROR]: Copied 11 values for column: Correspondent_Place
+2025-04-21 22:34:46 [ERROR]: Copied 11 values for column: Date
+2025-04-21 22:34:46 [ERROR]: Copied 11 values for column: Place_of_Creation
+2025-04-21 22:34:46 [ERROR]: Copied 11 values for column: People
+2025-04-21 22:34:46 [ERROR]: Copied 11 values for column: Places
+2025-04-21 22:34:46 [ERROR]: Copied 11 values for column: Summary
+2025-04-21 22:34:46 [ERROR]: Copied 11 values for column: Creation_Place
+2025-04-21 22:34:50 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 22:34:50 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 22:34:50 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 22:34:50 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 22:34:50 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Date', 'People', 'Places', 'Summary', 'Location']
+2025-04-21 22:35:03 [ERROR]: CSV export error: [Errno 13] Permission denied: 'C:/Users/mark_/OneDrive/Test/next_new_test/test.csv'
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 465, in export_as_csv
+    export_df.to_csv(file_path, index=False, encoding='utf-8')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\util\_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\generic.py", line 3967, in to_csv
+    return DataFrameRenderer(formatter).to_csv(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        path_or_buf,
+        ^^^^^^^^^^^^
+    ...<14 lines>...
+        storage_options=storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\format.py", line 1014, in to_csv
+    csv_formatter.save()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\csvs.py", line 251, in save
+    with get_handle(
+         ~~~~~~~~~~^
+        self.filepath_or_buffer,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        storage_options=self.storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ) as handles:
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\common.py", line 873, in get_handle
+    handle = open(
+        handle,
+    ...<3 lines>...
+        newline="",
+    )
+PermissionError: [Errno 13] Permission denied: 'C:/Users/mark_/OneDrive/Test/next_new_test/test.csv'
+
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 465, in export_as_csv
+    export_df.to_csv(file_path, index=False, encoding='utf-8')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\util\_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\core\generic.py", line 3967, in to_csv
+    return DataFrameRenderer(formatter).to_csv(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        path_or_buf,
+        ^^^^^^^^^^^^
+    ...<14 lines>...
+        storage_options=storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\format.py", line 1014, in to_csv
+    csv_formatter.save()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\formats\csvs.py", line 251, in save
+    with get_handle(
+         ~~~~~~~~~~^
+        self.filepath_or_buffer,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        storage_options=self.storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ) as handles:
+    ^
+  File "C:\Users\mark_\miniconda3\envs\PearlBot\Lib\site-packages\pandas\io\common.py", line 873, in get_handle
+    handle = open(
+        handle,
+    ...<3 lines>...
+        newline="",
+    )
+PermissionError: [Errno 13] Permission denied: 'C:/Users/mark_/OneDrive/Test/next_new_test/test.csv'
+2025-04-21 22:36:52 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 22:36:56 [ERROR]: Starting CSV export process
+2025-04-21 22:36:56 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 22:36:56 [ERROR]: Added missing column: Text
+2025-04-21 22:36:56 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 22:36:56 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 22:36:56 [ERROR]: Reset index for temp_df. New length: 11
+2025-04-21 22:37:03 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 22:37:03 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 22:37:03 [ERROR]: Added essential column: Creation_Place
+2025-04-21 22:37:03 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 22:37:03 [ERROR]: Copied 11 values for column: Document_Type
+2025-04-21 22:37:03 [ERROR]: Copied 11 values for column: Author
+2025-04-21 22:37:03 [ERROR]: Copied 11 values for column: Correspondent
+2025-04-21 22:37:03 [ERROR]: Copied 11 values for column: Correspondent_Place
+2025-04-21 22:37:03 [ERROR]: Copied 11 values for column: Date
+2025-04-21 22:37:03 [ERROR]: Copied 11 values for column: Place_of_Creation
+2025-04-21 22:37:03 [ERROR]: Copied 11 values for column: People
+2025-04-21 22:37:03 [ERROR]: Copied 11 values for column: Places
+2025-04-21 22:37:03 [ERROR]: Copied 11 values for column: Summary
+2025-04-21 22:37:03 [ERROR]: Copied 11 values for column: Creation_Place
+2025-04-21 22:37:06 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 22:37:06 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 22:37:06 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 22:37:06 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 22:37:06 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Date', 'People', 'Places', 'Summary', 'Location']

@@ -34,7 +34,7 @@ class App(TkinterDnD.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        self.title("Transcription Pearl 1.5 beta")  # Set the window title
+        self.title("Archive Studio 1.0")  # Set the window title
         self.link_nav = 0
         self.geometry("1200x800")
 
@@ -2219,9 +2219,19 @@ class App(TkinterDnD.Tk):
         self.document_menu.entryconfig("Highlight Errors", state="normal" if has_errors else "disabled")
 
     def update_separation_menu_state(self, state="normal"):
-        """Update the state of the document separation menu items."""
-        # Always keep the Apply Document Separation menu item enabled
-        self.process_menu.entryconfig("Apply Document Separation", state="normal")
+        """Enable or disable the 'Apply Document Separation' menu item."""
+        try:
+            # Get the current index of the menu entry
+            menu_index = self.process_menu.index("Apply Document Separation")
+            # Check if the index is valid (not None)
+            if menu_index is not None:
+                 self.process_menu.entryconfig(menu_index, state=state)
+                 print(f"Set 'Apply Document Separation' state to {state}")
+            else:
+                 print(f"Could not find menu item 'Apply Document Separation' to set state.")
+        except tk.TclError as e:
+            # Log the error if the menu item doesn't exist
+            self.error_logging(f"Error configuring 'Apply Document Separation' menu item: {e}", level="WARNING")
 
 # GUI and DF Update Functions
 
@@ -2297,6 +2307,39 @@ class App(TkinterDnD.Tk):
 
         except Exception as e:
             self.error_logging(f"Error rotating image at index {index} ({image_path_abs}): {e}")
+
+    def update_display_after_ai(self, index, updated_column_name):
+        """
+        Updates the DataFrame's Text_Toggle and refreshes the display 
+        if the modified page is currently visible.
+        Should be called by AIFunctionsHandler after updating a text column.
+        """
+        if self.main_df.empty or index < 0 or index >= len(self.main_df):
+            self.error_logging(f"update_display_after_ai called with invalid index: {index}", level="WARNING")
+            return
+
+        self.error_logging(f"update_display_after_ai called for index {index}, column {updated_column_name}", level="INFO") # <-- Added INFO log
+
+        try:
+            # --- MODIFIED --- Force update Text_Toggle if new text exists
+            new_text = self.main_df.loc[index, updated_column_name]
+            if pd.notna(new_text) and str(new_text).strip():
+                self.main_df.loc[index, 'Text_Toggle'] = updated_column_name
+                self.error_logging(f"Forced Text_Toggle for index {index} to {updated_column_name}", level="INFO")
+            # --- END MODIFIED ---
+
+            # If the updated page is the one currently displayed, refresh the UI
+            if index == self.page_counter:
+                self.error_logging(f"Refreshing display for current page {index} via load_text() after AI update ({updated_column_name})", level="INFO")
+                # --- MODIFIED --- Call load_text directly
+                self.load_text()
+                # --- END MODIFIED ---
+            else: # <-- Added else block for logging
+                self.error_logging(f"AI update for index {index} ({updated_column_name}) occurred, but current page is {self.page_counter}. No immediate refresh.", level="INFO") # <-- Added INFO log
+
+        except Exception as e:
+            self.error_logging(f"Error in update_display_after_ai for index {index}, column {updated_column_name}: {e}", level="ERROR")
+
 
 # Callbacks
 

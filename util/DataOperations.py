@@ -204,67 +204,92 @@ class DataOperations:
              return
         try:
             cleaned_response = str(response).strip() if response is not None else ""
-            target_column = None
-            new_toggle = None
-            highlight_changes = False
+            # Removed unused variables: target_column, new_toggle
+            highlight_changes = False # Keep highlight flags if needed later
             highlight_names_places = False
             highlight_errors_flag = False
 
-            if ai_job == "Get_Names_and_Places":
+            # --- MOVED TEXT UPDATE BLOCKS FIRST ---
+            # --- HTR ---
+            if ai_job == "HTR":
+                # Clean up common HTR prefixes/markers
+                cleaned_response = re.sub(r"(?i)^Transcription:|^Text:", "", response).strip()
+                self.app.main_df.loc[index, 'Original_Text'] = cleaned_response
+                # Call UI update handler
+                self.app.update_display_after_ai(index, 'Original_Text')
+
+            # --- Correct_Text ---
+            elif ai_job == "Correct_Text":
+                # Clean up common prefixes/markers
+                cleaned_response = re.sub(r"(?i)^Corrected Text:", "", response).strip()
+                self.app.main_df.loc[index, 'Corrected_Text'] = cleaned_response
+                # Call UI update handler
+                self.app.update_display_after_ai(index, 'Corrected_Text')
+
+            # --- Format_Text ---
+            elif ai_job == "Format_Text":
+                # Clean up common prefixes/markers
+                cleaned_response = re.sub(r"(?i)^Formatted Text:", "", response).strip()
+                self.app.main_df.loc[index, 'Formatted_Text'] = cleaned_response
+                # Log before calling UI update
+                self.app.error_logging(f"DataOperations: Preparing to call update_display_after_ai for Format_Text, index {index}", level="INFO")
+                # Call UI update handler
+                self.app.update_display_after_ai(index, 'Formatted_Text')
+
+            # --- Translation ---
+            elif ai_job == "Translation":
+                # Clean up common prefixes/markers
+                cleaned_response = re.sub(r"(?i)^Translation:", "", response).strip()
+                self.app.main_df.loc[index, 'Translation'] = cleaned_response
+                # Call UI update handler
+                self.app.update_display_after_ai(index, 'Translation')
+            # --- END MOVED TEXT UPDATE BLOCKS ---
+
+            # --- Handle other job types ---
+            elif ai_job == "Get_Names_and_Places":
                 # Ensure columns exist
                 if 'People' not in self.app.main_df.columns: self.app.main_df['People'] = ""
                 if 'Places' not in self.app.main_df.columns: self.app.main_df['Places'] = ""
-
-                # Use robust parsing - NOW CALLS LOCAL METHOD
+                # Use robust parsing
                 names, places = self.parse_names_places_response(cleaned_response)
-                print(f"DEBUG: update_df_with_ai_job_response writing People='{names}' Places='{places}' at index={index}")
+                self.app.error_logging(f"DEBUG: update_df_with_ai_job_response writing People='{names}' Places='{places}' at index={index}", level="DEBUG") # Changed print to log
                 self.app.main_df.loc[index, 'People'] = names
                 self.app.main_df.loc[index, 'Places'] = places
-
                 if names.strip() or places.strip():
                     highlight_names_places = True
             elif ai_job == "Metadata":
-                # Metadata extraction now handled by its own function for complexity
                 self.app.ai_functions_handler.extract_metadata_from_response(index, cleaned_response)
-                # No direct text toggle change, but may update other columns
             elif ai_job == "Auto_Rotate":
-                # Rotation is handled separately by update_image_rotation called within ai_function
+                # Handled elsewhere
                 pass
             elif ai_job == "Identify_Errors":
-                # Take just the first line if multiple lines exist
                 errors = cleaned_response.split('\n')[0].strip()
-                # Remove any potential prefix like "Errors:"
                 if errors.lower().startswith("errors:"):
                      errors = errors[7:].strip()
-
                 self.app.main_df.loc[index, 'Errors'] = errors
-
-                # Store which version of text the errors apply to
                 selected_source = getattr(self.app.ai_functions_handler, 'temp_selected_source', self.app.text_display_var.get())
                 self.app.main_df.loc[index, 'Errors_Source'] = selected_source
-
                 if errors:
                     highlight_errors_flag = True
 
-            # Update the target column and toggle if defined
-            if target_column:
-                self.app.main_df.loc[index, target_column] = cleaned_response
-            if new_toggle:
-                 self.app.main_df.loc[index, 'Text_Toggle'] = new_toggle
-                 # Update display dropdown if this is the current page
-                 if index == self.app.page_counter:
-                     self.app.text_display_var.set(new_toggle)
+            # --- Generic Highlight and Refresh Logic (Now runs AFTER potential DF updates) ---
 
-            # Set highlight flags
-            if highlight_changes: self.app.highlight_changes_var.set(True)
-            if highlight_names_places:
+            # Set highlight flags based on results (only for certain job types)
+            if highlight_names_places: # Set by Get_Names_and_Places
                 self.app.highlight_names_var.set(bool(self.app.main_df.loc[index, 'People'].strip()))
                 self.app.highlight_places_var.set(bool(self.app.main_df.loc[index, 'Places'].strip()))
-            if highlight_errors_flag: self.app.highlight_errors_var.set(True)
+            if highlight_errors_flag: # Set by Identify_Errors
+                self.app.highlight_errors_var.set(True)
+            # Potential future highlight logic could go here
 
-            # Refresh the display ONLY if the current page was updated
-            if index == self.app.page_counter:
+            # Refresh the display ONLY if the current page was updated AND the job wasn't one handled by update_display_after_ai
+            # The update_display_after_ai method now handles refresh for HTR, Correct, Format, Translate
+            if index == self.app.page_counter and ai_job not in ["HTR", "Correct_Text", "Format_Text", "Translation"]:
+                self.app.error_logging(f"DataOperations: Refreshing display via load_text for job {ai_job}, index {index}", level="INFO")
                 self.app.load_text() # This will re-apply highlights and update menus
+            elif index == self.app.page_counter:
+                # Log that refresh is handled by the specific callback for text-update jobs
+                self.app.error_logging(f"DataOperations: Refresh for job {ai_job}, index {index} handled by update_display_after_ai", level="INFO")
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update DataFrame for index {index}: {str(e)}")
