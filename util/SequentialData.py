@@ -4,6 +4,7 @@ import pandas as pd
 import math
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
+from util.JSONExtraction import extract_json_from_response
 
 def df_to_json_array(df, text_column):
     """
@@ -96,10 +97,14 @@ def _parse_index_string(index_str, app):
     app.error_logging(f"Parsing index string: '{index_str}'", level="DEBUG")
     
     # Handle comma-separated values directly, which is the most common format for 'Indecies'
+    app.error_logging(f"DEBUG _parse_index_string: Checking for comma in '{index_str}'", level="DEBUG")
     if ',' in index_str:
+        app.error_logging(f"DEBUG _parse_index_string: Comma found. Splitting by comma.", level="DEBUG")
         for part in index_str.split(','):
             part = part.strip()
+            app.error_logging(f"DEBUG _parse_index_string: Processing part '{part}'", level="DEBUG")
             if part and part.isdigit():
+                app.error_logging(f"DEBUG _parse_index_string: Part '{part}' is digit. Appending.", level="DEBUG")
                 try:
                     # Assume indices from API are 0-based
                     index_val = int(part)
@@ -109,19 +114,30 @@ def _parse_index_string(index_str, app):
                         app.error_logging(f"Skipping invalid 0 or negative index derived from '{part}'.", level="WARNING")
                 except ValueError:
                     app.error_logging(f"Could not convert part '{part}' to integer.", level="WARNING")
+            else:
+                app.error_logging(f"DEBUG _parse_index_string: Part '{part}' is empty or not digit.", level="DEBUG")
         
-        # If we successfully parsed comma-separated values, return them
+        app.error_logging(f"DEBUG _parse_index_string: After comma split loop, indices are: {indices}", level="DEBUG")
         if indices:
             app.error_logging(f"Parsed {len(indices)} indices from comma-separated list: {indices}", level="DEBUG")
+            app.error_logging(f"DEBUG _parse_index_string: Returning indices (Exit Point 1).", level="DEBUG")
             return indices
+        else:
+            app.error_logging(f"DEBUG _parse_index_string: No indices found after comma split. Proceeding to fallback.", level="DEBUG")
+    else:
+        app.error_logging(f"DEBUG _parse_index_string: No comma found. Proceeding to fallback.", level="DEBUG")
     
     # Fall back to the original parsing logic for space-separated or other formats
-    parts = re.split(r'[,\s]+', index_str.strip())
+    app.error_logging(f"DEBUG _parse_index_string: Using fallback regex split r'[\s,]+' on '{index_str.strip()}'", level="DEBUG")
+    parts = re.split(r'[\s,]+', index_str.strip()) # Use \s for any whitespace, retain comma
+    app.error_logging(f"DEBUG _parse_index_string: Fallback parts: {parts}", level="DEBUG")
     for part in parts:
         part = part.strip()
+        app.error_logging(f"DEBUG _parse_index_string: Processing fallback part '{part}'", level="DEBUG")
         if not part:
             continue
         if part.isdigit():
+            app.error_logging(f"DEBUG _parse_index_string: Fallback part '{part}' is digit. Appending.", level="DEBUG")
             try:
                 # Assume indices from API are 0-based
                 index_val = int(part)
@@ -137,6 +153,7 @@ def _parse_index_string(index_str, app):
             app.error_logging(f"Skipping non-numeric index part: '{part}'", level="WARNING")
     
     app.error_logging(f"Parsed {len(indices)} indices using fallback regex split: {indices}", level="DEBUG")
+    app.error_logging(f"DEBUG _parse_index_string: Returning indices (Exit Point 2).", level="DEBUG")
     return indices
 
 def call_sequential_api(app, df, preset_name):
@@ -178,107 +195,123 @@ def call_sequential_api(app, df, preset_name):
             current_chunk_last_data = None
 
             if raw_response and raw_response != "Error":
-                # Clean the raw response string
-                cleaned_json = str(raw_response).strip()
-                # Remove potential markdown code fences (```json ... ``` or ``` ... ```)
-                if cleaned_json.startswith("```json"):
-                    cleaned_json = cleaned_json[7:]
-                if cleaned_json.startswith("```"):
-                     cleaned_json = cleaned_json[3:]
-                if cleaned_json.endswith("```"):
-                    cleaned_json = cleaned_json[:-3]
-                cleaned_json = cleaned_json.strip() # Strip again after removal
+                # Use the new extraction function directly
+                # It handles cleaning, parsing, regex fallback, and basic error logging
+                parsed_chunk_data = extract_json_from_response(raw_response, app.error_logging)
 
-                try:
-                    parsed_chunk_data = json.loads(cleaned_json)
-                    if isinstance(parsed_chunk_data, list) and parsed_chunk_data: # Ensure it's a non-empty list
-                        first_item = parsed_chunk_data[0]
-                        # --- Format Detection ---
-                        if isinstance(first_item, dict) and 'index' in first_item:
-                            # OLD FORMAT: List of dicts, each with 'index'
-                            app.error_logging("Detected old format (list of dicts with 'index')", level="INFO")
-                            chunk_df = pd.DataFrame(parsed_chunk_data)
-                            results_dfs.append(chunk_df)
-                        elif isinstance(first_item, dict) and any(re.match(r'^[\d,\s-]+$', str(v)) for v in first_item.values()):
-                            # NEW FORMAT DETECTED: At least one value looks like a comma/space/hyphen separated list of numbers.
-                            app.error_logging("Detected new format (dict with one index-like key and data keys)", level="INFO")
-                            chunk_results = []
+                # Check if the extraction was successful and returned a non-empty list
+                if isinstance(parsed_chunk_data, list) and parsed_chunk_data:
+                    chunk_results = [] # Initialize list to hold rows for this chunk's DataFrame
 
-                            for item in parsed_chunk_data:
-                                if isinstance(item, dict):
-                                    index_key = None
-                                    index_str = None
-                                    data_to_apply = {}
+                    # Process each item (dictionary) in the parsed list
+                    for item in parsed_chunk_data:
+                        if not isinstance(item, dict) or not item:
+                            app.error_logging(f"Skipping non-dictionary or empty item in parsed data: {item}", level="WARNING")
+                            continue
 
-                                    # Find the index key and separate data keys
-                                    for k, v in item.items():
-                                        # Check if value looks like a list of indices (string of digits, commas, spaces, hyphens)
-                                        if isinstance(v, (str, int, float)) and re.match(r'^[\d,\s-]+$', str(v)):
-                                            if index_key is None: # Found the first potential index key
-                                                index_key = k
-                                                index_str = str(v)
-                                            else:
-                                                 app.error_logging(f"Warning: Multiple potential index keys found in item: {item}. Using first one found ('{index_key}').", level="WARNING")
-                                                 data_to_apply[k] = v # Treat subsequent index-like keys as data for now
-                                        else:
-                                            data_to_apply[k] = v # This is a data key
+                        try:
+                            item_keys = list(item.keys())
+                            if not item_keys:
+                                app.error_logging(f"Skipping item with no keys: {item}", level="WARNING")
+                                continue
 
-                                    if index_key is not None and index_str is not None:
-                                        indices = _parse_index_string(index_str, app) # Parse the found index string
-                                        # Data_to_apply now contains all keys *except* the identified index_key
-                                        
-                                        # Ensure all indices got parsed properly
-                                        if not indices and index_str.strip():
-                                            app.error_logging(f"Warning: Failed to parse any indices from '{index_str}'", level="WARNING")
-                                        
-                                        # Fix for 'Indecies' field when multiple indices are combined
-                                        if index_key.lower() == 'indecies' or index_key.lower() == 'indices':
-                                            app.error_logging(f"Found grouped indices: {index_str}", level="INFO")
-                                            # Make sure we have at least one index
-                                            if not indices:
-                                                # Try a fallback parse for comma-separated indices
-                                                try:
-                                                    indices_str = index_str.strip()
-                                                    raw_indices = [int(idx.strip()) for idx in indices_str.split(',') if idx.strip().isdigit()]
-                                                    if raw_indices:
-                                                        indices = raw_indices
-                                                        app.error_logging(f"Parsed {len(indices)} indices using fallback method", level="INFO")
-                                                except Exception as e:
-                                                    app.error_logging(f"Fallback parsing failed: {e}", level="WARNING")
+                            # Assume the first key is the index key
+                            index_key_name = item_keys[0]
+                            index_value = item[index_key_name]
 
-                                        for idx in indices:
-                                            row_data = {'index': idx}
-                                            row_data.update(data_to_apply) # Add the extracted data
-                                            chunk_results.append(row_data)
-                                    else:
-                                         app.error_logging(f"Skipping item: Could not identify a unique index key in {item}", level="WARNING")
-                                else:
-                                     app.error_logging(f"Skipping invalid item in new format list: {item}", level="WARNING")
+                            # Collect all other keys and their values as data
+                            data_to_apply = {k: v for i, (k, v) in enumerate(item.items()) if i > 0}
 
-                            if chunk_results:
-                                chunk_df = pd.DataFrame(chunk_results)
-                                # Get the data from the *last* item processed in this chunk
-                                if chunk_results:
-                                    last_processed_item_in_chunk = chunk_results[-1]
-                                    # We need the data part, excluding the 'index' key
-                                    current_chunk_last_data = {k: v for k, v in last_processed_item_in_chunk.items() if k != 'index'}
+                            indices = []
+                            # Determine indices based on the type of the index_value
+                            if isinstance(index_value, int):
+                                indices = [index_value] # Single index
+                            elif isinstance(index_value, str):
+                                # Parse the string value (e.g., "0, 1, 2")
+                                indices = _parse_index_string(index_value, app)
+                                # --- DEBUG: Print parsed indices ---
+                                app.error_logging(f"DEBUG: Parsed indices from '{index_value}': {indices}", level="DEBUG")
+                                # --- END DEBUG ---
+                            else:
+                                app.error_logging(f"Unexpected type for index key '{index_key_name}': {type(index_value)}. Value: {index_value}. Skipping item.", level="WARNING")
+                                continue # Skip this item if index format is wrong
 
-                                # Log columns found in this chunk's df for debugging
-                                app.error_logging(f"Chunk DF columns: {chunk_df.columns.tolist()}", level="DEBUG")
-                                app.error_logging(f"Chunk DF shape: {chunk_df.shape}, rows processed: {len(chunk_results)}", level="INFO")
-                                results_dfs.append(chunk_df)
+                            if not indices:
+                                app.error_logging(f"Could not extract valid indices from key '{index_key_name}' with value '{index_value}'. Skipping item.", level="WARNING")
+                                continue # Skip if parsing indices failed
+
+                            # Create a row for each index
+                            for idx in indices:
+                                row_data = {'index': idx}
+                                row_data.update(data_to_apply)
+                                chunk_results.append(row_data)
+
+                        except Exception as item_processing_error:
+                            app.error_logging(f"Error processing item based on key order: {item_processing_error}. Item: {item}", level="ERROR")
+                            continue # Skip to the next item on error
+
+                    # After processing all items, check if we gathered any results
+                    if chunk_results:
+                        chunk_df = pd.DataFrame(chunk_results)
+                        
+                        # --- DEBUG: Print head and tail of chunk_df ---
+                        print("\n--- Chunk DF Head (Debug) ---")
+                        print(chunk_df.head(3))
+                        print("\n--- Chunk DF Tail (Debug) ---")
+                        print(chunk_df.tail(3))
+                        print("--- End Chunk DF Debug ---\n")
+                        # --- END DEBUG ---
+                        
+                        # Get the context data from the *last* processed item's data
+                        # Find the last item in the original parsed_chunk_data that was successfully processed
+                        last_processed_original_item = None
+                        if parsed_chunk_data:
+                           # Iterate backwards through original items to find the one corresponding to the last chunk_result
+                           # This assumes indices are unique within the chunk processing
+                           if chunk_results:
+                              last_idx_in_results = chunk_results[-1].get('index')
+                              for original_item in reversed(parsed_chunk_data):
+                                 if isinstance(original_item, dict):
+                                     original_keys = list(original_item.keys())
+                                     if original_keys:
+                                         original_index_key = original_keys[0]
+                                         original_index_val = original_item.get(original_index_key)
+                                         parsed_original_indices = []
+                                         if isinstance(original_index_val, int):
+                                             parsed_original_indices = [original_index_val]
+                                         elif isinstance(original_index_val, str):
+                                             parsed_original_indices = _parse_index_string(original_index_val, app)
+
+                                         if last_idx_in_results in parsed_original_indices:
+                                             last_processed_original_item = original_item
+                                             break # Found the item
+
+                        if last_processed_original_item:
+                            item_keys = list(last_processed_original_item.keys())
+                            # Use the identified item to extract context data (all keys except the first)
+                            current_chunk_last_data = {k: v for i, (k, v) in enumerate(last_processed_original_item.items()) if i > 0}
+                            app.error_logging(f"Set context for next chunk: {current_chunk_last_data}", level="DEBUG")
                         else:
-                            # Unrecognized format
-                            app.error_logging(f"Unrecognized JSON structure in chunk response: First item: {first_item}", level="WARNING")
-                            app.error_logging(f"Problematic JSON string (cleaned):\n{cleaned_json}", level="DEBUG")
+                            current_chunk_last_data = None # Reset if context couldn't be determined
+                            app.error_logging("Could not determine context for next chunk from last processed item.", level="WARNING")
 
+                        # Log columns found and append DF
+                        app.error_logging(f"Chunk DF columns: {chunk_df.columns.tolist()}", level="DEBUG")
+                        app.error_logging(f"Chunk DF shape: {chunk_df.shape}, rows processed: {len(chunk_results)}", level="INFO")
+                        results_dfs.append(chunk_df)
+                        app.error_logging(f"Appended chunk_df to results_dfs. Current count: {len(results_dfs)}", level="DEBUG")
                     else:
+                        app.error_logging("No valid rows generated from parsed chunk data.", level="WARNING")
+                        # Ensure context is reset if no valid rows were generated
+                        current_chunk_last_data = None
+
+                else:
+                     # This else catches cases where parsed_chunk_data is None (extraction failed)
+                     # or it wasn't a non-empty list
+                     if parsed_chunk_data is not None: # Only log if it wasn't None but still invalid
                          app.error_logging(f"Parsed JSON chunk was not a non-empty list: {type(parsed_chunk_data)}", level="WARNING")
-                         app.error_logging(f"Problematic JSON string (cleaned):\n{cleaned_json}", level="DEBUG")
-                         
-                except json.JSONDecodeError as e:
-                    app.error_logging(f"Error decoding JSON chunk: {e}", level="ERROR")
-                    app.error_logging(f"Problematic JSON string (cleaned):\n{cleaned_json}", level="DEBUG")
+                     # Error logging for failed parsing is handled within extract_json_from_response
+
             elif raw_response == "Error":
                  app.error_logging("API call for a chunk returned 'Error'", level="ERROR")
             # else: response was None or empty, ignore
