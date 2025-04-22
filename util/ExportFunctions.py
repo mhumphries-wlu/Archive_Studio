@@ -787,12 +787,23 @@ class ExportManager:
         new_sequential_columns = [] # Initialize
         original_columns = set(compiled_df.columns)
         result_df = pd.DataFrame() # Initialize empty result df
+        progress_window, progress_bar, progress_label = None, None, None # Initialize progress bar vars
+
         try:
             self.app.error_logging(f"Starting sequential analysis with preset: {preset_name or 'Sequence_Dates'}", level="INFO")
-            
+
+            # --- Create Progress Bar ---
+            total_items = len(compiled_df)
+            progress_window, progress_bar, progress_label = self.app.progress_bar.create_progress_window(
+                "Analyzing Sequential Data..."
+            )
+            self.app.progress_bar.update_progress(0, total_items)
+            # --- End Progress Bar Creation ---
+
             # Call the API which now handles chunking and returns a combined DataFrame of results
+            # Removed progress_window, progress_bar, progress_label arguments
             result_df = call_sequential_api(self.app, compiled_df, preset_name or "Sequence_Dates")
-            
+
             # Check if result_df is empty (due to API errors or parsing errors in all chunks)
             if result_df.empty:
                 self.app.error_logging("Sequential API calls/parsing failed to produce results DataFrame.", level="ERROR")
@@ -820,10 +831,23 @@ class ExportManager:
                  if result_df['index'].duplicated().any():
                      self.app.error_logging("Warning: Duplicate values found in 'index' column, later entries will override earlier ones", level="WARNING")
                      
+                 # Drop rows with NaN index before setting
+                 result_df = result_df.dropna(subset=['index'])
+                 # Convert index to int if possible, handle potential errors
+                 try:
+                     result_df['index'] = result_df['index'].astype(int)
+                 except ValueError:
+                     self.app.error_logging("Warning: Could not convert 'index' column to int.", level="WARNING")
+                     
                  result_df = result_df.set_index('index')
             else:
                  self.app.error_logging("Sequential API result DataFrame missing 'index' column for merging.", level="ERROR")
                  return compiled_df, new_sequential_columns
+
+            # Identify new columns BEFORE merging
+            original_columns = set(compiled_df.columns)
+            new_sequential_columns = [col for col in result_df.columns if col not in original_columns]
+            self.app.error_logging(f"Identified new sequential columns: {new_sequential_columns}", level="INFO")
 
             # --- Add Debug Logging --- 
             self.app.error_logging(f"Compiled DF length: {len(compiled_df)}, Result DF length: {len(result_df)}", level="INFO")
@@ -833,10 +857,6 @@ class ExportManager:
             self.app.error_logging(f"Result DF (from API) BEFORE update:\n{result_df.tail(3)}", level="DEBUG")
             # --- End Debug Logging ---
 
-            # Identify new columns before merging
-            new_sequential_columns = [col for col in result_df.columns if col not in original_columns]
-            
-            # --- Revised Merge Strategy --- 
             # Preserve original compiled_df index
             compiled_df_original_index = compiled_df.index
 
@@ -859,6 +879,9 @@ class ExportManager:
                     compiled_df[col] = compiled_df[api_col].combine_first(compiled_df[col])
                     # Drop the temporary API column
                     compiled_df = compiled_df.drop(columns=[api_col])
+
+            # Log columns after merge and combine_first
+            self.app.error_logging(f"Columns in compiled_df AFTER merge and combine_first: {compiled_df.columns.tolist()}", level="DEBUG")
 
             # Check for rows that should have data but don't
             expected_rows = compiled_df_original_index.tolist()
@@ -893,8 +916,17 @@ class ExportManager:
         except Exception as e:
             self.app.error_logging(f"Error during sequential data analysis or merge: {str(e)}\n{traceback.format_exc()}", level="ERROR")
             
+        finally: # --- Ensure Progress Bar is Closed ---
+            if progress_window:
+                self.app.progress_bar.close_progress_window()
+            # --- End Ensure Progress Bar is Closed ---
+
         # Return the modified DataFrame and the list of new column names
-        return compiled_df, new_sequential_columns
+        # Ensure the list of new columns is accurate based on the final df state
+        final_original_columns = set(pre_merge_df.columns)
+        final_new_columns = [col for col in compiled_df.columns if col not in final_original_columns]
+        self.app.error_logging(f"Returning final new columns: {final_new_columns}", level="INFO")
+        return compiled_df, final_new_columns
         
     def _prepare_date_df(self, compiled_df):
         """Prepare dataframe for date analysis."""
@@ -1293,11 +1325,14 @@ class ExportManager:
         # Filter for existing columns and remove duplicates, maintaining order
         final_columns = []
         seen_columns = set()
+        self.app.error_logging(f"Columns available in compiled_df for final selection: {compiled_df.columns.tolist()}", level="DEBUG") # Log available columns
+        self.app.error_logging(f"Combined columns requested for export: {combined_columns}", level="DEBUG") # Log requested columns
+        
         for col in combined_columns:
-            if col in export_df.columns and col not in seen_columns:
+            if col in compiled_df.columns and col not in seen_columns:
                 final_columns.append(col)
                 seen_columns.add(col)
-            elif col not in export_df.columns:
+            elif col not in compiled_df.columns:
                  self.app.error_logging(f"Column '{col}' requested for export but not found in DataFrame.", level="WARNING")
         
         # Remove any stray index column if present

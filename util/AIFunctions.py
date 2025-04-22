@@ -57,7 +57,7 @@ class AIFunctionsHandler:
             # REMOVED traceback.print_exc()
             return "Error", index
 
-    def ai_function(self, all_or_one_flag="All Pages", ai_job="HTR", batch_size=None, selected_metadata_preset=None, export_text_source=None):
+    def ai_function(self, all_or_one_flag="All Pages", ai_job="HTR", batch_size=None, selected_metadata_preset=None, export_text_source=None, show_final_message=True):
         """ Main function to orchestrate AI jobs """
         # If export_text_source is provided (when called from export), set it as temp_selected_source
         # This ensures the existing logic for text source selection works correctly
@@ -522,8 +522,8 @@ class AIFunctionsHandler:
             if self.app.button1['state'] == 'disabled':
                  self.app.toggle_button_state()
 
-            # Final status message - **FIX:** Only show if not Chunk_Text
-            if ai_job != "Chunk_Text":
+            # Final status message - **FIX:** Only show if show_final_message is True and not Chunk_Text
+            if show_final_message and ai_job != "Chunk_Text": # <-- Check show_final_message flag
                 if error_count > 0:
                     total_processed_or_error = len(processed_indices) # Count includes errors and skips after submission
                     success_count = total_processed_or_error - error_count

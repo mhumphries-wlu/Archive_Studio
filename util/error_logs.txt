@@ -2087,3 +2087,136 @@ PermissionError: [Errno 13] Permission denied: 'C:/Users/mark_/OneDrive/Test/nex
 2025-04-21 22:37:06 [ERROR]: Using column 'Original_Text' for text
 2025-04-21 22:37:06 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
 2025-04-21 22:37:06 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Date', 'People', 'Places', 'Summary', 'Location']
+2025-04-21 22:43:46 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 22:43:49 [ERROR]: Starting CSV export process
+2025-04-21 22:43:49 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 22:43:49 [ERROR]: Added missing column: Text
+2025-04-21 22:43:49 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 22:43:49 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 22:43:49 [ERROR]: Reset index for temp_df. New length: 337
+2025-04-21 22:44:40 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 22:44:40 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 22:44:40 [ERROR]: Added essential column: Creation_Place
+2025-04-21 22:44:40 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 22:44:40 [ERROR]: Copied 337 values for column: Document_Type
+2025-04-21 22:44:40 [ERROR]: Copied 337 values for column: Author
+2025-04-21 22:44:40 [ERROR]: Copied 337 values for column: Correspondent
+2025-04-21 22:44:40 [ERROR]: Copied 337 values for column: Correspondent_Place
+2025-04-21 22:44:40 [ERROR]: Copied 337 values for column: Date
+2025-04-21 22:44:40 [ERROR]: Copied 337 values for column: Place_of_Creation
+2025-04-21 22:44:40 [ERROR]: Copied 337 values for column: People
+2025-04-21 22:44:40 [ERROR]: Copied 337 values for column: Places
+2025-04-21 22:44:40 [ERROR]: Copied 337 values for column: Summary
+2025-04-21 22:44:40 [ERROR]: Copied 337 values for column: Creation_Place
+2025-04-21 22:44:40 [ERROR]: Single author specified: Angus Bethune
+2025-04-21 22:44:40 [ERROR]: Citation specified: HBCA, B194-A-2
+2025-04-21 22:44:40 [ERROR]: Error during sequential data analysis or merge: call_sequential_api() got an unexpected keyword argument 'progress_window'
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 804, in _analyze_sequential_data
+    result_df = call_sequential_api(
+        self.app,
+    ...<7 lines>...
+        # --- End Pass Progress Bar Components ---
+    )
+TypeError: call_sequential_api() got an unexpected keyword argument 'progress_window'
+
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 804, in _analyze_sequential_data
+    result_df = call_sequential_api(
+        self.app,
+    ...<7 lines>...
+        # --- End Pass Progress Bar Components ---
+    )
+TypeError: call_sequential_api() got an unexpected keyword argument 'progress_window'
+2025-04-21 22:44:40 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: []
+2025-04-21 22:44:40 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 22:44:40 [ERROR]: Applying single author override: Angus Bethune
+2025-04-21 22:44:40 [ERROR]: Applying citation override: HBCA, B194-A-2
+2025-04-21 22:44:40 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 22:44:40 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Author', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 22:49:22 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 22:49:25 [ERROR]: Starting CSV export process
+2025-04-21 22:49:25 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 22:49:25 [ERROR]: Added missing column: Text
+2025-04-21 22:49:25 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 22:49:25 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 22:49:25 [ERROR]: Reset index for temp_df. New length: 11
+2025-04-21 22:49:32 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 22:49:32 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 22:49:32 [ERROR]: Added essential column: Creation_Place
+2025-04-21 22:49:32 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 22:49:32 [ERROR]: Copied 11 values for column: Document_Type
+2025-04-21 22:49:32 [ERROR]: Copied 11 values for column: Author
+2025-04-21 22:49:32 [ERROR]: Copied 11 values for column: Correspondent
+2025-04-21 22:49:32 [ERROR]: Copied 11 values for column: Correspondent_Place
+2025-04-21 22:49:32 [ERROR]: Copied 11 values for column: Date
+2025-04-21 22:49:32 [ERROR]: Copied 11 values for column: Place_of_Creation
+2025-04-21 22:49:32 [ERROR]: Copied 11 values for column: People
+2025-04-21 22:49:32 [ERROR]: Copied 11 values for column: Places
+2025-04-21 22:49:32 [ERROR]: Copied 11 values for column: Summary
+2025-04-21 22:49:32 [ERROR]: Copied 11 values for column: Creation_Place
+2025-04-21 22:49:32 [ERROR]: Error during sequential data analysis or merge: call_sequential_api() got an unexpected keyword argument 'progress_window'
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 804, in _analyze_sequential_data
+    result_df = call_sequential_api(
+        self.app,
+    ...<7 lines>...
+        # --- End Pass Progress Bar Components ---
+    )
+TypeError: call_sequential_api() got an unexpected keyword argument 'progress_window'
+
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 804, in _analyze_sequential_data
+    result_df = call_sequential_api(
+        self.app,
+    ...<7 lines>...
+        # --- End Pass Progress Bar Components ---
+    )
+TypeError: call_sequential_api() got an unexpected keyword argument 'progress_window'
+2025-04-21 22:49:38 [ERROR]: CSV export error: cannot access local variable 'pre_merge_df' where it is not associated with a value
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 444, in export_as_csv
+    compiled_df, new_sequential_columns = self._analyze_sequential_data(compiled_df, sequential_preset)
+                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 935, in _analyze_sequential_data
+    final_original_columns = set(pre_merge_df.columns)
+                                 ^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'pre_merge_df' where it is not associated with a value
+
+Stack trace:
+Traceback (most recent call last):
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 444, in export_as_csv
+    compiled_df, new_sequential_columns = self._analyze_sequential_data(compiled_df, sequential_preset)
+                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Programs\TranscriptionPearl\util\ExportFunctions.py", line 935, in _analyze_sequential_data
+    final_original_columns = set(pre_merge_df.columns)
+                                 ^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'pre_merge_df' where it is not associated with a value
+2025-04-21 22:55:15 [ERROR]: Resolved 'Current Display' to actual column: Original_Text
+2025-04-21 22:55:18 [ERROR]: Starting CSV export process
+2025-04-21 22:55:18 [ERROR]: Ensuring these columns exist in the DataFrame: ['Page', 'Text', 'Citation', 'Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'People', 'Places', 'Translation', 'Separated_Text', 'Creation_Place', 'Date']
+2025-04-21 22:55:18 [ERROR]: Added missing column: Text
+2025-04-21 22:55:18 [ERROR]: Added missing column: Place_of_Creation
+2025-04-21 22:55:18 [ERROR]: Using resolved text source column: Original_Text
+2025-04-21 22:55:18 [ERROR]: Reset index for temp_df. New length: 11
+2025-04-21 22:57:39 [ERROR]: Restored original index to updated_df for alignment.
+2025-04-21 22:57:39 [ERROR]: Using metadata headers from preset 'Standard Metadata': Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary
+2025-04-21 22:57:39 [ERROR]: Added essential column: Creation_Place
+2025-04-21 22:57:39 [ERROR]: Metadata columns to copy: ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary', 'Creation_Place']
+2025-04-21 22:57:39 [ERROR]: Copied 11 values for column: Document_Type
+2025-04-21 22:57:39 [ERROR]: Copied 11 values for column: Author
+2025-04-21 22:57:39 [ERROR]: Copied 11 values for column: Correspondent
+2025-04-21 22:57:39 [ERROR]: Copied 11 values for column: Correspondent_Place
+2025-04-21 22:57:39 [ERROR]: Copied 11 values for column: Date
+2025-04-21 22:57:39 [ERROR]: Copied 11 values for column: Place_of_Creation
+2025-04-21 22:57:39 [ERROR]: Copied 11 values for column: People
+2025-04-21 22:57:39 [ERROR]: Copied 11 values for column: Places
+2025-04-21 22:57:39 [ERROR]: Copied 11 values for column: Summary
+2025-04-21 22:57:39 [ERROR]: Copied 11 values for column: Creation_Place
+2025-04-21 22:57:42 [ERROR]: Successfully merged sequential analysis results. New columns added: ['Location']
+2025-04-21 22:57:42 [ERROR]: Preparing export dataframe. Text source: Original_Text, New sequential cols: ['Location']
+2025-04-21 22:57:42 [ERROR]: Using column 'Original_Text' for text
+2025-04-21 22:57:42 [ERROR]: Metadata headers from preset 'Standard Metadata': ['Document_Type', 'Author', 'Correspondent', 'Correspondent_Place', 'Date', 'Place_of_Creation', 'People', 'Places', 'Summary']
+2025-04-21 22:57:42 [ERROR]: Final columns selected for export after empty check: ['Page', 'Original_Text', 'Document_Type', 'Date', 'People', 'Places', 'Summary', 'Location']
