@@ -269,8 +269,28 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'name': "Collate_Names",
                 'model': "gemini-2.5-pro-preview-03-25",
                 'temperature': "0.2",
-                'general_instructions': '''You are given a list of historical names potentially containing spelling variations or OCR errors. Your task is to group variants of the same person together and choose the most complete or correct spelling as the primary entry. Format the output STRICTLY as follows, starting each line with the chosen primary spelling, followed by '=', then all identified variants (including the primary spelling itself) separated by semicolons.\n\nRules:\n- Group variants based on likely identity (similar spelling, OCR errors, phonetic similarity).\n- Ignore minor variations like titles (Mr, Mrs, Dr) unless they differentiate people.\n- If first names/initials differ significantly, consider them separate entries unless context strongly suggests otherwise.\n- Every single item from the input list MUST appear as a variant in exactly one group in your output.\n- Output only the grouped lists in the specified format, starting immediately with the first primary spelling.\n\nFormat Example:\nJohn Smith = John Smith; Jon Smyth; J. Smith\n''',
-                'specific_instructions': 'Collate the following list of names. Ensure every item appears in the output. Format according to the rules provided.\n\nList:\n{text_for_llm}',
+                'general_instructions': f"""You are given the text of a primary document and all the various spellings of the names of people mentioned in that document. Your task is to identify cases where more than one spelling (including errors and typos) is used to refer to a specific person in the document and then correct those errors. You will compile a list of names and their corrections which will be used in a regex function, replacing the error text with the correction.
+
+RULES
+
+Follow these rules when compiling your list of names and corrections:
+
+- Only include cases where a name is spelled more than one way in your list.
+- Treat whole names (IE "John Smith" as in "Last night John Smith arrived") as separate entries from single last names (IE "Smith" as in "Last night Smith arrived"); ignore orphaned/single first names entirely (IE "John" as in "Last night John arrived").
+- Treat pluralized and possessives as separate entries from their singular/non-possessive forms (IE "John Smith's" would be a seperate correction item from "John Smith" to avoid confusion).
+- Ignore honorifics, titles, etc unless the honorific/title requires correcting (IE use "John Smith" for "Mr. John Smith", "John Smith, Esq.", etc but correct "Mf. John Smith" to "Mr. John Smith" etc).
+- Group variants of the same name together where a single change would apply to all errors (IE "John Smith = Johh Smith, Jonn Smith, John Smeth, John Smmth")
+
+OUTPUT FORMAT
+
+Each item in your list must be written on a new line. Each new line begins with the correction/correct form of the name followed by an equals sign and then the list of errors to which we will apply the correction in a semi-colon delineated list. Do not include any explanations or additional information in your list.
+
+Example Output:
+
+John Smith = John Smith; Jonn Smyth; Johh Smith
+J. Smith = J Smeth; J Smmth; 7 Smith
+Smith = Smihh; Smethh""",
+                'specific_instructions': 'List of names to process:\n{text_for_llm}',
                 'val_text': '',
                 'use_images': False,
                 'current_image': "No",
@@ -543,20 +563,44 @@ If you don't have information for a heading or don't know, leave it blank.'''
             json.dump(settings, f, indent=4)
 
     def load_settings(self):
+        # Store default presets before loading from file
+        default_analysis_presets = self._ensure_image_fields(self.analysis_presets)
+        # Add other default preset lists here if needed for merging later
+
         try:
             with open(self.settings_file_path, 'r') as f:
                 settings = json.load(f)
-                
+
             # Load all settings using get() to provide defaults
             for key, value in settings.items():
                 if hasattr(self, key):
+                    # Skip loading presets here, handle them specifically after this loop
                     if key.endswith('_presets') and isinstance(value, list):
-                        setattr(self, key, self._ensure_image_fields(value))
+                        continue # Handle presets separately below
                     else:
                         setattr(self, key, value)
-            # Ensure format_presets is loaded if present in file but not in self
-            if 'format_presets' in settings:
-                self.format_presets = self._ensure_image_fields(settings['format_presets'])
+
+            # --- Merge Presets ---
+            # Load analysis presets from file, ensuring image fields
+            loaded_analysis_presets = self._ensure_image_fields(settings.get('analysis_presets', []))
+            # Get names of loaded presets
+            loaded_analysis_names = {p['name'] for p in loaded_analysis_presets}
+            # Add default presets if they are missing in the loaded list
+            for default_preset in default_analysis_presets:
+                if default_preset['name'] not in loaded_analysis_names:
+                    loaded_analysis_presets.append(default_preset)
+            self.analysis_presets = loaded_analysis_presets
+
+            # --- Load other preset types (ensure they exist in settings before loading) ---
+            preset_keys = ['function_presets', 'chunk_text_presets', 'format_presets', 'metadata_presets', 'sequential_metadata_presets']
+            for key in preset_keys:
+                if key in settings and isinstance(settings[key], list):
+                    setattr(self, key, self._ensure_image_fields(settings[key]))
+                # Optional: Add merging logic for other presets here if needed in the future,
+                # similar to how analysis_presets was handled above.
+
+            # --- Load remaining specific settings ---
+            # Ensure format_presets is loaded if present in file but not in self (already handled above)
             # Ensure sequential_batch_size is loaded if present
             if 'sequential_batch_size' in settings:
                 self.sequential_batch_size = settings['sequential_batch_size']
@@ -566,8 +610,25 @@ If you don't have information for a heading or don't know, leave it blank.'''
                 'query_system_prompt', 'query_val_text', 'query_model']:
                 if field in settings:
                     setattr(self, field, settings[field])
+
+            # Load backward-compatible metadata settings if presets aren't the primary source
+            if 'metadata_preset' in settings: # Check if the old structure might be dominant
+                 self.metadata_preset = settings.get('metadata_preset', "Standard Metadata")
+                 self.metadata_model = settings.get('metadata_model', self.metadata_presets[0]['model'])
+                 self.metadata_temp = settings.get('metadata_temp', self.metadata_presets[0]['temperature'])
+                 self.metadata_system_prompt = settings.get('metadata_system_prompt', self.metadata_presets[0]['general_instructions'])
+                 self.metadata_user_prompt = settings.get('metadata_user_prompt', self.metadata_presets[0]['specific_instructions'])
+                 self.metadata_val_text = settings.get('metadata_val_text', self.metadata_presets[0]['val_text'])
+                 self.metadata_headers = settings.get('metadata_headers', self.metadata_presets[0]['metadata_headers'])
+
         except FileNotFoundError:
             self.restore_defaults()
+        except json.JSONDecodeError:
+            print(f"Error decoding settings file: {self.settings_file_path}. Restoring defaults.")
+            self.restore_defaults()
+        except Exception as e:
+            print(f"Unexpected error loading settings: {e}. Restoring defaults.")
+            self.restore_defaults() # Restore defaults on any unexpected error during loading
 
     def _ensure_image_fields(self, presets):
         # Helper to ensure num_prev_images and num_after_images are present in all presets
