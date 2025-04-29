@@ -1,12 +1,9 @@
-# ArchivePearl
+# Archive Studio
 
-[![Version](https://img.shields.io/badge/Version-1.0%20beta-blue.svg)](https://github.com/mhumphries2323/ArchivePearl) <!-- Replace with actual repo link -->
+[![Version](https://img.shields.io/badge/Version-1.0%20beta-blue.svg)](https://github.com/mhumphries2323/ArchiveStudio) <!-- Replace with actual repo link -->
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
 A desktop application for Microsoft Windows designed to assist historians, archivists, and researchers in processing, transcribing, and analyzing historical documents using Large Language Models (LLMs) via API services (OpenAI, Google, and Anthropic).
-
-<!-- Optional: Add a screenshot or GIF here -->
-<!-- ![ArchivePearl Screenshot](link_to_screenshot.png) -->
 
 ---
 
@@ -32,7 +29,7 @@ A desktop application for Microsoft Windows designed to assist historians, archi
 
 ## Overview
 
-ArchivePearl integrates document viewing, text editing, and Artificial Intelligence (AI) capabilities via external APIs (OpenAI, Anthropic, Google) to facilitate tasks such as transcription (HTR), text correction, relevance analysis, metadata extraction, document separation ("chunking"), and content analysis for historical documents.
+Archive Studio integrates document viewing, text editing, and Artificial Intelligence (AI) capabilities via external APIs (OpenAI, Anthropic, Google) to facilitate tasks such as transcription (HTR), text correction, relevance analysis, metadata extraction, document separation ("chunking"), and content analysis for historical documents.
 
 It provides a structured environment for managing document images and their associated textual data through various processing stages, supporting batch processing to significantly speed up research workflows. The application is designed primarily for academic and research purposes, helping users transform raw historical documents into structured, analyzable data.
 
@@ -56,9 +53,9 @@ It provides a structured environment for managing document images and their asso
 
 ## User Manual
 
-A comprehensive **ArchivePearl User Manual (v1.0 beta)** is available in the repository:
+A comprehensive **ArchiveStudio User Manual (v1.0 beta)** is available in the repository:
 
-**[ArchivePearl_User_Manual_v1.0_beta.pdf](Manual.pdf)** 
+**[ArchiveStudio_User_Manual_v1.0_beta.pdf](Manual.pdf)** 
 
 This manual provides detailed instructions on:
 
@@ -81,25 +78,25 @@ This manual provides detailed instructions on:
 
 ## Installation
 
-1.  Download the latest `ArchivePearl.exe` executable file and the accompanying `util` directory from the [Releases page](https://github.com/mhumphries2323/ArchivePearl/releases) or the repository. <!-- **IMPORTANT:** Update this link -->
-2.  Create a dedicated directory for the application (e.g., `C:\ArchivePearl`).
-3.  Move the `ArchivePearl.exe` file AND the entire `util` directory (with all its contents) into the directory you created. The program requires the files within the `util` folder to function correctly.
-4.  **Antivirus Software:** As unsigned software, ArchivePearl might be flagged by Windows Defender or other antivirus programs. You may need to create an exception to allow the program to run. Ensure the entire program directory is allowed.
+1.  Download the latest `ArchiveStudio.exe` executable file and the accompanying `util` directory from the [Releases page](https://github.com/mhumphries2323/ArchiveStudio/releases) or the repository. <!-- **IMPORTANT:** Update this link -->
+2.  Create a dedicated directory for the application (e.g., `C:\ArchiveStudio`).
+3.  Move the `ArchiveStudio.exe` file AND the entire `util` directory (with all its contents) into the directory you created. The program requires the files within the `util` folder to function correctly.
+4.  **Antivirus Software:** As unsigned software, ArchiveStudio might be flagged by Windows Defender or other antivirus programs. You may need to create an exception to allow the program to run. Ensure the entire program directory is allowed.
 
 ## API Key Setup
 
-Using the AI features of ArchivePearl **requires API keys** from OpenAI, Anthropic, and/or Google.
+Using the AI features of ArchiveStudio **requires API keys** from OpenAI, Anthropic, and/or Google.
 
 1.  **Obtain Keys:** Follow the instructions in **Section 3.3 of the User Manual** to create accounts and generate API keys on the respective provider platforms.
 2.  **Configure Billing:** Set up billing information or purchase credits on each platform you intend to use.
 3.  **Set Usage Limits (Recommended):** Configure spending limits within your provider accounts to prevent unexpected costs.
-4.  **Enter Keys in ArchivePearl:** Launch ArchivePearl, go to `File -> Settings -> API Settings`, and paste your keys into the corresponding fields. Keys are stored locally on your machine.
+4.  **Enter Keys in ArchiveStudio:** Launch ArchiveStudio, go to `File -> Settings -> API Settings`, and paste your keys into the corresponding fields. Keys are stored locally on your machine.
 
 **Warning:** API usage is billed by the AI providers based on data processed (tokens for text, per image/tile for images). Familiarize yourself with provider pricing before processing documents. See **Section 3.2 of the User Manual** for more details on costs and tokenization.
 
 ## Basic Workflow
 
-1.  **Launch** the `ArchivePearl.exe` application.
+1.  **Launch** the `ArchiveStudio.exe` application.
 2.  **Create a New Project** (`File -> New Project`) or **Open an Existing Project** (`File -> Open Project`).
 3.  **Import Documents:**
     *   `File -> Import PDF...` (extracts images and embedded text)
@@ -128,11 +125,11 @@ Application behavior, especially AI functions, is controlled via the **Settings*
     *   `Format`: Define text reformatting rules.
 *   Settings can be **Saved**, **Loaded**, **Exported** (`.psf`), **Imported**, or **Restored to Defaults**.
 
-Settings are stored locally in `settings.json` (typically in `C:\Users\[YourUsername]\AppData\Roaming\ArchivePearl`).
+Settings are stored locally in `settings.json` (typically in `C:\Users\[YourUsername]\AppData\Roaming\ArchiveStudio`).
 
 ## Exporting
 
-ArchivePearl offers various export options (`File` menu):
+ArchiveStudio offers various export options (`File` menu):
 
 *   **Single Text File:** Combines text from all documents/pages.
 *   **Separate Text Files:** One `.txt` file per document/page.
@@ -166,7 +163,7 @@ Under the following terms:
 
 If you use this software in your research, please cite:
 
-> Mark Humphries, 2024. ArchivePearl 1.0 Beta. Department of History: Wilfrid Laurier University.
+> Mark Humphries, 2024. ArchiveStudio 1.0 Beta. Department of History: Wilfrid Laurier University.
 
 If you wish to cite the paper that explores related research:
 
@@ -197,4 +194,4 @@ This software utilizes APIs provided by:
 *   [Google (Gemini Models)](https://ai.google.dev/)
 *   [Anthropic (Claude Models)](https://www.anthropic.com/)
 
-Their powerful language models make the core functionality of ArchivePearl possible.
+Their powerful language models make the core functionality of ArchiveStudio possible.
