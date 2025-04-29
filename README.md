@@ -1,6 +1,6 @@
 # ArchivePearl
 
-[![Version](https://img.shields.io/badge/Version-1.5%20beta-blue.svg)](https://github.com/mhumphries2323/ArchivePearl) <!-- Replace with actual repo link -->
+[![Version](https://img.shields.io/badge/Version-1.0%20beta-blue.svg)](https://github.com/mhumphries2323/ArchivePearl) <!-- Replace with actual repo link -->
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
 A desktop application for Microsoft Windows designed to assist historians, archivists, and researchers in processing, transcribing, and analyzing historical documents using Large Language Models (LLMs) via API services (OpenAI, Google, and Anthropic).
@@ -56,9 +56,9 @@ It provides a structured environment for managing document images and their asso
 
 ## User Manual
 
-A comprehensive **ArchivePearl User Manual (v1.5 beta)** is available in the repository:
+A comprehensive **ArchivePearl User Manual (v1.0 beta)** is available in the repository:
 
-**[ArchivePearl_User_Manual_v1.5_beta.pdf](link/to/your/ArchivePearl_User_Manual_v1.5_beta.pdf)** <!-- **IMPORTANT:** Update this link -->
+**[ArchivePearl_User_Manual_v1.0_beta.pdf](link/to/your/ArchivePearl_User_Manual_v1.0_beta.pdf)** <!-- **IMPORTANT:** Update this link -->
 
 This manual provides detailed instructions on:
 
@@ -166,7 +166,7 @@ Under the following terms:
 
 If you use this software in your research, please cite:
 
-> Mark Humphries, 2024. ArchivePearl 1.5 Beta. Department of History: Wilfrid Laurier University.
+> Mark Humphries, 2024. ArchivePearl 1.0 Beta. Department of History: Wilfrid Laurier University.
 
 If you wish to cite the paper that explores related research:
 
@@ -177,7 +177,7 @@ If you wish to cite the paper that explores related research:
 *   **Mark Humphries** (Programming, Funding, and Historical Work) - Wilfrid Laurier University, Waterloo, Ontario
 *   **Lianne Leddy** (Funding, Historical Work, and Testing) - Wilfrid Laurier University, Waterloo, Ontario
 
-*(User Manual written by Mark Humphries and Gemini-1.5-Pro)*
+*(User Manual written by Mark Humphries and Gemini-1.0-Pro)*
 
 ## Disclaimer
 
