@@ -515,9 +515,6 @@ class AIFunctionsHandler:
             if ai_job == "Metadata":
                  self.last_used_metadata_preset = job_params.get('preset_name_used', None)
 
-            # Refresh display for the current page
-            self.app.refresh_display() # Use refresh_display for consistency
-
             # Re-enable buttons if they are disabled
             if self.app.button1['state'] == 'disabled':
                  self.app.toggle_button_state()

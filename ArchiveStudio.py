@@ -1002,6 +1002,8 @@ class App(TkinterDnD.Tk):
         self.original_image = None
         self.photo_image = None
         self.pagination_added = False
+        self.current_image_path_list = None # <--- ADDED: Explicitly reset image list
+        self.current_doc_page_index = 0    # <--- ADDED: Explicitly reset doc page index
 
         # Reset highlight toggles to False instead of recreating them
         self.highlight_names_var.set(False)
@@ -1052,6 +1054,9 @@ class App(TkinterDnD.Tk):
 
         # Reset the dropdown to "None"
         self.text_display_var.set("None")
+
+        # Refresh the display to reflect the cleared state
+        self.refresh_display() # <--- ADDED: Call refresh_display
 
     def initialize_settings(self):
         # Get the appropriate app data directory
