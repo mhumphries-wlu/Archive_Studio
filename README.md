@@ -58,7 +58,7 @@ It provides a structured environment for managing document images and their asso
 
 A comprehensive **ArchivePearl User Manual (v1.0 beta)** is available in the repository:
 
-**[ArchivePearl_User_Manual_v1.0_beta.pdf](link/to/your/ArchivePearl_User_Manual_v1.0_beta.pdf)** <!-- **IMPORTANT:** Update this link -->
+**[ArchivePearl_User_Manual_v1.0_beta.pdf](Manual.pdf)** 
 
 This manual provides detailed instructions on:
 
