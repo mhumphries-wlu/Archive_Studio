@@ -128,7 +128,7 @@ def _parse_index_string(index_str, app):
         app.error_logging(f"DEBUG _parse_index_string: No comma found. Proceeding to fallback.", level="DEBUG")
     
     # Fall back to the original parsing logic for space-separated or other formats
-    app.error_logging(f"DEBUG _parse_index_string: Using fallback regex split r'[\s,]+' on '{index_str.strip()}'", level="DEBUG")
+    app.error_logging(f"DEBUG _parse_index_string: Using fallback regex split r'[\\s,]+' on '{index_str.strip()}'", level="DEBUG")
     parts = re.split(r'[\s,]+', index_str.strip()) # Use \s for any whitespace, retain comma
     app.error_logging(f"DEBUG _parse_index_string: Fallback parts: {parts}", level="DEBUG")
     for part in parts:
