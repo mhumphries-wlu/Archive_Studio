@@ -1,9 +1,10 @@
-can you add it here:
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
+*.pyd
+*.pyc
 
 # C extensions
 *.so
@@ -120,3 +121,7 @@ desktop.ini
 logs/
 error_logs/
 scratch/
+util/__pycache__/
+util/subs/__pycache__/
+util/temp/
+

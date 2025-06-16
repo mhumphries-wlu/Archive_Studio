@@ -203,16 +203,25 @@ class APIHandler:
         
         populated_user_prompt = user_prompt if formatting_function else user_prompt.format(text_to_process=text_to_process)
         
-        generate_content_config = types.GenerateContentConfig(
-            temperature=temp,
-            top_p=0.95,
-            top_k=40,
-            max_output_tokens=8192,
-            response_mime_type="text/plain",
-            system_instruction=[
+        config_args = {
+            "temperature": temp,
+            "top_p": 0.95,
+            "top_k": 40,
+            "max_output_tokens": 8192,
+            "response_mime_type": "text/plain",
+            "system_instruction": [
                 types.Part.from_text(text=system_prompt),
-            ],
-        )
+            ]
+        }
+        
+        # Set thinking budget for Gemini 2.5 Pro and Flash
+        if "flash" in engine.lower():
+            config_args["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
+        elif "pro" in engine.lower():
+            # Minimum thinking budget for Pro models
+            config_args["thinking_config"] = types.ThinkingConfig(thinking_budget=128)
+            
+        generate_content_config = types.GenerateContentConfig(**config_args)
 
         max_retries = 5 if job_type == "Metadata" else 3
         retries = 0
