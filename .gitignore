@@ -1,19 +1,122 @@
+can you add it here:
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 
-# Ignore ENV variables
+# C extensions
+*.so
+
+# Virtual environments
 .env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# Ignore all images
+# VS Code settings
+.vscode/
+
+# PyCharm settings
+.idea/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Logs and error files
+*.log
+*.err
+*.out
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.pytest_cache/
+test-results/
+
+# Build artifacts
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+# Usually creates a dist/ folder and a build/ folder
+*.manifest
+*.spec
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Pylint
+.pylint.d/
+
+# Other system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Images and binaries
 *.png
 *.jpg
 *.jpeg
 *.gif
 *.bmp
 *.tiff  
-
-# Ignore all PDF files
+*.ico
 *.pdf
 
-# Ignore all text files
+# Raw or temp text
 *.txt
+*.bak
+*.tmp
+*.swp
+*.swo
+*~
+
+# SQLite or other local databases
+*.sqlite
+*.db
+*.db3
+
+# API keys or config
+*.pem
+*.key
+*.crt
+
+# Ignore specific custom folders
+logs/
+error_logs/
+scratch/
