@@ -65,8 +65,22 @@ class AIFunctionsHandler:
             self.temp_selected_source = export_text_source
             self.app.error_logging(f"Using export-provided text source: {export_text_source}", level="DEBUG")
 
-        # Check if we should show text source selection window (moved check here)
+        # Check if we should show preset/source selection windows (moved check here)
         # Skip window if triggered by export (export_text_source is provided)
+        
+        # Check for HTR preset selection window (HTR doesn't need text source selection)
+        if ai_job == "HTR" and not export_text_source:
+            # Check if HTR preset is needed (i.e., temp preset not already set)
+            htr_preset_needed = not hasattr(self, 'temp_htr_preset') or not self.temp_htr_preset
+            
+            if htr_preset_needed:
+                # Create the HTR preset window (which sets temp attributes)
+                self.app.create_htr_preset_window(all_or_one_flag, ai_job)
+                # Return because the window callback will re-invoke this process
+                # via process_htr_with_selected_preset
+                return
+
+        # Check for text source selection window for other jobs
         if ai_job in ["Correct_Text", "Translation", "Identify_Errors", "Format_Text", "Metadata"] and not export_text_source:
              # Check if a selection window is needed (i.e., temp source not already set)
             source_needed = not hasattr(self, 'temp_selected_source') or not self.temp_selected_source
@@ -511,6 +525,7 @@ class AIFunctionsHandler:
             # Ensure temporary selections are cleared
             if hasattr(self, 'temp_selected_source'): delattr(self, 'temp_selected_source')
             if hasattr(self, 'temp_format_preset'): delattr(self, 'temp_format_preset')
+            if hasattr(self, 'temp_htr_preset'): delattr(self, 'temp_htr_preset')
             # Add attribute to store the last used preset name (for ExportFunctions._copy_metadata_columns)
             if ai_job == "Metadata":
                  self.last_used_metadata_preset = job_params.get('preset_name_used', None)
@@ -552,7 +567,8 @@ class AIFunctionsHandler:
             "batch_size": default_batch_size,
             "use_images": False, # Default to not using images unless specified
             "current_image": "Yes", # Default to using current image if use_images is True
-            "headers": [] # For metadata
+            "headers": [], # For metadata
+            "thinking_budget": "128" # Default thinking budget for Gemini models
         }
 
         try:
@@ -570,6 +586,7 @@ class AIFunctionsHandler:
                         "current_image": preset.get("current_image", "Yes"),
                         "num_prev_images": int(preset.get("num_prev_images", 0)),
                         "num_after_images": int(preset.get("num_after_images", 0)),
+                        "thinking_budget": preset.get('thinking_budget', '128'),
                     })
                 else:
                     self.app.error_logging(f"Chunk text preset '{selected_strategy_name}' not found. Using defaults.", level="WARNING")
@@ -605,6 +622,7 @@ class AIFunctionsHandler:
                          "headers": headers,
                          "num_prev_images": int(preset.get("num_prev_images", 0)),
                          "num_after_images": int(preset.get("num_after_images", 0)),
+                         "thinking_budget": preset.get('thinking_budget', '128'),
                      })
                      self.app.error_logging(f"Using metadata preset '{preset_name_to_use}' with headers: {headers}", level="DEBUG")
                  else:
@@ -628,6 +646,7 @@ class AIFunctionsHandler:
                          "current_image": preset.get("current_image", "Yes"),
                          "num_prev_images": int(preset.get("num_prev_images", 0)),
                          "num_after_images": int(preset.get("num_after_images", 0)),
+                         "thinking_budget": preset.get('thinking_budget', '128'),
                      })
                  else:
                      self.app.error_logging(f"Format preset '{format_preset_name}' not found. Using defaults.", level="WARNING")
@@ -637,7 +656,16 @@ class AIFunctionsHandler:
 
 
             else: # Handle other standard jobs using function_presets
-                 preset = next((p for p in self.app.settings.function_presets if p.get('name') == ai_job), None)
+                 # For HTR, use the selected preset from transcription_presets
+                 if ai_job == "HTR" and hasattr(self, 'temp_htr_preset') and self.temp_htr_preset:
+                     preset = next((p for p in self.app.settings.transcription_presets if p.get('name') == self.temp_htr_preset), None)
+                     self.app.error_logging(f"Using selected HTR preset from transcription_presets: {self.temp_htr_preset}", level="DEBUG")
+                 elif ai_job == "HTR":
+                     # If no preset selected, look for default "HTR" preset in transcription_presets
+                     preset = next((p for p in self.app.settings.transcription_presets if p.get('name') == "HTR"), None)
+                 else:
+                     preset = next((p for p in self.app.settings.function_presets if p.get('name') == ai_job), None)
+                 
                  if preset:
                      params.update({
                          "temp": float(preset.get('temperature', 0.7)),
@@ -649,6 +677,7 @@ class AIFunctionsHandler:
                          "current_image": preset.get("current_image", "Yes"),
                          "num_prev_images": int(preset.get("num_prev_images", 0)),
                          "num_after_images": int(preset.get("num_after_images", 0)),
+                         "thinking_budget": preset.get('thinking_budget', '128'),
                      })
                      # Override use_images specifically for HTR and Auto_Rotate if not set in preset
                      if ai_job in ["HTR", "Auto_Rotate"] and not preset.get('use_images'):
@@ -819,7 +848,8 @@ class AIFunctionsHandler:
                             'use_images': False,
                             'current_image': "No",
                             'num_prev_images': "0",
-                            'num_after_images': "0"
+                            'num_after_images': "0",
+                            'thinking_budget': "128"
                         }
                     system_message = preset.get('general_instructions', '')
                     temp = float(preset.get('temperature', 0.2))
@@ -829,6 +859,7 @@ class AIFunctionsHandler:
                     current_image = preset.get('current_image', "No")
                     num_prev_images = int(preset.get('num_prev_images', 0))
                     num_after_images = int(preset.get('num_after_images', 0))
+                    thinking_budget = preset.get('thinking_budget', '128')
                     user_prompt_template = preset.get('specific_instructions', '')
                     user_prompt_text = user_prompt_template.replace("{text_for_llm}", text_for_llm)
 
@@ -849,7 +880,8 @@ class AIFunctionsHandler:
                                 'use_images': use_images,
                                 'current_image': current_image,
                                 'num_prev_images': num_prev_images,
-                                'num_after_images': num_after_images
+                                'num_after_images': num_after_images,
+                                'thinking_budget': thinking_budget
                             }
                         )
                     )
@@ -1397,6 +1429,30 @@ class AIFunctionsHandler:
             if hasattr(self, 'temp_selected_source'): delattr(self, 'temp_selected_source')
             if hasattr(self, 'temp_format_preset'): delattr(self, 'temp_format_preset')
 
+    def process_htr_with_selected_preset(self, all_or_one_flag, ai_job):
+        """
+        Sets temporary attributes based on the HTR preset selection window,
+        then calls the main ai_function to proceed with processing.
+        """
+        try:
+            # Make sure we have a selected HTR preset from the window
+            if not hasattr(self.app, 'htr_preset_var') or not self.app.htr_preset_var.get():
+                messagebox.showwarning("No Preset Selected", "No HTR preset was selected.")
+                return
+
+            # Store the selected HTR preset temporarily on the handler instance
+            self.temp_htr_preset = self.app.htr_preset_var.get()
+            self.app.error_logging(f"Stored temp HTR preset: {self.temp_htr_preset}", level="DEBUG")
+
+            # Now call the main AI function - it will use the temp attributes
+            self.ai_function(all_or_one_flag=all_or_one_flag, ai_job=ai_job)
+
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred preparing HTR processing: {str(e)}")
+            self.app.error_logging(f"Error in process_htr_with_selected_preset: {str(e)}", level="ERROR")
+            # Clean up temp vars if ai_function wasn't called or errored immediately
+            if hasattr(self, 'temp_htr_preset'): delattr(self, 'temp_htr_preset')
+
     def update_df_with_chunk_result(self, index, separated_text, source_text_type):
         """
         Update the DataFrame with the chunked text result (text with separators).
@@ -1499,7 +1555,8 @@ class AIFunctionsHandler:
                 "user_prompt": user_prompt_filled, # Use the filled template
                 "system_prompt": relevance_preset.get('general_instructions', 'Classify text relevance based on criteria. Output only one word: Relevant, Partially Relevant, Irrelevant, or Uncertain.'),
                 "batch_size": min(10, getattr(self.app.settings, 'batch_size', 10)), # Smaller batch for analysis
-                "use_images": False # Relevance check is text-based
+                "use_images": False, # Relevance check is text-based
+                "thinking_budget": relevance_preset.get('thinking_budget', '128')
             }
 
             # Initialize counters

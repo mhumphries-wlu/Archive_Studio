@@ -1,1 +1,653 @@
 
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 5, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 15, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 3, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 4, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 9, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 14, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 2, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 0, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 1, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 10, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 8, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 6, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 17, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 13, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 7, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 12, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 16, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 11, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 18, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 20, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: API Error during processing for index 19, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 5
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 3
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 4
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 15
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 14
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 9
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 1
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 2
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 10
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 0
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 6
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 16
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 17
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 8
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 12
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 18
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 13
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 11
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 20
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 19
+2025-06-25 10:46:32 [ERROR]: Chunking API returned error for index 7
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 5, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 4, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 10, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 9, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 8, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 7, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 3, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 12, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 2, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 15, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 1, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 0, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 13, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 11, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 14, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 6, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 16, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 17, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 18, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 19, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: API Error during processing for index 20, job Chunk_Text - Additional Info: name 'job_params' is not defined
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\util\AIFunctions.py", line 40, in process_api_request
+    return await self.app.api_handler.route_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 82, in route_api_call
+    return await self.handle_gemini_call(system_prompt, user_prompt, temp,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Programs\Archive_Studio\util\APIHandler.py", line 219, in handle_gemini_call
+    if job_params:
+       ^^^^^^^^^^
+NameError: name 'job_params' is not defined
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 10
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 9
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 8
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 3
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 7
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 0
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 4
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 5
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 2
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 15
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 1
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 11
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 14
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 12
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 13
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 17
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 16
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 18
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 19
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 20
+2025-06-25 11:11:29 [ERROR]: Chunking API returned error for index 6
+2025-06-25 12:06:12 [ERROR]: Chunking API returned error for index 19
+2025-06-25 12:06:14 [ERROR]: Chunking API returned error for index 16
+2025-06-25 12:06:14 [ERROR]: Chunking API returned error for index 2
+2025-06-25 12:06:14 [ERROR]: Chunking API returned error for index 22
+2025-06-25 12:06:14 [ERROR]: Chunking API returned error for index 11
+2025-06-25 12:06:15 [ERROR]: Chunking API returned error for index 4
+2025-06-25 12:06:15 [ERROR]: Chunking API returned error for index 28
+2025-06-25 12:06:16 [ERROR]: Chunking API returned error for index 0
+2025-06-25 12:06:16 [ERROR]: Chunking API returned error for index 14
+2025-06-25 12:06:16 [ERROR]: Chunking API returned error for index 6
+2025-06-25 12:06:16 [ERROR]: Chunking API returned error for index 26
+2025-06-25 12:06:16 [ERROR]: Chunking API returned error for index 3
+2025-06-25 12:06:16 [ERROR]: Chunking API returned error for index 9
+2025-06-25 12:06:16 [ERROR]: Chunking API returned error for index 8
+2025-06-25 12:06:16 [ERROR]: Chunking API returned error for index 5
+2025-06-25 12:06:16 [ERROR]: Chunking API returned error for index 7
+2025-06-25 12:06:17 [ERROR]: Chunking API returned error for index 30
+2025-06-25 12:06:17 [ERROR]: Chunking API returned error for index 25
+2025-06-25 12:06:17 [ERROR]: Chunking API returned error for index 10
+2025-06-25 12:06:17 [ERROR]: Chunking API returned error for index 20
+2025-06-25 12:06:18 [ERROR]: Chunking API returned error for index 13
+2025-06-25 12:06:18 [ERROR]: Chunking API returned error for index 27
+2025-06-25 12:06:18 [ERROR]: Chunking API returned error for index 24
+2025-06-25 12:06:19 [ERROR]: Chunking API returned error for index 18
+2025-06-25 12:06:19 [ERROR]: Chunking API returned error for index 31
+2025-06-25 12:06:20 [ERROR]: Chunking API returned error for index 1
+2025-06-25 12:06:21 [ERROR]: Chunking API returned error for index 15
+2025-06-25 12:06:21 [ERROR]: Chunking API returned error for index 17
+2025-06-25 12:06:21 [ERROR]: Chunking API returned error for index 12
+2025-06-25 12:06:24 [ERROR]: Chunking API returned error for index 23
+2025-06-25 12:06:24 [ERROR]: Chunking API returned error for index 29
+2025-06-25 12:06:45 [ERROR]: Chunking API returned error for index 21
+2025-06-25 12:07:10 [ERROR]: Chunking API returned error for index 28
+2025-06-25 12:07:10 [ERROR]: Chunking API returned error for index 19
+2025-06-25 12:07:11 [ERROR]: Chunking API returned error for index 14
+2025-06-25 12:07:11 [ERROR]: Chunking API returned error for index 2
+2025-06-25 12:07:11 [ERROR]: Chunking API returned error for index 26
+2025-06-25 12:07:11 [ERROR]: Chunking API returned error for index 16
+2025-06-25 12:07:11 [ERROR]: Chunking API returned error for index 10
+2025-06-25 12:07:12 [ERROR]: Chunking API returned error for index 0
+2025-06-25 12:07:12 [ERROR]: Chunking API returned error for index 6
+2025-06-25 12:07:12 [ERROR]: Chunking API returned error for index 30
+2025-06-25 12:07:12 [ERROR]: Chunking API returned error for index 4
+2025-06-25 12:07:12 [ERROR]: Chunking API returned error for index 3
+2025-06-25 12:07:13 [ERROR]: Chunking API returned error for index 25
+2025-06-25 12:07:13 [ERROR]: Chunking API returned error for index 9
+2025-06-25 12:07:13 [ERROR]: Chunking API returned error for index 12
+2025-06-25 12:07:13 [ERROR]: Chunking API returned error for index 18
+2025-06-25 12:07:13 [ERROR]: Chunking API returned error for index 7
+2025-06-25 12:07:13 [ERROR]: Chunking API returned error for index 22
+2025-06-25 12:07:14 [ERROR]: Chunking API returned error for index 24
+2025-06-25 12:07:14 [ERROR]: Chunking API returned error for index 13
+2025-06-25 12:07:15 [ERROR]: Chunking API returned error for index 11
+2025-06-25 12:07:15 [ERROR]: Chunking API returned error for index 5
+2025-06-25 12:07:15 [ERROR]: Chunking API returned error for index 27
+2025-06-25 12:07:16 [ERROR]: Chunking API returned error for index 17
+2025-06-25 12:07:16 [ERROR]: Chunking API returned error for index 20
+2025-06-25 12:07:16 [ERROR]: Chunking API returned error for index 8
+2025-06-25 12:07:16 [ERROR]: Chunking API returned error for index 1
+2025-06-25 12:07:18 [ERROR]: Chunking API returned error for index 31
+2025-06-25 12:07:21 [ERROR]: Chunking API returned error for index 15
+2025-06-25 12:07:27 [ERROR]: Chunking API returned error for index 23
+2025-06-25 12:07:27 [ERROR]: Chunking API returned error for index 29
+2025-06-25 12:07:39 [ERROR]: Chunking API returned error for index 21

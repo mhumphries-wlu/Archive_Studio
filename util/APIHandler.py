@@ -82,7 +82,7 @@ class APIHandler:
             return await self.handle_gemini_call(system_prompt, user_prompt, temp, 
                                               image_data, text_to_process, val_text, 
                                               engine, index, is_base64, formatting_function, 
-                                              api_timeout, job_type, required_headers)
+                                              api_timeout, job_type, required_headers, job_params)
         elif "claude" in engine.lower():
             return await self.handle_claude_call(system_prompt, user_prompt, temp, 
                                               image_data, text_to_process, val_text, 
@@ -197,7 +197,7 @@ class APIHandler:
     async def handle_gemini_call(self, system_prompt, user_prompt, temp, image_data, 
                                 text_to_process, val_text, engine, index, 
                                 is_base64=True, formatting_function=False, api_timeout=120.0,
-                                job_type=None, required_headers=None):
+                                job_type=None, required_headers=None, job_params=None):
         """Handle API calls to Google Gemini models"""
         client = genai_client.Client(api_key=self.google_api_key)
         
@@ -214,8 +214,21 @@ class APIHandler:
             ]
         }
         
-        # Set thinking budget for Gemini 2.5 Pro and Flash
-        if "flash" in engine.lower():
+        # Set thinking budget for Gemini models from job_params or use defaults
+        thinking_budget = None
+        if job_params:
+            thinking_budget = job_params.get('thinking_budget', None)
+            # Convert string to int if needed
+            if thinking_budget is not None:
+                try:
+                    thinking_budget = int(thinking_budget)
+                except (ValueError, TypeError):
+                    thinking_budget = None
+        
+        # Apply thinking budget or defaults based on model type
+        if thinking_budget is not None:
+            config_args["thinking_config"] = types.ThinkingConfig(thinking_budget=thinking_budget)
+        elif "flash" in engine.lower():
             config_args["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
         elif "pro" in engine.lower():
             # Minimum thinking budget for Pro models
@@ -229,8 +242,9 @@ class APIHandler:
         while retries < max_retries:
             try:
                 parts = []
+                labels_text = []
                 
-                # Handle image data
+                # Handle image data - add all images first
                 if image_data:
                     if isinstance(image_data, (str, Path)):
                         uploaded_file = client.files.upload(file=image_data)
@@ -239,23 +253,36 @@ class APIHandler:
                             mime_type="image/jpeg"
                         ))
                     else:
+                        # First pass: add all images to parts, collect labels
                         for img_path, label in image_data:
-                            if label:
-                                parts.append(types.Part.from_text(text=label))
                             uploaded_file = client.files.upload(file=img_path)
                             parts.append(types.Part.from_uri(
                                 file_uri=uploaded_file.uri,
                                 mime_type="image/jpeg"
                             ))
+                            if label:
+                                labels_text.append(label)
+                        
+                        # Second pass: add all labels as text after images
+                        for label in labels_text:
+                            parts.append(types.Part.from_text(text=label))
                 
+                # Finally add the main user prompt
                 parts.append(types.Part.from_text(text=populated_user_prompt))
                 contents = [types.Content(role="user", parts=parts)]
 
                 # Print debug info for Gemini API call
-                print("\n[GEMINI API CALL]")
+                print("\n[GEMINI API CALL DEBUG]")
                 print(f"Model: {engine}")
-                print(f"System Prompt: {system_prompt}")
-                print(f"User Prompt: {populated_user_prompt}")
+                print(f"Index: {index}")
+                print(f"Job Type: {job_type}")
+                print(f"Temperature: {generate_content_config.temperature}")
+                print(f"Has thinking_config: {'thinking_config' in config_args}")
+                if 'thinking_config' in config_args:
+                    print(f"Thinking budget: {config_args['thinking_config'].thinking_budget}")
+                print(f"Number of content parts: {len(parts)}")
+                print(f"System Prompt (first 100 chars): {system_prompt[:100]}...")
+                print(f"User Prompt (first 100 chars): {populated_user_prompt[:100]}...")
 
                 # Stream response and collect text
                 response_text = ""
@@ -267,7 +294,11 @@ class APIHandler:
                     if hasattr(chunk, 'text') and chunk.text is not None:
                         response_text += chunk.text
                 
-                print(f"[Gemini API Raw Response]:\n{response_text}\n")
+                print(f"[Gemini API Response Length]: {len(response_text)}")
+                if response_text:
+                    print(f"[Gemini API Response Preview]: {response_text[:200]}...")
+                else:
+                    print(f"[Gemini API Response]: Empty response received")
 
                 validation_result = self._validate_response(response_text, val_text, index, job_type, required_headers)
                 
@@ -282,11 +313,20 @@ class APIHandler:
                 return validation_result
 
             except Exception as e:
-                print(f"[Gemini API Exception]: {e}")
-                self.log_error(f"Gemini API Error with {engine} for index {index}", f"{str(e)}")
+                print(f"[Gemini API Exception Details]:")
+                print(f"  Error Type: {type(e).__name__}")
+                print(f"  Error Message: {str(e)}")
+                print(f"  Index: {index}")
+                print(f"  Retry: {retries + 1}/{max_retries}")
+                print(f"  Engine: {engine}")
+                print(f"  Job Type: {job_type}")
+                
+                self.log_error(f"Gemini API Error with {engine} for index {index}", f"{type(e).__name__}: {str(e)}")
                 retries += 1
                 if retries == max_retries:
+                    print(f"[Gemini API] Max retries reached for index {index}")
                     return "Error", index
+                print(f"[Gemini API] Retrying in {1 * (1.5 ** retries):.1f} seconds...")
                 await asyncio.sleep(1 * (1.5 ** retries))
     
     async def handle_claude_call(self, system_prompt, user_prompt, temp, image_data, 

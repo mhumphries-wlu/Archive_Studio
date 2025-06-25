@@ -267,8 +267,8 @@ class ImageHandler:
             dest_path = os.path.join(images_directory, new_file_name)
 
             try:
-                # Instead of directly copying, resize and save the image
-                self.resize_image(source_path, dest_path)
+                # Copy the image directly without resizing
+                shutil.copy2(source_path, dest_path)
                 # Store relative path
                 relative_dest_path = os.path.relpath(dest_path, project_directory or temp_directory)
 

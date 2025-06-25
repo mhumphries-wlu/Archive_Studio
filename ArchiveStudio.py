@@ -34,7 +34,7 @@ class App(TkinterDnD.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        self.title("Archive Studio 1.0")  # Set the window title
+        self.title("Archive Studio 1.2") # Set the window title
         self.link_nav = 0
         self.geometry("1200x800")
 
@@ -62,6 +62,7 @@ class App(TkinterDnD.Tk):
         self.highlight_errors_var = tk.BooleanVar()
         self.skip_completed_pages = tk.BooleanVar(value=True)  # Default to skipping completed pages
         self.relevance_var = tk.StringVar() # Added for relevance dropdown
+        self.text_font_size = 20  # Default font size for text display
 
         # Initialize settings early
         self.settings = Settings()
@@ -75,8 +76,6 @@ class App(TkinterDnD.Tk):
         self.show_relevance = tk.BooleanVar(value=False)
         self.show_page_nav = tk.BooleanVar(value=False)
         # self.show_relevance_nav = tk.BooleanVar(value=True) # REMOVED - Visibility tied to show_relevance
-
-        self.current_scale = 1
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=0)  # Top frame
@@ -114,6 +113,16 @@ class App(TkinterDnD.Tk):
         )
         self.text_display_dropdown.pack(side="left", padx=2)
         self.text_display_dropdown.bind('<<ComboboxSelected>>', self.on_text_display_change)
+
+        # Font size control buttons
+        font_size_label = tk.Label(left_group, text="Font:")
+        font_size_label.pack(side="left", padx=(10, 2))
+        
+        self.font_decrease_button = tk.Button(left_group, text="-", command=self.decrease_font_size, width=2)
+        self.font_decrease_button.pack(side="left", padx=1)
+        
+        self.font_increase_button = tk.Button(left_group, text="+", command=self.increase_font_size, width=2)
+        self.font_increase_button.pack(side="left", padx=1)
 
         self.chunking_strategy_var = tk.StringVar()
 
@@ -259,6 +268,7 @@ class App(TkinterDnD.Tk):
         # Variables to store last selected dropdown values <--- ADDED
         self.last_selected_format_preset = None
         self.last_selected_chunking_strategy = None
+        self.last_selected_htr_preset = None
         # <--- END ADDED
 
         # Configure highlight tags
@@ -296,6 +306,12 @@ class App(TkinterDnD.Tk):
         self.menubar.add_cascade(label="File", menu=self.file_menu)
         self.file_menu.add_command(label="New Project", command=self.project_io.create_new_project)
         self.file_menu.add_command(label="Open Project", command=self.project_io.open_project)
+        
+        # Create Recent Projects submenu
+        self.recent_menu = tk.Menu(self.file_menu, tearoff=0)
+        self.file_menu.add_cascade(label="Open Recent Projects", menu=self.recent_menu)
+        self.update_recent_projects_menu()
+        
         self.file_menu.add_command(label="Save Project", command=self.project_io.save_project)
         self.file_menu.add_command(label="Save Project As", command=self.project_io.save_project_as)
         self.file_menu.add_separator()
@@ -494,6 +510,11 @@ class App(TkinterDnD.Tk):
         self.bind("<Alt-Left>", lambda event: self.document_page_nav(-1))
         self.bind("<Alt-Right>", lambda event: self.document_page_nav(1))
 
+        # Font size adjustment bindings
+        self.bind("<Control-plus>", lambda event: self.increase_font_size())
+        self.bind("<Control-equal>", lambda event: self.increase_font_size())  # For keyboards where + requires shift
+        self.bind("<Control-minus>", lambda event: self.decrease_font_size())
+
     def create_image_widget(self, frame, image_path, state):
         # Load the image
         original_image = Image.open(image_path)
@@ -513,8 +534,8 @@ class App(TkinterDnD.Tk):
     def create_text_widget(self, frame, label_text, state):
         # Create a Text widget to display the contents of the selected file
         text_display = tk.Text(frame, wrap="word", state=state, undo=True)
-        # Make the font size 16
-        text_display.config(font=("Calibri", 20))
+        # Use the persistent font size
+        text_display.config(font=("Calibri", self.text_font_size))
 
         text_display.grid(sticky="nsew")
 
@@ -819,6 +840,94 @@ class App(TkinterDnD.Tk):
         # Wait for the window to be closed
         self.wait_window(source_window)
 
+    def create_htr_preset_window(self, all_or_one_flag, ai_job):
+        """
+        Creates a window for selecting HTR preset before running HTR
+        """
+        # Create the window
+        htr_window = tk.Toplevel(self)
+        htr_window.title("Select HTR Preset")
+        htr_window.geometry("400x200")
+        htr_window.grab_set()  # Make window modal
+
+        # Message explaining purpose
+        message_label = tk.Label(htr_window,
+            text="Select the HTR preset to use for text recognition:",
+            font=("Calibri", 12))
+        message_label.pack(pady=15)
+
+        # HTR preset selection dropdown
+        preset_frame = tk.Frame(htr_window)
+        preset_frame.pack(pady=10)
+
+        preset_label = tk.Label(preset_frame, text="HTR Preset:")
+        preset_label.pack(side="left", padx=5)
+
+        # Create a StringVar for the HTR preset dropdown
+        self.htr_preset_var = tk.StringVar()
+
+        # Get available HTR presets from transcription_presets
+        htr_options = [preset.get('name', f"Preset {i+1}") for i, preset in enumerate(self.settings.transcription_presets)]
+
+        # Create the HTR preset dropdown
+        htr_dropdown = ttk.Combobox(preset_frame,
+                                   textvariable=self.htr_preset_var,
+                                   values=htr_options,
+                                   state="readonly",
+                                   width=30)
+        htr_dropdown.pack(side="left", padx=5)
+
+        # Set default to last selected HTR preset if available, else look for "HTR" preset, else first
+        if self.last_selected_htr_preset and self.last_selected_htr_preset in htr_options:
+            self.htr_preset_var.set(self.last_selected_htr_preset)
+        elif "HTR" in htr_options:
+            self.htr_preset_var.set("HTR")
+        elif htr_options:
+            self.htr_preset_var.set(htr_options[0])
+
+        # Buttons frame
+        button_frame = tk.Frame(htr_window)
+        button_frame.pack(pady=20)
+
+        # Function to handle OK button
+        def on_ok():
+            # Store the selected HTR preset
+            if hasattr(self, 'htr_preset_var'):
+                self.last_selected_htr_preset = self.htr_preset_var.get()
+            # Close the window
+            htr_window.destroy()
+            # Run the AI function with the selected parameters using the handler
+            self.ai_functions_handler.process_htr_with_selected_preset(all_or_one_flag, ai_job)
+
+        # Function to handle Cancel button
+        def on_cancel():
+            htr_window.destroy()
+
+        # Create buttons
+        ok_button = tk.Button(button_frame, text="OK", command=on_ok, width=10)
+        ok_button.pack(side="left", padx=10)
+
+        cancel_button = tk.Button(button_frame, text="Cancel", command=on_cancel, width=10)
+        cancel_button.pack(side="left", padx=10)
+
+        # Center the window on the screen
+        htr_window.update_idletasks()
+        width = htr_window.winfo_width()
+        height = htr_window.winfo_height()
+        x = (htr_window.winfo_screenwidth() // 2) - (width // 2)
+        y = (htr_window.winfo_screenheight() // 2) - (height // 2)
+        htr_window.geometry(f'{width}x{height}+{x}+{y}')
+
+        # Bind keyboard shortcuts
+        htr_window.bind("<Return>", lambda event: on_ok())
+        htr_window.bind("<Escape>", lambda event: on_cancel())
+
+        # Give focus to the dropdown
+        htr_dropdown.focus_set()
+
+        # Wait for the window to be closed
+        self.wait_window(htr_window)
+
     def create_chunk_text_window(self, all_or_one_flag):
         """
         Creates a window for selecting document type before running Chunk_Text
@@ -1034,8 +1143,9 @@ class App(TkinterDnD.Tk):
         self.original_image = None
         self.photo_image = None
 
-        # Reset zoom and pan
-        self.current_scale = 1
+        # Reset zoom and pan in image handler
+        if hasattr(self, 'image_handler'):
+            self.image_handler.current_scale = 1
 
         # Reset counter
         self.counter_update()
@@ -1711,6 +1821,120 @@ class App(TkinterDnD.Tk):
             self.text_display.edit_redo()
         except tk.TclError:
             pass
+
+    def increase_font_size(self):
+        """Increase the font size of the text display"""
+        if self.text_font_size < 48:  # Maximum font size limit
+            self.text_font_size += 2
+            self.update_text_font()
+
+    def decrease_font_size(self):
+        """Decrease the font size of the text display"""
+        if self.text_font_size > 8:  # Minimum font size limit
+            self.text_font_size -= 2
+            self.update_text_font()
+
+    def update_text_font(self):
+        """Update the font size of the text display widget"""
+        self.text_display.config(font=("Calibri", self.text_font_size))
+
+    def update_recent_projects_menu(self):
+        """Update the recent projects submenu with current recent projects"""
+        # Clear existing menu items
+        self.recent_menu.delete(0, 'end')
+        
+        # Get recent projects from settings
+        recent_projects = self.settings.get_recent_projects()
+        
+        if not recent_projects:
+            # Add a disabled "No recent projects" item if list is empty
+            self.recent_menu.add_command(label="No recent projects", state="disabled")
+        else:
+            # Add menu items for each recent project
+            for i, project_path in enumerate(recent_projects):
+                # Get just the project name (directory name) for display
+                project_name = os.path.basename(project_path)
+                if not project_name:  # Handle case where path ends with separator
+                    project_name = os.path.basename(os.path.dirname(project_path))
+                
+                # Add menu item with keyboard shortcut for first 4 items
+                if i < 9:  # Support up to 9 recent projects with number shortcuts
+                    label = f"&{i+1} {project_name}"
+                else:
+                    label = project_name
+                
+                self.recent_menu.add_command(
+                    label=label,
+                    command=lambda path=project_path: self.open_recent_project(path)
+                )
+            
+            # Add separator and clear menu option
+            if recent_projects:
+                self.recent_menu.add_separator()
+                self.recent_menu.add_command(
+                    label="Clear Recent Projects",
+                    command=self.clear_recent_projects
+                )
+
+    def open_recent_project(self, project_path):
+        """Open a project from the recent projects list"""
+        try:
+            # Check if the project still exists
+            if not os.path.exists(project_path):
+                messagebox.showerror("Error", f"Project not found: {project_path}")
+                # Remove the non-existent project from recent list
+                if project_path in self.settings.recent_projects:
+                    self.settings.recent_projects.remove(project_path)
+                    self.settings.save_settings()
+                    self.update_recent_projects_menu()
+                return
+            
+            # Save current text before opening new project
+            self.data_operations.update_df()
+            
+            # Open the project using ProjectIO
+            project_name = os.path.basename(project_path)
+            project_file = os.path.join(project_path, f"{project_name}.pbf")
+            images_directory = os.path.join(project_path, "images")
+
+            if not os.path.exists(project_file) or not os.path.exists(images_directory):
+                messagebox.showerror("Error", "Invalid project directory. Missing project file or images directory.")
+                return
+
+            # Use the existing project opening logic from ProjectIO
+            # Set the project path and call the open project method
+            original_method = self.project_io.open_project
+            
+            # Temporarily override the directory selection to use our path
+            def mock_askdirectory(*args, **kwargs):
+                return project_path
+            
+            # Backup the original filedialog.askdirectory
+            original_askdirectory = filedialog.askdirectory
+            filedialog.askdirectory = mock_askdirectory
+            
+            try:
+                # Call the regular open project method
+                self.project_io.open_project()
+                
+                # Add this project to recent projects (moves it to top)
+                self.settings.add_recent_project(project_path)
+                self.update_recent_projects_menu()
+                
+            finally:
+                # Restore the original filedialog.askdirectory
+                filedialog.askdirectory = original_askdirectory
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to open recent project: {e}")
+            self.error_logging(f"Failed to open recent project {project_path}: {e}")
+
+    def clear_recent_projects(self):
+        """Clear all recent projects from the list"""
+        if messagebox.askyesno("Clear Recent Projects", "Are you sure you want to clear all recent projects?"):
+            self.settings.recent_projects = []
+            self.settings.save_settings()
+            self.update_recent_projects_menu()
 
     def error_logging(self, error_message, additional_info=None, level="ERROR"):
         """Use the ErrorLogger module to log errors."""

@@ -6,8 +6,11 @@
 import os
 import pandas as pd
 import fitz  # PyMuPDF
+import tkinter as tk
 from tkinter import messagebox, filedialog, simpledialog
 import traceback
+import shutil
+from PIL import Image
 
 class ProjectIO:
     def __init__(self, app):
@@ -63,6 +66,10 @@ class ProjectIO:
 
             # Save the updated DataFrame with relative paths to the project file
             save_df.to_csv(project_file, index=False, encoding='utf-8')
+
+            # Add project to recent projects list
+            self.app.settings.add_recent_project(self.app.project_directory)
+            self.app.update_recent_projects_menu()
 
             messagebox.showinfo("Success", f"Project saved successfully to {self.app.project_directory}")
         except Exception as e:
@@ -180,6 +187,10 @@ class ProjectIO:
                 self.app.current_image_path = None
 
             self.app.counter_update()
+
+            # Add project to recent projects list
+            self.app.settings.add_recent_project(project_directory)
+            self.app.update_recent_projects_menu()
 
             messagebox.showinfo("Success", "Project loaded successfully.")
 
@@ -333,8 +344,8 @@ class ProjectIO:
 
                     if source_image_path_abs and os.path.exists(source_image_path_abs):
                         try:
-                            # Call via image handler instead:
-                            self.app.image_handler.resize_image(source_image_path_abs, new_image_path_abs)
+                            # Copy image directly without resizing
+                            shutil.copy2(source_image_path_abs, new_image_path_abs)
                             # Update the Image_Path in the DataFrame being saved to the *new relative path*
                             save_df.at[index, 'Image_Path'] = rel_image_path_for_csv
                         except Exception as img_err:
@@ -362,6 +373,10 @@ class ProjectIO:
             # Update the app's current project directory references ONLY after successful save
             self.app.project_directory = project_directory
             self.app.images_directory = images_directory
+            
+            # Add project to recent projects list
+            self.app.settings.add_recent_project(project_directory)
+            self.app.update_recent_projects_menu()
             # Optionally, refresh display if needed, though usually not required after save_as
             # self.app.refresh_display()
 
@@ -424,10 +439,11 @@ class ProjectIO:
                 image_filename = f"{new_page_num_str}.jpg" # Final is JPG
                 image_path_abs = os.path.join(self.app.images_directory, image_filename)
 
-                # Resize/convert PNG temp image to JPG final image
-                # self.app.resize_image(temp_image_path, image_path_abs) # resize_image handles conversion and saving as JPG
-                # Call via image handler instead:
-                self.app.image_handler.resize_image(temp_image_path, image_path_abs)
+                # Convert PNG temp image to JPG final image
+                # Convert and save as JPG instead of resizing
+                with Image.open(temp_image_path) as img:
+                    img = img.convert('RGB')
+                    img.save(image_path_abs, 'JPEG', quality=95)
 
                 # Get relative path for storage (relative to project or temp base)
                 image_path_rel = self.app.get_relative_path(image_path_abs)

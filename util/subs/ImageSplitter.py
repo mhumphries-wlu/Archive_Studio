@@ -337,6 +337,10 @@ class ImageSplitter(tk.Toplevel):
         self.image_canvas.bind("<ButtonRelease-1>", self.handle_mouse_release)
         self.bind("<Left>", lambda event: self.navigate_images(-1))
         self.bind("<Right>", lambda event: self.navigate_images(1))
+        
+        # Ctrl+Arrow navigation bindings
+        self.bind("<Control-Left>", lambda event: self.navigate_images(-1))
+        self.bind("<Control-Right>", lambda event: self.navigate_images(1))
 
         # Image rotation bindings
         self.bind("<Control-bracketright>", lambda event: self.rotate_image(-90))
@@ -522,6 +526,8 @@ class ImageSplitter(tk.Toplevel):
         # Rebind the basic navigation controls
         self.bind("<Left>", lambda event: self.navigate_images(-1))
         self.bind("<Right>", lambda event: self.navigate_images(1))
+        self.bind("<Control-Left>", lambda event: self.navigate_images(-1))
+        self.bind("<Control-Right>", lambda event: self.navigate_images(1))
         self.bind("<KeyPress-,>", lambda event: self.rotate_image(-90))
         self.bind("<KeyPress-.>", lambda event: self.rotate_image(90))
         

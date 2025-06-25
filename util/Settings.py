@@ -82,7 +82,8 @@ These are the line numbers where a document separator should be placed immediate
 Your objective is to ensure that break markers are inserted only when a new letter truly begins, avoiding incorrect breaks between paragraphs within the same letter.''',
                 "specific_instructions": "Document Text: {text_to_process}",
                 "val_text": "Document Break Lines:",
-                "use_images": False
+                "use_images": False,
+                "thinking_budget": "128"
             },
             {
                 "name": "Diary",
@@ -117,7 +118,8 @@ These are the line numbers where a document separator should be placed immediate
 Your objective is to preserve the original diary structure as accurately as possible, ensuring entries are properly delineated for future analysis.''',
                 "specific_instructions": "Document Text: {text_to_process}",               
                 "val_text": "Document Break Lines:",
-                "use_images": False
+                "use_images": False,
+                "thinking_budget": "128"
             },
             {
                 "name": "Parish Register",
@@ -133,10 +135,25 @@ For example: "Document Break Lines: 4;15;27"
 These are the line numbers where a document separator should be placed immediately BEFORE that line. The document separator will mark the start of a new entry.''',
                 "specific_instructions": "Document Text: {text_to_process}",
                 "val_text": "Document Break Lines:",
-                "use_images": False
+                "use_images": False,
+                "thinking_budget": "128"
             }
         ]
 
+        self.transcription_presets = [
+            {
+                'name': "HTR",
+                'model': "gemini-2.5-pro",
+                'temperature': "0.3",
+                'general_instructions': '''Your task is to accurately transcribe handwritten historical documents, minimizing the CER and WER. Work character by character, word by word, line by line, transcribing the text exactly as it appears on the page. To maintain the authenticity of the historical text, retain spelling errors, grammar, syntax, and punctuation as well as line breaks. Transcribe all the text on the page including headers, footers, marginalia, insertions, page numbers, etc. If these are present, insert them where indicated by the author (as applicable). In your response, write: "Transcription:" followed only by your accurate transcription''',
+                'specific_instructions': '''Carefully transcribe this page from an 18th/19th century document. In your response, write: "Transcription:" followed only by your accurate transcription.''',
+                'use_images': True,
+                'current_image': "Yes",
+                'num_prev_images': "0",
+                'num_after_images': "0",
+            }
+        ]
+        
         self.function_presets = [
             {
                 'name': "HTR",
@@ -148,7 +165,8 @@ These are the line numbers where a document separator should be placed immediate
                 'current_image': "Yes",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "Transcription:"
+                'val_text': "Transcription:",
+                "thinking_budget": "128"
             },
             {
                 'name': "Correct_Text",
@@ -160,7 +178,8 @@ These are the line numbers where a document separator should be placed immediate
                 'current_image': "Yes",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "Corrected Transcript:"
+                'val_text': "Corrected Transcript:",
+                "thinking_budget": "128"
             },
             {
                 'name': "Identify_Errors",
@@ -172,7 +191,8 @@ These are the line numbers where a document separator should be placed immediate
                 'current_image': "Yes",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "Errors:"
+                'val_text': "Errors:",
+                "thinking_budget": "128"
             },
             {
                 'name': "Get_Names_and_Places",
@@ -194,7 +214,8 @@ End your response after finishing the second list.'''
                 'current_image': "No",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "None"
+                'val_text': "None",
+                "thinking_budget": "128"
             },
 
             {
@@ -222,7 +243,8 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'num_prev_images': "0",
                 'num_after_images': "0",
                 'val_text': "Metadata:",
-                'required_headers': ["Document Type", "Author", "Date", "Place of Creation", "People", "Places", "Summary"]
+                'required_headers': ["Document Type", "Author", "Date", "Place of Creation", "People", "Places", "Summary"],
+                "thinking_budget": "128"
             },
 
             {
@@ -235,7 +257,8 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'current_image': "Yes",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': None
+                'val_text': None,
+                "thinking_budget": "128"
             },
             {
                 'name': "Translation",
@@ -247,7 +270,8 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'current_image': "No",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "Translation:"
+                'val_text': "Translation:",
+                "thinking_budget": "128"
             }
 
         ]
@@ -264,7 +288,8 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'num_prev_images': "0",
                 'num_after_images': "0",
                 'val_text': "Relevance:",
-            },
+                "thinking_budget": "128"
+                },
             {
                 'name': "Collate_Names",
                 'model': "gemini-2.5-pro-preview-03-25",
@@ -295,7 +320,8 @@ Smith = Smihh; Smethh""",
                 'use_images': False,
                 'current_image': "No",
                 'num_prev_images': "0",
-                'num_after_images': "0"
+                'num_after_images': "0",
+                "thinking_budget": "128"
             },
             {
                 'name': "Collate_Places",
@@ -307,7 +333,8 @@ Smith = Smihh; Smethh""",
                 'use_images': False,
                 'current_image': "No",
                 'num_prev_images': "0",
-                'num_after_images': "0"
+                'num_after_images': "0",
+                "thinking_budget": "128"
             },
             {
                 'name': "Bounding_Boxes",
@@ -321,7 +348,8 @@ Smith = Smihh; Smethh""",
                 'current_image': "Yes",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': None
+                'val_text': None,
+                "thinking_budget": "128"
             },
             {
                 'name': "Bounding_Boxes_By_Row",
@@ -335,7 +363,8 @@ Smith = Smihh; Smethh""",
                 'current_image': "Yes",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': None
+                'val_text': None,
+                "thinking_budget": "128"
             }            
         ] # List of dictionaries for analysis presets
         
@@ -350,7 +379,8 @@ Smith = Smihh; Smethh""",
                 'current_image': "No",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "Formatted Text:"
+                'val_text': "Formatted Text:",
+                "thinking_budget": "128"
             },
 
             {
@@ -363,7 +393,8 @@ Smith = Smihh; Smethh""",
                 'current_image': "No",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "Formatted Text:"
+                'val_text': "Formatted Text:",
+                "thinking_budget": "128"
             },
             {
                 'name': "Letter",
@@ -375,7 +406,8 @@ Smith = Smihh; Smethh""",
                 'current_image': "No",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "Formatted Text:"
+                'val_text': "Formatted Text:",
+                "thinking_budget": "128"
             }
         ]
 
@@ -390,7 +422,8 @@ Smith = Smihh; Smethh""",
                 'current_image': "No",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "Relevance:"
+                'val_text': "Relevance:",
+                "thinking_budget": "128"
             }
         ]
 
@@ -417,7 +450,8 @@ For People, list all the names of people mentioned in the document. For Places, 
 If you don't have information for a heading or don't know, leave it blank.''',
                 'specific_instructions': '''Text to analyze:\n\n{text_to_process}''',
                 'val_text': "Metadata:",
-                'metadata_headers': "Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary"
+                'metadata_headers': "Document Type;Author;Correspondent;Correspondent Place;Date;Place of Creation;People;Places;Summary",
+                "thinking_budget": "128"
             }
         ]
         
@@ -440,7 +474,8 @@ Current Document to Analyze: {text_to_process}''',
                 'current_image': "No",  
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "None"
+                'val_text': "None",
+                "thinking_budget": "128"
             },
             {
                 'name': "Sequence_Diary",
@@ -465,7 +500,8 @@ Current Diary Entry to Analyze: {text_to_process}''',
                 'current_image': "No",  
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "None"
+                'val_text': "None",
+                "thinking_budget": "128"
             }
         ]
 
@@ -474,12 +510,15 @@ Current Diary Entry to Analyze: {text_to_process}''',
         
         self.model_list = [
             "gpt-4o",
-            "gpt-4.5-preview",
-            "claude-3-5-sonnet-20241022",
-            "claude-3-7-sonnet-20250219",
-            "gemini-2.0-flash",
-            "gemini-2.5-pro-exp-03-25"
+
+            "claude-opus-4-20250514",
+            "claude-sonnet-4-20250514",
+            "gemini-2.5-flash",
+            "gemini-2.5-pro"
         ]
+
+        # Initialize recent projects list (max 4 projects)
+        self.recent_projects = []
 
         # Restore API keys
         self.openai_api_key = saved_openai_key
@@ -536,6 +575,7 @@ If you don't have information for a heading or don't know, leave it blank.'''
             'check_orientation': self.check_orientation,                                # Check orientation of text
             'analysis_presets': self._ensure_image_fields(self.analysis_presets),
             'function_presets': self._ensure_image_fields(self.function_presets),
+            'transcription_presets': self._ensure_image_fields(self.transcription_presets),
             'chunk_text_presets': self._ensure_image_fields(self.chunk_text_presets),
             'format_presets': self._ensure_image_fields(self.format_presets),
             'metadata_presets': self._ensure_image_fields(self.metadata_presets),
@@ -557,6 +597,7 @@ If you don't have information for a heading or don't know, leave it blank.'''
             'query_val_text': self.query_val_text,
             'query_model': self.query_model,
             'sequential_batch_size': self.sequential_batch_size,                     # Sequential Batch Size
+            'recent_projects': self.recent_projects,                                 # Recent projects list
         }
         
         with open(self.settings_file_path, 'w') as f:
@@ -592,7 +633,7 @@ If you don't have information for a heading or don't know, leave it blank.'''
             self.analysis_presets = loaded_analysis_presets
 
             # --- Load other preset types (ensure they exist in settings before loading) ---
-            preset_keys = ['function_presets', 'chunk_text_presets', 'format_presets', 'metadata_presets', 'sequential_metadata_presets']
+            preset_keys = ['function_presets', 'transcription_presets', 'chunk_text_presets', 'format_presets', 'metadata_presets', 'sequential_metadata_presets']
             for key in preset_keys:
                 if key in settings and isinstance(settings[key], list):
                     setattr(self, key, self._ensure_image_fields(settings[key]))
@@ -604,6 +645,9 @@ If you don't have information for a heading or don't know, leave it blank.'''
             # Ensure sequential_batch_size is loaded if present
             if 'sequential_batch_size' in settings:
                 self.sequential_batch_size = settings['sequential_batch_size']
+            # Load recent projects if present
+            if 'recent_projects' in settings:
+                self.recent_projects = settings['recent_projects']
             # Ensure translation and query fields are loaded even if missing from self
             for field in [
                 'translation_system_prompt', 'translation_user_prompt', 'translation_val_text', 'translation_model',
@@ -649,3 +693,33 @@ If you don't have information for a heading or don't know, leave it blank.'''
                         os.unlink(item_path)
                     elif os.path.isdir(item_path):
                         shutil.rmtree(item_path)
+
+    def add_recent_project(self, project_path):
+        """Add a project to the recent projects list, maintaining max 4 entries"""
+        if not project_path or not os.path.exists(project_path):
+            return
+        
+        # Remove the project if it already exists in the list
+        if project_path in self.recent_projects:
+            self.recent_projects.remove(project_path)
+        
+        # Add the project to the beginning of the list
+        self.recent_projects.insert(0, project_path)
+        
+        # Keep only the 4 most recent projects
+        self.recent_projects = self.recent_projects[:4]
+        
+        # Save settings to persist the change
+        self.save_settings()
+
+    def get_recent_projects(self):
+        """Get the list of recent projects, filtering out non-existent ones"""
+        # Filter out projects that no longer exist
+        valid_projects = [path for path in self.recent_projects if os.path.exists(path)]
+        
+        # Update the list if any were removed
+        if len(valid_projects) != len(self.recent_projects):
+            self.recent_projects = valid_projects
+            self.save_settings()
+        
+        return self.recent_projects

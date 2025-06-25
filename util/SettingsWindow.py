@@ -89,6 +89,7 @@ class SettingsWindow:
                 "Analysis Presets",
                 "Document Separation Presets", 
                 "Function Presets",
+                "Transcription Presets",
                 "Format Presets",
                 "",  # Separator
                 "Load Settings",
@@ -148,6 +149,8 @@ class SettingsWindow:
             self.show_chunk_text_presets_settings()
         elif option == "Function Presets":
             self.show_preset_functions_settings()
+        elif option == "Transcription Presets":
+            self.show_transcription_presets_settings()
         elif option == "Format Presets":
             self.show_format_presets_settings()
         elif option == "Load Settings":
@@ -291,6 +294,13 @@ class SettingsWindow:
         self.bind_entry_update(self.metadata_temp_entry, self.settings.metadata_presets, 
                            self.selected_metadata_preset_var, 'temperature')
 
+        # Thinking Budget
+        tk.Label(main_settings_frame, text="Thinking Budget (Gemini models only):").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        self.metadata_thinking_budget_entry = tk.Entry(main_settings_frame, width=10)
+        self.metadata_thinking_budget_entry.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        self.bind_entry_update(self.metadata_thinking_budget_entry, self.settings.metadata_presets, 
+                           self.selected_metadata_preset_var, 'thinking_budget')
+
         # Instructions Frame
         instructions_frame = ttk.LabelFrame(self.right_frame, text="Instructions")
         instructions_frame.grid(row=2, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
@@ -409,10 +419,16 @@ class SettingsWindow:
         self.analysis_temp_entry.grid(row=2, column=1, padx=5, pady=5, sticky="w")
         self.bind_entry_update(self.analysis_temp_entry, self.settings.analysis_presets, self.selected_preset_var, 'temperature')
 
+        # Thinking Budget
+        tk.Label(main_settings_frame, text="Thinking Budget (Gemini models only):").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        self.analysis_thinking_budget_entry = tk.Entry(main_settings_frame, width=10)
+        self.analysis_thinking_budget_entry.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        self.bind_entry_update(self.analysis_thinking_budget_entry, self.settings.analysis_presets, self.selected_preset_var, 'thinking_budget')
+
         # Dataframe Field
-        tk.Label(main_settings_frame, text="Dataframe Field:").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        tk.Label(main_settings_frame, text="Dataframe Field:").grid(row=4, column=0, padx=5, pady=5, sticky="w")
         self.analysis_dataframe_field_entry = tk.Entry(main_settings_frame, width=30)
-        self.analysis_dataframe_field_entry.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        self.analysis_dataframe_field_entry.grid(row=4, column=1, padx=5, pady=5, sticky="w")
         self.bind_entry_update(self.analysis_dataframe_field_entry, self.settings.analysis_presets, self.selected_preset_var, 'dataframe_field')
 
         # Image Controls
@@ -571,9 +587,15 @@ class SettingsWindow:
         self.chunk_temp_entry.grid(row=2, column=1, padx=5, pady=5, sticky="w")
         self.bind_entry_update(self.chunk_temp_entry, self.settings.chunk_text_presets, self.selected_chunk_preset_var, 'temperature')
 
+        # Thinking Budget
+        tk.Label(main_settings_frame, text="Thinking Budget (Gemini models only):").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        self.chunk_thinking_budget_entry = tk.Entry(main_settings_frame, width=10)
+        self.chunk_thinking_budget_entry.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        self.bind_entry_update(self.chunk_thinking_budget_entry, self.settings.chunk_text_presets, self.selected_chunk_preset_var, 'thinking_budget')
+
         # Add Image Controls Frame
         image_control_frame = ttk.Frame(self.right_frame)
-        image_control_frame.grid(row=3, column=0, padx=10, pady=5, sticky="ew")
+        image_control_frame.grid(row=4, column=0, padx=10, pady=5, sticky="ew")
         
         self.use_images_var = tk.BooleanVar()
         use_images_check = ttk.Checkbutton(image_control_frame, text="Use Images",
@@ -612,7 +634,7 @@ class SettingsWindow:
 
         # Instructions and Validation Frame
         instructions_frame = ttk.LabelFrame(self.right_frame, text="Instructions")
-        instructions_frame.grid(row=4, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
+        instructions_frame.grid(row=5, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
 
         # General Instructions
         tk.Label(instructions_frame, text="General Instructions:").grid(row=0, column=0, padx=10, pady=5, sticky="nw")
@@ -695,6 +717,12 @@ class SettingsWindow:
         self.function_temp_entry.grid(row=2, column=1, padx=5, pady=5, sticky="w")
         self.bind_entry_update(self.function_temp_entry, self.settings.function_presets, self.selected_function_preset_var, 'temperature')
 
+        # Thinking Budget
+        tk.Label(main_settings_frame, text="Thinking Budget (Gemini models only):").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        self.function_thinking_budget_entry = tk.Entry(main_settings_frame, width=10)
+        self.function_thinking_budget_entry.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        self.bind_entry_update(self.function_thinking_budget_entry, self.settings.function_presets, self.selected_function_preset_var, 'thinking_budget')
+
         # Image Controls
         image_control_frame = ttk.Frame(self.right_frame)
         image_control_frame.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
@@ -761,6 +789,148 @@ class SettingsWindow:
         self.function_val_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
         self.bind_entry_update(self.function_val_entry, self.settings.function_presets, self.selected_function_preset_var, 'val_text')
 
+    def show_transcription_presets_settings(self):
+        for widget in self.right_frame.winfo_children():
+            widget.destroy()
+
+        # Main settings frame
+        main_settings_frame = ttk.Frame(self.right_frame)
+        main_settings_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
+
+        # Preset selection row
+        tk.Label(main_settings_frame, text="Select Transcription Preset:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.selected_transcription_preset_var = tk.StringVar()
+        preset_names = [p['name'] for p in self.settings.transcription_presets] if self.settings.transcription_presets else []
+        self.transcription_preset_dropdown = ttk.Combobox(main_settings_frame, textvariable=self.selected_transcription_preset_var,
+                                                        values=preset_names, state="readonly", width=30)
+        self.transcription_preset_dropdown.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+        self.transcription_preset_dropdown.bind("<<ComboboxSelected>>", self.load_selected_transcription_preset)
+
+        # Create new, modify and delete buttons
+        create_button = tk.Button(main_settings_frame, text="Create New", command=self.create_new_transcription_preset_window)
+        create_button.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+
+        modify_button = tk.Button(main_settings_frame, text="Modify", command=self.modify_transcription_preset)
+        modify_button.grid(row=0, column=3, padx=5, pady=5, sticky="w")
+
+        delete_button = tk.Button(main_settings_frame, text="Delete", command=self.delete_transcription_preset)
+        delete_button.grid(row=0, column=4, padx=5, pady=5, sticky="w")
+
+        # Model and Temperature row
+        tk.Label(main_settings_frame, text="Model:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        self.transcription_model_var = tk.StringVar()
+        model_dropdown = ttk.Combobox(main_settings_frame, 
+                                    textvariable=self.transcription_model_var,
+                                    values=self.settings.model_list, 
+                                    state="readonly", 
+                                    width=30)
+        model_dropdown.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+        model_dropdown.bind("<<ComboboxSelected>>",
+                        lambda e: self.update_current_generic_preset(
+                            self.settings.transcription_presets, 
+                            self.selected_transcription_preset_var, 
+                            'model', 
+                            self.transcription_model_var.get()))
+    
+        tk.Label(main_settings_frame, text="Temperature:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        self.transcription_temp_entry = tk.Entry(main_settings_frame, width=10)
+        self.transcription_temp_entry.grid(row=2, column=1, padx=5, pady=5, sticky="w")
+        self.bind_entry_update(self.transcription_temp_entry, self.settings.transcription_presets, self.selected_transcription_preset_var, 'temperature')
+
+        # Thinking Budget
+        tk.Label(main_settings_frame, text="Thinking Budget (Gemini models only):").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        self.transcription_thinking_budget_entry = tk.Entry(main_settings_frame, width=10)
+        self.transcription_thinking_budget_entry.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        self.bind_entry_update(self.transcription_thinking_budget_entry, self.settings.transcription_presets, self.selected_transcription_preset_var, 'thinking_budget')
+
+        # Image Controls
+        image_control_frame = ttk.Frame(self.right_frame)
+        image_control_frame.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
+
+        self.transcription_use_images_var = tk.BooleanVar()
+        use_images_check = ttk.Checkbutton(image_control_frame, text="Use Images",
+                                        variable=self.transcription_use_images_var,
+                                        command=self.toggle_transcription_image_controls)
+        use_images_check.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.add_var_trace(self.transcription_use_images_var, self.settings.transcription_presets, self.selected_transcription_preset_var, 'use_images')
+
+        # Detailed Image Settings Frame
+        self.transcription_image_settings_frame = ttk.LabelFrame(image_control_frame, text="Image Settings")
+        self.transcription_image_settings_frame.grid(row=1, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+        self.transcription_image_settings_frame.grid_remove()  # Initially hidden
+
+        tk.Label(self.transcription_image_settings_frame, text="Current Image:").grid(row=0, column=0, padx=5, pady=5)
+        self.transcription_current_image_var = tk.StringVar(value="Yes")
+        self.transcription_current_image_dropdown = ttk.Combobox(self.transcription_image_settings_frame,
+                                                textvariable=self.transcription_current_image_var,
+                                                values=["Yes", "No"], state="readonly", width=5)
+        self.transcription_current_image_dropdown.grid(row=0, column=1, padx=5, pady=5)
+        self.add_var_trace(self.transcription_current_image_var, self.settings.transcription_presets, self.selected_transcription_preset_var, 'current_image')
+
+        tk.Label(self.transcription_image_settings_frame, text="# Previous Images:").grid(row=1, column=0, padx=5, pady=5)
+        self.transcription_prev_images_entry = ttk.Spinbox(self.transcription_image_settings_frame, from_=0, to=3, width=5)
+        self.transcription_prev_images_entry.grid(row=1, column=1, padx=5, pady=5)
+        self.bind_entry_update(self.transcription_prev_images_entry, self.settings.transcription_presets, self.selected_transcription_preset_var, 'num_prev_images')
+
+        tk.Label(self.transcription_image_settings_frame, text="# After Images:").grid(row=1, column=2, padx=5, pady=5)
+        self.transcription_after_images_entry = ttk.Spinbox(self.transcription_image_settings_frame, from_=0, to=3, width=5)
+        self.transcription_after_images_entry.grid(row=1, column=3, padx=5, pady=5)
+        self.bind_entry_update(self.transcription_after_images_entry, self.settings.transcription_presets, self.selected_transcription_preset_var, 'num_after_images')
+
+        # Instructions and Validation Frame
+        instructions_frame = ttk.LabelFrame(self.right_frame, text="Instructions")
+        instructions_frame.grid(row=4, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
+
+        # General Instructions
+        tk.Label(instructions_frame, text="General Instructions:").grid(row=0, column=0, padx=10, pady=5, sticky="nw")
+        general_frame = ttk.Frame(instructions_frame)
+        general_frame.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+        self.transcription_general_text = tk.Text(general_frame, height=10, width=90, wrap=tk.WORD)
+        self.transcription_general_text.grid(row=0, column=0, sticky="nsew")
+        self.bind_text_update(self.transcription_general_text, self.settings.transcription_presets, self.selected_transcription_preset_var, 'general_instructions')
+        general_scrollbar = ttk.Scrollbar(general_frame, orient="vertical", command=self.transcription_general_text.yview)
+        self.transcription_general_text.configure(yscrollcommand=general_scrollbar.set)
+        general_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Specific Instructions
+        tk.Label(instructions_frame, text="Specific Instructions:").grid(row=1, column=0, padx=10, pady=5, sticky="nw")
+        specific_frame = ttk.Frame(instructions_frame)
+        specific_frame.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+        self.transcription_specific_text = tk.Text(specific_frame, height=15, width=90, wrap=tk.WORD)
+        self.transcription_specific_text.grid(row=0, column=0, sticky="nsew")
+        self.bind_text_update(self.transcription_specific_text, self.settings.transcription_presets, self.selected_transcription_preset_var, 'specific_instructions')
+        specific_scrollbar = ttk.Scrollbar(specific_frame, orient="vertical", command=self.transcription_specific_text.yview)
+        self.transcription_specific_text.configure(yscrollcommand=specific_scrollbar.set)
+        specific_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Validation Text
+        tk.Label(instructions_frame, text="Validation Text:").grid(row=2, column=0, padx=10, pady=5, sticky="w")
+        self.transcription_val_entry = tk.Entry(instructions_frame, width=90)
+        self.transcription_val_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
+        self.bind_entry_update(self.transcription_val_entry, self.settings.transcription_presets, self.selected_transcription_preset_var, 'val_text')
+
+        # Load initial preset if available
+        if preset_names:
+            self.selected_transcription_preset_var.set(preset_names[0])
+            self.load_selected_transcription_preset()
+
+    def toggle_transcription_image_controls(self):
+        if self.transcription_use_images_var.get():
+            if hasattr(self, 'transcription_image_settings_frame') and self.transcription_image_settings_frame.winfo_exists():
+                self.transcription_image_settings_frame.grid()
+            state = "normal"
+        else:
+            if hasattr(self, 'transcription_image_settings_frame') and self.transcription_image_settings_frame.winfo_exists():
+                self.transcription_image_settings_frame.grid_remove()
+            state = "disabled"
+            self.transcription_current_image_var.set("No")
+        
+        # List the widgets that might have been created in transcription preset view.
+        for widget_name in ['transcription_current_image_dropdown', 'transcription_prev_images_entry', 'transcription_after_images_entry']:
+            widget = getattr(self, widget_name, None)
+            if widget is not None and widget.winfo_exists():
+                widget.configure(state=state)
+
     def show_format_presets_settings(self):
         for widget in self.right_frame.winfo_children():
             widget.destroy()
@@ -817,10 +987,16 @@ class SettingsWindow:
         self.format_temp_entry = tk.Entry(main_settings_frame, width=10)
         self.format_temp_entry.grid(row=2, column=1, padx=5, pady=5, sticky="w")
         self.bind_entry_update(self.format_temp_entry, self.settings.format_presets, self.selected_format_preset_var, 'temperature')
+
+        # Thinking Budget
+        tk.Label(main_settings_frame, text="Thinking Budget (Gemini models only):").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        self.format_thinking_budget_entry = tk.Entry(main_settings_frame, width=10)
+        self.format_thinking_budget_entry.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        self.bind_entry_update(self.format_thinking_budget_entry, self.settings.format_presets, self.selected_format_preset_var, 'thinking_budget')
         
         # Add Image Controls Frame
         image_control_frame = ttk.Frame(self.right_frame)
-        image_control_frame.grid(row=3, column=0, padx=10, pady=5, sticky="ew")
+        image_control_frame.grid(row=4, column=0, padx=10, pady=5, sticky="ew")
         
         use_images_check = ttk.Checkbutton(image_control_frame, text="Use Images",
                                         variable=self.use_images_var,
@@ -903,6 +1079,8 @@ class SettingsWindow:
             if 'model' in preset and preset['model'] in self.settings.model_list:
                 self.format_model_var.set(preset['model'])
             self.set_entry_text(self.format_temp_entry, preset.get('temperature', "0.2"))
+            # Thinking Budget
+            self.set_entry_text(self.format_thinking_budget_entry, preset.get('thinking_budget', "128"))
             
             # Image settings
             self.use_images_var.set(preset.get('use_images', False))
@@ -1085,6 +1263,7 @@ class SettingsWindow:
         """Update all dropdown menus with current values"""
         self.update_model_dropdowns()
         self.update_function_preset_dropdown()
+        self.update_transcription_preset_dropdown()
         self.update_preset_dropdown()
         self.update_chunk_preset_dropdown()
         self.update_metadata_preset_dropdown()
@@ -1101,6 +1280,8 @@ class SettingsWindow:
             if 'model' in preset and preset['model'] in self.settings.model_list:
                 self.function_model_var.set(preset['model'])
             self.set_entry_text(self.function_temp_entry, preset.get('temperature', "0.7"))
+            # Thinking Budget
+            self.set_entry_text(self.function_thinking_budget_entry, preset.get('thinking_budget', "128"))
             # Image settings
             self.use_images_var.set(preset.get('use_images', True))
             self.current_image_var.set(preset.get('current_image', "Yes"))
@@ -1116,6 +1297,29 @@ class SettingsWindow:
                 self.set_entry_text(self.function_val_entry, preset.get('val_text', ""))
             self.toggle_image_controls()
 
+    def load_selected_transcription_preset(self, event=None):
+        selected_name = self.selected_transcription_preset_var.get()
+        preset = self.get_preset_by_name(self.settings.transcription_presets, selected_name)
+        if preset:
+            # Model
+            if 'model' in preset and preset['model'] in self.settings.model_list:
+                self.transcription_model_var.set(preset['model'])
+            self.set_entry_text(self.transcription_temp_entry, preset.get('temperature', "0.3"))
+            # Thinking Budget
+            self.set_entry_text(self.transcription_thinking_budget_entry, preset.get('thinking_budget', "128"))
+            # Image settings
+            self.transcription_use_images_var.set(preset.get('use_images', True))
+            self.transcription_current_image_var.set(preset.get('current_image', "Yes"))
+            self.set_entry_text(self.transcription_prev_images_entry, preset.get('num_prev_images', "0"))
+            self.set_entry_text(self.transcription_after_images_entry, preset.get('num_after_images', "0"))
+            # Instructions
+            self.set_text_widget(self.transcription_general_text, preset.get('general_instructions', ""))
+            self.set_text_widget(self.transcription_specific_text, preset.get('specific_instructions', ""))
+            # Validation text for transcription presets
+            if 'val_text' in preset:
+                self.set_entry_text(self.transcription_val_entry, preset.get('val_text', ""))
+            self.toggle_transcription_image_controls()
+
     def load_selected_preset(self, event=None):
         selected_name = self.selected_preset_var.get()
         preset = self.get_preset_by_name(self.settings.analysis_presets, selected_name)
@@ -1124,6 +1328,8 @@ class SettingsWindow:
             if 'model' in preset and preset['model'] in self.settings.model_list:
                 self.analysis_model_var.set(preset['model'])
             self.set_entry_text(self.analysis_temp_entry, preset.get('temperature', "0.7"))
+            # Thinking Budget
+            self.set_entry_text(self.analysis_thinking_budget_entry, preset.get('thinking_budget', "128"))
             # Dataframe Field
             if 'dataframe_field' in preset:
                 self.set_entry_text(self.analysis_dataframe_field_entry, preset.get('dataframe_field', ""))
@@ -1167,6 +1373,8 @@ class SettingsWindow:
             if 'model' in preset and preset['model'] in self.settings.model_list:
                 self.chunk_model_var.set(preset['model'])
             self.set_entry_text(self.chunk_temp_entry, preset.get('temperature', "0.7"))
+            # Thinking Budget
+            self.set_entry_text(self.chunk_thinking_budget_entry, preset.get('thinking_budget', "128"))
             
             # Image settings
             self.use_images_var.set(preset.get('use_images', False))
@@ -1191,6 +1399,8 @@ class SettingsWindow:
                 self.metadata_model_var.set(preset['model'])
             # Temperature
             self.set_entry_text(self.metadata_temp_entry, preset.get('temperature', "0.3"))
+            # Thinking Budget
+            self.set_entry_text(self.metadata_thinking_budget_entry, preset.get('thinking_budget', "128"))
             # Instructions
             self.set_text_widget(self.metadata_general_text, preset.get('general_instructions', ""))
             self.set_text_widget(self.metadata_specific_text, preset.get('specific_instructions', ""))
@@ -1265,10 +1475,17 @@ class SettingsWindow:
         self.bind_entry_update(self.seq_metadata_temp_entry, self.settings.sequential_metadata_presets, 
                            self.selected_seq_metadata_preset_var, 'temperature')
 
+        # Thinking Budget
+        tk.Label(main_settings_frame, text="Thinking Budget (Gemini models only):").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        self.seq_metadata_thinking_budget_entry = tk.Entry(main_settings_frame, width=10)
+        self.seq_metadata_thinking_budget_entry.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        self.bind_entry_update(self.seq_metadata_thinking_budget_entry, self.settings.sequential_metadata_presets, 
+                           self.selected_seq_metadata_preset_var, 'thinking_budget')
+
         # Sequential Batch Size
-        tk.Label(main_settings_frame, text="Batch Size:").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        tk.Label(main_settings_frame, text="Batch Size:").grid(row=4, column=0, padx=5, pady=5, sticky="w")
         self.seq_batch_size_entry = tk.Entry(main_settings_frame, width=10)
-        self.seq_batch_size_entry.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        self.seq_batch_size_entry.grid(row=4, column=1, padx=5, pady=5, sticky="w")
         # Bind this entry to the global sequential_batch_size setting
         self.seq_batch_size_entry.insert(0, str(self.settings.sequential_batch_size))
         self.seq_batch_size_entry.bind("<KeyRelease>", self._update_sequential_batch_size)
@@ -1339,6 +1556,8 @@ class SettingsWindow:
                 self.seq_metadata_model_var.set(preset['model'])
             # Temperature
             self.set_entry_text(self.seq_metadata_temp_entry, preset.get('temperature', "0.3"))
+            # Thinking Budget
+            self.set_entry_text(self.seq_metadata_thinking_budget_entry, preset.get('thinking_budget', "128"))
             # Instructions
             self.set_text_widget(self.seq_metadata_general_text, preset.get('general_instructions', ""))
             self.set_text_widget(self.seq_metadata_specific_text, preset.get('specific_instructions', ""))
@@ -1383,6 +1602,78 @@ class SettingsWindow:
 
     def create_new_function_preset_window(self):
         self.create_new_preset_window(preset_type="function")
+
+    def create_new_transcription_preset_window(self):
+        new_win = tk.Toplevel(self.settings_window)
+        new_win.title("Create New Transcription Preset")
+
+        # Make window modal and stay on top
+        new_win.transient(self.settings_window)
+        new_win.grab_set()
+        new_win.attributes('-topmost', True)
+
+        # Center the window
+        window_width = 300
+        window_height = 120
+        screen_width = new_win.winfo_screenwidth()
+        screen_height = new_win.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        new_win.geometry(f'{window_width}x{window_height}+{x}+{y}')
+
+        # Configure grid
+        new_win.grid_columnconfigure(1, weight=1)
+
+        # Name entry
+        tk.Label(new_win, text="Preset Name:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        name_entry = tk.Entry(new_win, width=30)
+        name_entry.grid(row=0, column=1, columnspan=2, padx=10, pady=5, sticky="ew")
+
+        # Button frame
+        button_frame = tk.Frame(new_win)
+        button_frame.grid(row=1, column=0, columnspan=3, pady=20)
+
+        def save_new_transcription_preset():
+            name = name_entry.get().strip()
+            if not name:
+                messagebox.showwarning("Invalid Name", "Please enter a preset name.", parent=new_win)
+                return
+
+            # Check if name already exists
+            if any(preset['name'] == name for preset in self.settings.transcription_presets):
+                messagebox.showwarning("Duplicate Name",
+                                       "A preset with this name already exists. Please choose a different name.",
+                                       parent=new_win)
+                return
+
+            new_preset = {
+                'name': name,
+                'model': self.settings.model_list[0] if self.settings.model_list else "gemini-2.5-pro",
+                'temperature': "0.3",
+                'general_instructions': '''Your task is to accurately transcribe handwritten historical documents, minimizing the CER and WER. Work character by character, word by word, line by line, transcribing the text exactly as it appears on the page. To maintain the authenticity of the historical text, retain spelling errors, grammar, syntax, and punctuation as well as line breaks. Transcribe all the text on the page including headers, footers, marginalia, insertions, page numbers, etc. If these are present, insert them where indicated by the author (as applicable). In your response, write: "Transcription:" followed only by your accurate transcription''',
+                'specific_instructions': '''Carefully transcribe this page from an 18th/19th century document. In your response, write: "Transcription:" followed only by your accurate transcription.''',
+                'use_images': True,
+                'current_image': "Yes",
+                'num_prev_images': "0",
+                'num_after_images': "0",
+                'val_text': "Transcription:",
+                'thinking_budget': "128"
+            }
+
+            self.settings.transcription_presets.append(new_preset)
+            self.update_transcription_preset_dropdown()
+            self.settings.save_settings()
+            new_win.destroy()
+
+        # Save and Cancel buttons
+        tk.Button(button_frame, text="Save", command=save_new_transcription_preset, width=10).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Cancel", command=new_win.destroy, width=10).pack(side=tk.LEFT, padx=5)
+
+        # Bind Enter key to save
+        name_entry.bind('<Return>', lambda e: save_new_transcription_preset())
+
+        # Set focus to entry
+        name_entry.focus_set()
 
     def create_new_preset_window(self, preset_type="analysis"):
         new_win = tk.Toplevel(self.settings_window)
@@ -1698,6 +1989,21 @@ If you don't have information for a heading or don't know, leave it blank.''',
         self.settings.save_settings()
         self.update_function_preset_dropdown()
 
+    def delete_transcription_preset(self):
+        selected_name = self.selected_transcription_preset_var.get()
+        if not selected_name:
+            messagebox.showwarning("No Selection", "No transcription preset selected to delete.", parent=self.settings_window)
+            return
+        confirm = messagebox.askyesno("Confirm Deletion",
+                                    f"Are you sure you want to delete the transcription preset '{selected_name}'?",
+                                    parent=self.settings_window)
+        if not confirm:
+            return
+        # Remove the preset from the list and update settings
+        self.settings.transcription_presets = [p for p in self.settings.transcription_presets if p['name'] != selected_name]
+        self.settings.save_settings()
+        self.update_transcription_preset_dropdown()
+
     def delete_analysis_preset(self):
         selected_name = self.selected_preset_var.get()
         if not selected_name:
@@ -1831,6 +2137,60 @@ If you don't have information for a heading or don't know, leave it blank.''',
             self.settings.save_settings()
             self.update_function_preset_dropdown()
             self.selected_function_preset_var.set(new_name)
+            new_win.destroy()
+        
+        button_frame = tk.Frame(new_win)
+        button_frame.grid(row=1, column=0, columnspan=3, pady=20)
+        tk.Button(button_frame, text="Save", command=save_modified_preset, width=10).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Cancel", command=new_win.destroy, width=10).pack(side=tk.LEFT, padx=5)
+        
+        name_entry.bind('<Return>', lambda e: save_modified_preset())
+        name_entry.focus_set()
+
+    def modify_transcription_preset(self):
+        selected_name = self.selected_transcription_preset_var.get()
+        if not selected_name:
+            messagebox.showwarning("No Selection", "No transcription preset selected to modify.", parent=self.settings_window)
+            return
+        preset = self.get_preset_by_name(self.settings.transcription_presets, selected_name)
+        if not preset:
+            messagebox.showwarning("Error", "Selected preset not found.", parent=self.settings_window)
+            return
+        # Create a small modal window to enter the new name
+        new_win = tk.Toplevel(self.settings_window)
+        new_win.title("Modify Transcription Preset Name")
+        new_win.transient(self.settings_window)
+        new_win.grab_set()
+        new_win.attributes('-topmost', True)
+        window_width = 300
+        window_height = 120
+        screen_width = new_win.winfo_screenwidth()
+        screen_height = new_win.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        new_win.geometry(f'{window_width}x{window_height}+{x}+{y}')
+        new_win.grid_columnconfigure(1, weight=1)
+        
+        tk.Label(new_win, text="New Preset Name:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        name_entry = tk.Entry(new_win, width=30)
+        name_entry.grid(row=0, column=1, columnspan=2, padx=10, pady=5, sticky="ew")
+        name_entry.insert(0, selected_name)
+        
+        def save_modified_preset():
+            new_name = name_entry.get().strip()
+            if not new_name:
+                messagebox.showwarning("Invalid Name", "Please enter a preset name.", parent=new_win)
+                return
+            # Prevent duplicate names (unless unchanged)
+            if new_name != selected_name and any(p['name'] == new_name for p in self.settings.transcription_presets):
+                messagebox.showwarning("Duplicate Name",
+                                    "A preset with this name already exists. Please choose a different name.",
+                                    parent=new_win)
+                return
+            preset['name'] = new_name
+            self.settings.save_settings()
+            self.update_transcription_preset_dropdown()
+            self.selected_transcription_preset_var.set(new_name)
             new_win.destroy()
         
         button_frame = tk.Frame(new_win)
@@ -2171,6 +2531,21 @@ If you don't have information for a heading or don't know, leave it blank.''',
     def export_settings(self):
         """Export all settings to a .psf file"""
         try:
+            # Ensure all preset types have image fields before export
+            self.ensure_image_fields_before_export()
+            
+            # Privacy warning for API keys
+            self.settings_window.lift()
+            include_api_keys = messagebox.askyesno(
+                "API Key Privacy Warning",
+                "Do you want to include your API keys in the exported settings file?\n\n"
+                "⚠️ WARNING: API keys are sensitive credentials that provide access to your AI services.\n"
+                "• Click 'Yes' only if the file will be kept secure and private\n"
+                "• Click 'No' to export settings without API keys (recommended for sharing)\n\n"
+                "Include API keys in export?",
+                parent=self.settings_window
+            )
+            
             # Create a temporary top-level window to serve as the parent for the file dialog
             temp_window = tk.Toplevel(self.settings_window)
             temp_window.attributes('-topmost', True)  # Make it top-most
@@ -2189,11 +2564,8 @@ If you don't have information for a heading or don't know, leave it blank.''',
             if not file_path:
                 return
                 
-            # Collect all settings
+            # Collect all settings - conditionally include API keys
             settings_dict = {
-                'openai_api_key': self.settings.openai_api_key,
-                'anthropic_api_key': self.settings.anthropic_api_key,
-                'google_api_key': self.settings.google_api_key,
                 'model_list': self.settings.model_list,
                 'translation_system_prompt': self.settings.translation_system_prompt,
                 'translation_user_prompt': self.settings.translation_user_prompt,
@@ -2210,6 +2582,7 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'check_orientation': self.settings.check_orientation,
                 'analysis_presets': self.settings.analysis_presets,
                 'function_presets': self.settings.function_presets,
+                'transcription_presets': self.settings.transcription_presets,
                 'chunk_text_presets': self.settings.chunk_text_presets,
                 'format_presets': self.settings.format_presets,  # <-- Add this line
                 'ghost_system_prompt': self.settings.ghost_system_prompt,
@@ -2222,12 +2595,23 @@ If you don't have information for a heading or don't know, leave it blank.''',
                 'sequential_batch_size': self.settings.sequential_batch_size,
             }
             
+            # Add API keys only if user consented
+            if include_api_keys:
+                settings_dict.update({
+                    'openai_api_key': self.settings.openai_api_key,
+                    'anthropic_api_key': self.settings.anthropic_api_key,
+                    'google_api_key': self.settings.google_api_key,
+                })
+            
             with open(file_path, 'w') as f:
                 json.dump(settings_dict, f, indent=4)
             
             # Ensure message box appears on top
             self.settings_window.lift()
-            messagebox.showinfo("Success", "Settings exported successfully!", parent=self.settings_window)
+            if include_api_keys:
+                messagebox.showinfo("Success", "Settings exported successfully!\n\n⚠️ API keys were included in the export.", parent=self.settings_window)
+            else:
+                messagebox.showinfo("Success", "Settings exported successfully!\n\n🔒 API keys were NOT included for privacy protection.", parent=self.settings_window)
             
         except Exception as e:
             self.settings_window.lift()
@@ -2268,6 +2652,9 @@ If you don't have information for a heading or don't know, leave it blank.''',
             if not confirm:
                 return
                 
+            # Check if API keys are present in the imported file
+            api_keys_imported = any(key in imported_settings for key in ['openai_api_key', 'anthropic_api_key', 'google_api_key'])
+            
             # Update all settings
             for key, value in imported_settings.items():
                 if hasattr(self.settings, key):
@@ -2282,6 +2669,9 @@ If you don't have information for a heading or don't know, leave it blank.''',
             # Save the imported settings
             self.settings.save_settings()
             
+            # Ensure all preset types have image fields after import
+            self.ensure_image_fields_after_import()
+            
             # Update UI
             self.parent.update_api_handler()
             
@@ -2293,7 +2683,10 @@ If you don't have information for a heading or don't know, leave it blank.''',
             
             # Ensure success message appears on top
             self.settings_window.lift()
-            messagebox.showinfo("Success", "Settings imported successfully!", parent=self.settings_window)
+            if api_keys_imported:
+                messagebox.showinfo("Success", "Settings imported successfully!\n\n🔑 API keys were restored from the import file.", parent=self.settings_window)
+            else:
+                messagebox.showinfo("Success", "Settings imported successfully!\n\n🔒 No API keys found in import file - your existing API keys were preserved.", parent=self.settings_window)
             
         except Exception as e:
             self.settings_window.lift()
@@ -2318,6 +2711,7 @@ If you don't have information for a heading or don't know, leave it blank.''',
             dropdown_vars = {
                 'analysis_model_var': None,
                 'function_model_var': None,
+                'transcription_model_var': None,
                 'chunk_model_var': None,
                 'seq_metadata_model_var': None
             }
@@ -2402,6 +2796,18 @@ If you don't have information for a heading or don't know, leave it blank.''',
                     # Update the global metadata preset selection in settings
                     self.settings.metadata_preset = preset_names[0]
                     self.load_selected_metadata_preset()
+        except tk.TclError:
+            pass
+
+    def update_transcription_preset_dropdown(self):
+        """Update transcription preset dropdown if it exists."""
+        try:
+            if hasattr(self, 'transcription_preset_dropdown') and self.transcription_preset_dropdown.winfo_exists():
+                preset_names = [p['name'] for p in self.settings.transcription_presets]
+                self.transcription_preset_dropdown['values'] = preset_names
+                if preset_names and self.selected_transcription_preset_var.get() not in preset_names:
+                    self.selected_transcription_preset_var.set(preset_names[0])
+                    self.load_selected_transcription_preset()
         except tk.TclError:
             pass
 
@@ -2553,33 +2959,31 @@ def _ensure_image_fields_in_presets(preset_list):
             preset['num_after_images'] = "0"
     return preset_list
 
-# --- Patch export_settings and import_settings to ensure image fields ---
-old_export_settings = SettingsWindow.export_settings
-old_import_settings = SettingsWindow.import_settings
-
-def export_settings_with_image_fields(self):
-    # Before export, ensure all preset types have image fields
+# --- The export_settings method already includes API key protection ---
+# --- Just ensure image fields are updated before any export/import ---
+def ensure_image_fields_before_export(self):
+    """Ensure all preset types have image fields before export"""
     self.settings.analysis_presets = _ensure_image_fields_in_presets(self.settings.analysis_presets)
     self.settings.function_presets = _ensure_image_fields_in_presets(self.settings.function_presets)
-    self.settings.chunk_text_presets = _ensure_image_fields_in_presets(self.settings.chunk_text_presets)
-    self.settings.format_presets = _ensure_image_fields_in_presets(self.settings.format_presets)
-    self.settings.metadata_presets = _ensure_image_fields_in_presets(self.settings.metadata_presets)
-    self.settings.sequential_metadata_presets = _ensure_image_fields_in_presets(self.settings.sequential_metadata_presets)
-    old_export_settings(self)
-
-
-def import_settings_with_image_fields(self):
-    old_import_settings(self)
-    # After import, ensure all preset types have image fields
-    self.settings.analysis_presets = _ensure_image_fields_in_presets(self.settings.analysis_presets)
-    self.settings.function_presets = _ensure_image_fields_in_presets(self.settings.function_presets)
+    self.settings.transcription_presets = _ensure_image_fields_in_presets(self.settings.transcription_presets)
     self.settings.chunk_text_presets = _ensure_image_fields_in_presets(self.settings.chunk_text_presets)
     self.settings.format_presets = _ensure_image_fields_in_presets(self.settings.format_presets)
     self.settings.metadata_presets = _ensure_image_fields_in_presets(self.settings.metadata_presets)
     self.settings.sequential_metadata_presets = _ensure_image_fields_in_presets(self.settings.sequential_metadata_presets)
 
-SettingsWindow.export_settings = export_settings_with_image_fields
-SettingsWindow.import_settings = import_settings_with_image_fields
+def ensure_image_fields_after_import(self):
+    """Ensure all preset types have image fields after import"""
+    self.settings.analysis_presets = _ensure_image_fields_in_presets(self.settings.analysis_presets)
+    self.settings.function_presets = _ensure_image_fields_in_presets(self.settings.function_presets)
+    self.settings.transcription_presets = _ensure_image_fields_in_presets(self.settings.transcription_presets)
+    self.settings.chunk_text_presets = _ensure_image_fields_in_presets(self.settings.chunk_text_presets)
+    self.settings.format_presets = _ensure_image_fields_in_presets(self.settings.format_presets)
+    self.settings.metadata_presets = _ensure_image_fields_in_presets(self.settings.metadata_presets)
+    self.settings.sequential_metadata_presets = _ensure_image_fields_in_presets(self.settings.sequential_metadata_presets)
+
+# Add these methods to the SettingsWindow class
+SettingsWindow.ensure_image_fields_before_export = ensure_image_fields_before_export
+SettingsWindow.ensure_image_fields_after_import = ensure_image_fields_after_import
 
 # --- Patch all create_new_*_preset_window and save_new_preset logic to always add image fields ---
 # (For brevity, only show for metadata and sequential_metadata, but same logic applies to all)
