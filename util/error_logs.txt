@@ -651,3 +651,13 @@ NameError: name 'job_params' is not defined
 2025-06-25 12:07:27 [ERROR]: Chunking API returned error for index 23
 2025-06-25 12:07:27 [ERROR]: Chunking API returned error for index 29
 2025-06-25 12:07:39 [ERROR]: Chunking API returned error for index 21
+2025-07-28 10:44:51 [ERROR]: API returned error for index 2, job HTR
+2025-07-28 10:44:51 [ERROR]: API returned error for index 3, job HTR
+2025-07-28 10:44:51 [ERROR]: API returned error for index 1, job HTR
+2025-07-28 10:44:51 [ERROR]: API returned error for index 0, job HTR
+2025-07-28 11:12:36 [ERROR]: Error in edit_single_image: DataOperations.process_edited_single_image() takes 1 positional argument but 2 were given
+Stack trace:
+Traceback (most recent call last):
+  File "d:\Programs\Archive_Studio\ArchiveStudio.py", line 2644, in edit_single_image
+    self.data_operations.process_edited_single_image(current_image_path_rel)
+TypeError: DataOperations.process_edited_single_image() takes 1 positional argument but 2 were given

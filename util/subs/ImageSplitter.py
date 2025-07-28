@@ -2062,19 +2062,6 @@ class ImageSplitter(tk.Toplevel):
                 # Save all images (default behavior)
                 data_to_save = self.image_data.sort_values('Image_Index').reset_index(drop=True)
 
-            # Debug: Print temp folder contents
-            print(f"Debug: Temp folder path: {self.temp_folder}")
-            if os.path.exists(self.temp_folder):
-                temp_files = os.listdir(self.temp_folder)
-                print(f"Debug: Files in temp folder: {temp_files}")
-            else:
-                print(f"Debug: Temp folder does not exist!")
-            
-            # Debug: Print dataframe info
-            print(f"Debug: Data to save shape: {data_to_save.shape}")
-            for idx, row in data_to_save.iterrows():
-                print(f"Debug Row {idx}: Split_Image={row.get('Split_Image', 'N/A')}, Original_Image={row.get('Original_Image', 'N/A')}")
-
             # Process and save images sequentially
             for i, row in data_to_save.iterrows():
                 try:
@@ -2087,31 +2074,15 @@ class ImageSplitter(tk.Toplevel):
                     # Validate source path exists
                     if not source_path or not os.path.exists(source_path):
                         print(f"Error: Source image not found at {source_path}")
-                        print(f"Row data: Split_Image={row.get('Split_Image', 'N/A')}, Original_Image={row.get('Original_Image', 'N/A')}")
-                        
-                        # Try to find the image in temp folder by filename
-                        if source_path:
-                            source_filename = os.path.basename(source_path)
-                            temp_file_path = os.path.join(self.temp_folder, source_filename)
-                            print(f"Debug: Trying temp file path: {temp_file_path}")
-                            if os.path.exists(temp_file_path):
-                                print(f"Debug: Found image in temp folder, using {temp_file_path}")
-                                source_path = temp_file_path
-                            else:
-                                print(f"Debug: Image not found in temp folder either")
-                                continue
-                        else:
-                            continue
+                        continue
                     
                     # Copy image directly to preserve quality (avoid double compression)
                     shutil.copy2(source_path, new_path)
-                    print(f"Debug: Successfully copied {source_path} to {new_path}")
                     
                     # Keep track of the mapping between old and new paths
                     row['Final_Path'] = new_path
                 except Exception as e:
                     print(f"Error processing image {i+1}: {e}")
-                    print(f"Source path was: {source_path if 'source_path' in locals() else 'undefined'}")
                     continue
 
             self.status = "saved"

@@ -565,224 +565,153 @@ class DataOperations:
     def process_edited_single_image(self, original_image_path_rel):
         """
         Processes images saved by the ImageSplitter for a single-image edit.
-        Replaces the original row in the DataFrame with new rows for each edited part,
-        renames files, and updates subsequent rows/files.
+        Uses a clean step-by-step approach to avoid file collisions and maintain proper numbering.
         """
         try:
             pass_images_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                        "subs", "pass_images") # Path relative to DataOperations.py
+                                        "subs", "pass_images")
 
             if not os.path.exists(pass_images_dir):
-                # Use app's error logging
                 self.app.error_logging(f"pass_images directory not found at: {pass_images_dir}", level="ERROR")
                 raise FileNotFoundError(f"pass_images directory not found at: {pass_images_dir}")
 
             # Get edited images and sort them naturally
             edited_images = sorted(
                 [f for f in os.listdir(pass_images_dir) if f.lower().endswith((".jpg", ".jpeg"))],
-                 key=natural_sort_key # Use helper function
+                 key=natural_sort_key
             )
 
             if not edited_images:
-                # This might happen if the user saved without making changes or splits
                 messagebox.showinfo("No Changes", "No new image parts were created.")
-                # Clean up pass_images directory anyway
-                try:
-                    for file in os.listdir(pass_images_dir):
-                        file_path = os.path.join(pass_images_dir, file)
-                        if os.path.isfile(file_path):
-                            os.unlink(file_path)
-                except Exception as e:
-                    # Log error using app's logger
-                    self.app.error_logging(f"Error cleaning up pass_images directory: {e}", level="ERROR")
-                return # Exit without changing DataFrame
+                return
 
-            # Use app's page_counter
-            current_df_index = self.app.page_counter # The index in the DF being replaced/inserted after
-            num_new_images = len(edited_images)
+            # Step 1: Count the number of split images
+            split_count = len(edited_images)
+            current_df_index = self.app.page_counter
+            project_images_dir = os.path.join(self.app.project_directory, "images") if hasattr(self.app, 'project_directory') and self.app.project_directory else self.app.images_directory
 
-            # --- Prepare New Rows ---
-            new_rows = []
-            for i, img_file in enumerate(edited_images):
-                edited_image_path_abs = os.path.join(pass_images_dir, img_file)
+            # Create a temporary directory for the reorganization
+            temp_reorg_dir = os.path.join(self.app.edit_temp_directory, "reorg_temp")
+            if os.path.exists(temp_reorg_dir):
+                shutil.rmtree(temp_reorg_dir)
+            os.makedirs(temp_reorg_dir)
 
-                # Determine the new index in the potentially expanded DataFrame
-                # All new rows will be inserted starting at current_df_index
-                new_df_index = current_df_index + i
+            try:
+                # Step 2: Copy all original images and text up to current image with original names
+                for i in range(current_df_index):
+                    old_img_path = self.app.get_full_path(self.app.main_df.iloc[i]['Image_Path'])
+                    old_text_path = self.app.get_full_path(self.app.main_df.iloc[i]['Text_Path'])
+                    
+                    new_img_name = f"{i+1:04d}_p{i+1:03d}.jpg"
+                    new_text_name = f"{i+1:04d}_p{i+1:03d}.txt"
+                    
+                    if old_img_path and os.path.exists(old_img_path):
+                        shutil.copy2(old_img_path, os.path.join(temp_reorg_dir, new_img_name))
+                    if old_text_path and os.path.exists(old_text_path):
+                        shutil.copy2(old_text_path, os.path.join(temp_reorg_dir, new_text_name))
 
-                # Create new sequential filename based on its future position in the DataFrame
-                # Note: This assumes the DF will be re-indexed later.
-                # Let's use a temporary naming scheme first, then rename after re-indexing.
-                # Use app's images_directory
-                temp_new_image_name = f"temp_{current_df_index}_{i}.jpg"
-                new_image_target_abs = os.path.join(self.app.images_directory, temp_new_image_name)
+                # Step 3: Copy remaining images and text files, incrementing by split_count-1
+                increment = split_count - 1
+                for i in range(current_df_index + 1, len(self.app.main_df)):
+                    old_img_path = self.app.get_full_path(self.app.main_df.iloc[i]['Image_Path'])
+                    old_text_path = self.app.get_full_path(self.app.main_df.iloc[i]['Text_Path'])
+                    
+                    new_index = i + increment
+                    new_img_name = f"{new_index+1:04d}_p{new_index+1:03d}.jpg"
+                    new_text_name = f"{new_index+1:04d}_p{new_index+1:03d}.txt"
+                    
+                    if old_img_path and os.path.exists(old_img_path):
+                        shutil.copy2(old_img_path, os.path.join(temp_reorg_dir, new_img_name))
+                    if old_text_path and os.path.exists(old_text_path):
+                        shutil.copy2(old_text_path, os.path.join(temp_reorg_dir, new_text_name))
 
-                # Copy image with temporary name
-                shutil.copy2(edited_image_path_abs, new_image_target_abs)
-                # Use app's path conversion
-                new_image_target_rel = self.app.get_relative_path(new_image_target_abs)
+                # Step 4: Copy the edited images to fill the gaps
+                for i, img_file in enumerate(edited_images):
+                    edited_image_path = os.path.join(pass_images_dir, img_file)
+                    new_index = current_df_index + i
+                    new_img_name = f"{new_index+1:04d}_p{new_index+1:03d}.jpg"
+                    shutil.copy2(edited_image_path, os.path.join(temp_reorg_dir, new_img_name))
 
+                # Step 5: Create blank text files for new images
+                for i in range(split_count):
+                    new_index = current_df_index + i
+                    new_text_name = f"{new_index+1:04d}_p{new_index+1:03d}.txt"
+                    new_text_path = os.path.join(temp_reorg_dir, new_text_name)
+                    if not os.path.exists(new_text_path):
+                        with open(new_text_path, 'w', encoding='utf-8') as f:
+                            f.write("")
 
-                # Create new row data - Index/Page will be updated after insertion
-                new_row = {
-                    "Index": -1, # Placeholder index
-                    "Page": "",  # Placeholder page
-                    "Original_Text": "", "Corrected_Text": "", "Formatted_Text": "",
-                    "Translation": "", "Separated_Text": "",
-                    "Image_Path": new_image_target_rel, # Relative path to temp named file
-                    "Text_Path": "",
-                    "Text_Toggle": "None",
-                    "People": "", "Places": "", "Errors": "", "Errors_Source": "", "Relevance": ""
-                    # Add other columns initialized as empty
-                }
-                # Ensure all DF columns exist using app's main_df columns
-                for col in self.app.main_df.columns:
-                     if col not in new_row:
-                          new_row[col] = ""
-                new_rows.append(new_row)
+                # Step 6: Clear the project images directory and copy reorganized files
+                for file in os.listdir(project_images_dir):
+                    if file.lower().endswith(('.jpg', '.jpeg', '.txt')):
+                        try:
+                            os.remove(os.path.join(project_images_dir, file))
+                        except Exception as e:
+                            self.app.error_logging(f"Could not remove {file}: {e}", level="WARNING")
 
-            # --- Update DataFrame ---
-            # Get rows before and after the insertion point using app's main_df
-            df_before = self.app.main_df.iloc[:current_df_index]
-            df_after = self.app.main_df.iloc[current_df_index+1:] # Skip the row being replaced
+                # Copy all reorganized files to project directory
+                for file in os.listdir(temp_reorg_dir):
+                    shutil.copy2(os.path.join(temp_reorg_dir, file), os.path.join(project_images_dir, file))
 
-            # Concatenate the parts with the new rows and update app's main_df
-            self.app.main_df = pd.concat([
-                df_before,
-                pd.DataFrame(new_rows),
-                df_after
-            ]).reset_index(drop=True) # Reset index immediately
+                # Step 7: Rebuild the DataFrame
+                new_rows = []
+                all_files = sorted([f for f in os.listdir(project_images_dir) if f.lower().endswith(('.jpg', '.jpeg'))], 
+                                 key=natural_sort_key)
+                
+                for i, img_file in enumerate(all_files):
+                    base_name = os.path.splitext(img_file)[0]
+                    text_file = f"{base_name}.txt"
+                    
+                    img_path_rel = self.app.get_relative_path(os.path.join(project_images_dir, img_file))
+                    text_path_rel = self.app.get_relative_path(os.path.join(project_images_dir, text_file))
+                    
+                    # Copy data from old DataFrame if it exists
+                    old_data = {}
+                    if i < len(self.app.main_df):
+                        old_row = self.app.main_df.iloc[i]
+                        for col in self.app.main_df.columns:
+                            if col not in ['Index', 'Page', 'Image_Path', 'Text_Path']:
+                                old_data[col] = old_row.get(col, "")
+                    
+                    new_row = {
+                        "Index": i,
+                        "Page": f"{i+1:04d}_p{i+1:03d}",
+                        "Image_Path": img_path_rel,
+                        "Text_Path": text_path_rel,
+                        "Text_Toggle": old_data.get("Text_Toggle", "None"),
+                        **old_data
+                    }
+                    
+                    # Ensure all DataFrame columns exist
+                    for col in self.app.main_df.columns:
+                        if col not in new_row:
+                            new_row[col] = ""
+                    
+                    new_rows.append(new_row)
 
-            # --- Rename Files and Update Paths ---
-            # Now that the DataFrame index is final, rename files and update paths
-            for i in range(num_new_images):
-                 new_final_index = current_df_index + i
-                 # Use app's main_df
-                 row_to_update = self.app.main_df.loc[new_final_index]
+                # Replace the DataFrame
+                self.app.main_df = pd.DataFrame(new_rows)
 
-                 old_temp_path_rel = row_to_update['Image_Path']
-                 # Use app's path conversion
-                 old_temp_path_abs = self.app.get_full_path(old_temp_path_rel)
-
-                 # Define final name and path using app's images_directory
-                 final_image_name = f"{new_final_index+1:04d}_p{new_final_index+1:03d}.jpg"
-                 final_image_path_abs = os.path.join(self.app.images_directory, final_image_name)
-                 # Use app's path conversion
-                 final_image_path_rel = self.app.get_relative_path(final_image_path_abs)
-
-                 # Rename the image file
-                 if os.path.exists(old_temp_path_abs):
-                     # First check if destination already exists
-                     if os.path.exists(final_image_path_abs):
-                         try:
-                             # Either remove the existing file first or use a unique name
-                             os.remove(final_image_path_abs)
-                             self.app.error_logging(f"Removed existing file {final_image_path_abs} before renaming", level="INFO")
-                         except Exception as rm_err:
-                             # If we can't remove the existing file, use copy instead of rename
-                             self.app.error_logging(f"Could not remove existing file, using copy instead: {str(rm_err)}", level="WARNING")
-                             shutil.copy2(old_temp_path_abs, final_image_path_abs)
-                             try:
-                                 os.remove(old_temp_path_abs)  # Try to clean up source file
-                             except:
-                                 pass  # Silent fail if we can't remove source
-                             continue  # Skip the rename operation
-                     
-                     # Now rename the file
-                     try:
-                         os.rename(old_temp_path_abs, final_image_path_abs)
-                     except Exception as rename_err:
-                         # If rename fails, try to copy instead
-                         self.app.error_logging(f"Rename failed, attempting copy: {str(rename_err)}", level="WARNING")
-                         try:
-                             shutil.copy2(old_temp_path_abs, final_image_path_abs)
-                             os.remove(old_temp_path_abs)  # Clean up source file
-                         except Exception as copy_err:
-                             self.app.error_logging(f"Failed to copy {old_temp_path_abs} to {final_image_path_abs}: {str(copy_err)}", level="ERROR")
-                 else:
-                     # Use app's logger
-                     self.app.error_logging(f"Temporary image file not found for renaming: {old_temp_path_abs}", level="WARNING")
-
-
-                 # Update the app's DataFrame with final info
-                 self.app.main_df.at[new_final_index, 'Index'] = new_final_index
-                 self.app.main_df.at[new_final_index, 'Page'] = f"{new_final_index+1:04d}_p{new_final_index+1:03d}"
-                 self.app.main_df.at[new_final_index, 'Image_Path'] = final_image_path_rel
-
-
-            # Re-number indices and pages for rows *after* the inserted block
-            # Use app's main_df
-            for idx in range(current_df_index + num_new_images, len(self.app.main_df)):
-                 old_page_parts = self.app.main_df.loc[idx, 'Page'].split('_p')
-                 old_doc_num = int(old_page_parts[0])
-                 # Only update index/page if it's different
-                 if self.app.main_df.loc[idx, 'Index'] != idx:
-                      self.app.main_df.at[idx, 'Index'] = idx
-                      # Update page numbering based on new index
-                      new_page_num = f"{idx+1:04d}_p{idx+1:03d}"
-                      self.app.main_df.at[idx, 'Page'] = new_page_num
-
-                      # Rename associated image file if needed
-                      old_img_path_rel = self.app.main_df.loc[idx, 'Image_Path']
-                      # Use app's path conversion
-                      old_img_path_abs = self.app.get_full_path(old_img_path_rel)
-                      if old_img_path_abs and os.path.exists(old_img_path_abs):
-                          img_dir = os.path.dirname(old_img_path_abs)
-                          new_img_name = f"{idx+1:04d}_p{idx+1:03d}{os.path.splitext(old_img_path_abs)[1]}"
-                          new_img_path_abs = os.path.join(img_dir, new_img_name)
-                          # Use app's path conversion
-                          new_img_path_rel = self.app.get_relative_path(new_img_path_abs)
-
-                          if old_img_path_abs != new_img_path_abs:
-                              try:
-                                  # Check if destination already exists
-                                  if os.path.exists(new_img_path_abs):
-                                      # Try to remove existing file
-                                      try:
-                                          os.remove(new_img_path_abs)
-                                      except Exception as remove_err:
-                                          self.app.error_logging(f"Could not remove existing file {new_img_path_abs}: {remove_err}", level="WARNING")
-                                          # Try using copy instead of rename
-                                          shutil.copy2(old_img_path_abs, new_img_path_abs)
-                                          # Update path in DataFrame regardless of whether we could delete the original
-                                          self.app.main_df.at[idx, 'Image_Path'] = new_img_path_rel
-                                          continue
-
-                                  # Now do the rename
-                                  os.rename(old_img_path_abs, new_img_path_abs)
-                                  self.app.main_df.at[idx, 'Image_Path'] = new_img_path_rel
-                              except OSError as rename_err:
-                                  # If rename fails, try copy as fallback
-                                  try:
-                                      shutil.copy2(old_img_path_abs, new_img_path_abs)
-                                      self.app.main_df.at[idx, 'Image_Path'] = new_img_path_rel
-                                      # Try to delete the original file but don't worry if it fails
-                                      try:
-                                          os.remove(old_img_path_abs)
-                                      except:
-                                          pass
-                                  except Exception as copy_err:
-                                      # Use app's logger
-                                      self.app.error_logging(f"Error renaming/copying image for index {idx}: {copy_err}", level="ERROR")
+            finally:
+                # Clean up temporary directory
+                if os.path.exists(temp_reorg_dir):
+                    shutil.rmtree(temp_reorg_dir)
 
             # Clean up pass_images directory
             try:
-                for file in edited_images: # Use the list we already have
+                for file in edited_images:
                     file_path = os.path.join(pass_images_dir, file)
                     if os.path.isfile(file_path):
                         os.unlink(file_path)
             except Exception as e:
-                 # Use app's logger
-                 self.app.error_logging(f"Error cleaning up pass_images directory: {e}", level="ERROR")
+                self.app.error_logging(f"Error cleaning up pass_images directory: {e}", level="ERROR")
 
-            # Refresh display to show the first inserted image
-            # Use app's page_counter and refresh_display
-            self.app.page_counter = current_df_index # Stay at the start of the inserted block
+            # Refresh display to show the first split image
+            self.app.page_counter = current_df_index
             self.app.refresh_display()
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to process edited images: {str(e)}")
-            # Use app's logger
             self.app.error_logging(f"Process edited image error: {str(e)}")
 
     def revert_current_page(self):
