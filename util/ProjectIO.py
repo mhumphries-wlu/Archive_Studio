@@ -41,16 +41,31 @@ class ProjectIO:
             # Create a copy of the DataFrame to prevent modifying the original
             save_df = self.app.main_df.copy()
             
-            # Convert all absolute paths to relative paths
+            # Convert all paths to relative paths with proper handling of lists
             for idx, row in save_df.iterrows():
-                # Convert Image_Path to relative path
-                if pd.notna(row['Image_Path']) and str(row['Image_Path']).strip():
-                    # Extract the filename from the potentially absolute path stored in the row
-                    image_filename = os.path.basename(str(row['Image_Path']))
-                    # Construct the expected simple relative path
-                    expected_relative_path = os.path.join("images", image_filename)
-                    # Store the simple relative path
-                    save_df.at[idx, 'Image_Path'] = expected_relative_path
+                # Convert Image_Path to relative path - handle both strings and lists
+                if pd.notna(row['Image_Path']) and row['Image_Path']:
+                    image_path_data = row['Image_Path']
+                    
+                    if isinstance(image_path_data, list):
+                        # Handle list of image paths - convert each to relative
+                        relative_paths = []
+                        for path in image_path_data:
+                            if pd.notna(path) and isinstance(path, str) and path.strip():
+                                # Get filename and construct relative path
+                                image_filename = os.path.basename(str(path))
+                                expected_relative_path = os.path.join("images", image_filename)
+                                relative_paths.append(expected_relative_path)
+                        # Store the list of relative paths
+                        save_df.at[idx, 'Image_Path'] = relative_paths if relative_paths else ""
+                    elif isinstance(image_path_data, str) and image_path_data.strip():
+                        # Handle single image path
+                        image_filename = os.path.basename(str(image_path_data))
+                        expected_relative_path = os.path.join("images", image_filename)
+                        save_df.at[idx, 'Image_Path'] = expected_relative_path
+                    else:
+                        # Handle invalid or empty paths
+                        save_df.at[idx, 'Image_Path'] = ""
 
                 # Convert Text_Path to relative path if it exists
                 if pd.notna(row['Text_Path']) and row['Text_Path']:
@@ -66,6 +81,14 @@ class ProjectIO:
 
             # Save the updated DataFrame with relative paths to the project file
             save_df.to_csv(project_file, index=False, encoding='utf-8')
+
+            # Update the main DataFrame with the corrected paths to maintain consistency
+            self.app.main_df['Image_Path'] = save_df['Image_Path']
+            if 'Text_Path' in save_df.columns:
+                self.app.main_df['Text_Path'] = save_df['Text_Path']
+
+            # Refresh the display to ensure consistency with saved state
+            self.app.refresh_display()
 
             # Add project to recent projects list
             self.app.settings.add_recent_project(self.app.project_directory)
@@ -109,6 +132,23 @@ class ProjectIO:
             # Set project directory before resolving paths
             self.app.project_directory = project_directory
             self.app.images_directory = images_directory
+
+            # Parse Image_Path fields that might be string representations of lists
+            if 'Image_Path' in self.app.main_df.columns:
+                for idx, row in self.app.main_df.iterrows():
+                    image_path_value = row['Image_Path']
+                    if pd.notna(image_path_value) and isinstance(image_path_value, str) and image_path_value.strip():
+                        # Check if it looks like a string representation of a list
+                        if image_path_value.startswith('[') and image_path_value.endswith(']'):
+                            try:
+                                # Safely evaluate the string as a Python literal
+                                import ast
+                                parsed_list = ast.literal_eval(image_path_value)
+                                if isinstance(parsed_list, list):
+                                    self.app.main_df.at[idx, 'Image_Path'] = parsed_list
+                            except (ValueError, SyntaxError) as e:
+                                # If parsing fails, leave as string and log warning
+                                self.app.error_logging(f"Warning: Could not parse Image_Path list at index {idx}: {image_path_value}. Error: {e}", level="WARNING")
 
             # Update Text_Toggle for each row to show the highest level of populated text
             for idx, row in self.app.main_df.iterrows():
@@ -368,17 +408,23 @@ class ProjectIO:
             # Save the modified DataFrame (now containing single, relative image paths)
             save_df.to_csv(project_file, index=False, encoding='utf-8')
 
-            messagebox.showinfo("Success", f"Project saved successfully to {project_directory}")
-
             # Update the app's current project directory references ONLY after successful save
             self.app.project_directory = project_directory
             self.app.images_directory = images_directory
+
+            # Update the main DataFrame with the new relative paths to maintain consistency
+            self.app.main_df['Image_Path'] = save_df['Image_Path']
+            if 'Text_Path' in save_df.columns:
+                self.app.main_df['Text_Path'] = save_df['Text_Path']
+
+            # Refresh the display to ensure consistency with saved state
+            self.app.refresh_display()
             
             # Add project to recent projects list
             self.app.settings.add_recent_project(project_directory)
             self.app.update_recent_projects_menu()
-            # Optionally, refresh display if needed, though usually not required after save_as
-            # self.app.refresh_display()
+
+            messagebox.showinfo("Success", f"Project saved successfully to {project_directory}")
 
         except Exception as e: # Catch errors during the loop or saving
             messagebox.showerror("Error", f"Failed to save project as: {e}")
