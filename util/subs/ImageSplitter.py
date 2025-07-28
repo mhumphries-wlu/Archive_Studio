@@ -302,6 +302,9 @@ class ImageSplitter(tk.Toplevel):
         process_menu.add_command(label="Auto Crop Active Image", command=self.auto_crop_image)
         process_menu.add_command(label="Auto Crop All Images", command=self.auto_crop_all_images)
         process_menu.add_separator()
+        process_menu.add_command(label="Auto Straighten Image", command=self.auto_straighten_image)
+        process_menu.add_command(label="Auto Straighten All Images", command=self.auto_straighten_all_images)
+        process_menu.add_separator()
         process_menu.add_command(label="Straighten Image by Line", command=self.manual_straighten)
         process_menu.add_separator()
         process_menu.add_command(label="Rotate Image Clockwise", command=lambda: self.rotate_image(-90))
@@ -327,6 +330,10 @@ class ImageSplitter(tk.Toplevel):
 
         # Auto crop image
         self.bind("<Control-Shift-a>", self.auto_crop_image)
+
+        # Auto straighten
+        self.bind("<Control-s>", self.auto_straighten_image)
+        self.bind("<Control-Shift-s>", self.auto_straighten_all_images)
 
         # Update rotation bindings for cursor
         self.bind("<bracketright>", lambda e: self.rotate_cursor(-1))
@@ -1065,6 +1072,250 @@ class ImageSplitter(tk.Toplevel):
         except Exception as e:
             messagebox.showerror("Error", f"Error during auto-crop: {str(e)}")
             return False
+
+# Auto Straighten Functions
+
+    def auto_straighten_image(self, event=None):
+        """Automatically straighten the current image by detecting vertical edges."""
+        if not self.image_data.empty:
+            current_image_row = self.image_data[self.image_data['Image_Index'] == self.current_image_index + 1].iloc[0]
+            image_path = current_image_row['Split_Image'] if pd.notna(current_image_row['Split_Image']) else current_image_row['Original_Image']
+            
+            angle = self.detect_straighten_angle(image_path)
+            if angle is not None:
+                # Apply the rotation
+                self.rotate_image_by_angle(image_path, angle)
+                messagebox.showinfo("Auto Straighten", f"Image straightened by {angle:.2f} degrees.")
+            else:
+                messagebox.showwarning("Auto Straighten", "Could not detect a clear vertical edge to straighten against.")
+
+    def auto_straighten_all_images(self):
+        """Apply auto straightening to all images in the collection."""
+        if not self.image_data.empty:
+            # Create progress window
+            progress_window = tk.Toplevel(self)
+            progress_window.title("Auto Straightening Progress")
+            progress_window.geometry("350x150")
+            progress_window.transient(self)
+            progress_window.grab_set()
+
+            # Progress label and bar
+            progress_label = tk.Label(progress_window, text="Auto straightening images...")
+            progress_label.pack(pady=10)
+
+            progress_var = tk.DoubleVar()
+            progress_bar = ttk.Progressbar(progress_window, variable=progress_var, maximum=100)
+            progress_bar.pack(pady=10, padx=20, fill=tk.X)
+
+            status_label = tk.Label(progress_window, text="Starting...")
+            status_label.pack(pady=5)
+
+            # Cancel flag
+            cancel_flag = {'cancelled': False}
+            
+            def cancel_processing():
+                cancel_flag['cancelled'] = True
+                progress_window.destroy()
+
+            cancel_button = tk.Button(progress_window, text="Cancel", command=cancel_processing)
+            cancel_button.pack(pady=5)
+
+            def update_progress():
+                progress_window.update()
+
+            def process_image(image_path):
+                if cancel_flag['cancelled']:
+                    return False
+                try:
+                    angle = self.detect_straighten_angle(image_path)
+                    if angle is not None and abs(angle) > 0.1:  # Only rotate if angle is significant
+                        return self.rotate_image_by_angle(image_path, angle)
+                    return True  # Consider it successful even if no rotation needed
+                except Exception as e:
+                    print(f"Error processing {image_path}: {str(e)}")
+                    return False
+
+            def process_all_images():
+                try:
+                    total_images = len(self.image_data)
+                    processed = 0
+                    successful = 0
+                    straightened = 0
+
+                    for index, row in self.image_data.iterrows():
+                        if cancel_flag['cancelled']:
+                            break
+
+                        image_path = row['Split_Image'] if pd.notna(row['Split_Image']) else row['Original_Image']
+                        
+                        # Update status
+                        status_label.config(text=f"Processing: {os.path.basename(image_path)}")
+                        update_progress()
+
+                        # Detect angle first to count how many actually need straightening
+                        angle = self.detect_straighten_angle(image_path)
+                        
+                        # Process the image
+                        if process_image(image_path):
+                            successful += 1
+                            if angle is not None and abs(angle) > 0.1:
+                                straightened += 1
+
+                        processed += 1
+                        progress_var.set((processed / total_images) * 100)
+                        update_progress()
+
+                    if not cancel_flag['cancelled']:
+                        # Refresh current image display
+                        def restore_view():
+                            self.show_current_image()
+                            self.status = "changed"
+                            progress_window.destroy()
+                            if successful == total_images:
+                                messagebox.showinfo("Complete", f"Successfully processed all {successful} images.\n{straightened} images were straightened.")
+                            else:
+                                messagebox.showwarning("Partial Success", f"Processed {successful} out of {total_images} images.\n{straightened} images were straightened.")
+
+                        self.after(100, restore_view)
+                    else:
+                        progress_window.destroy()
+
+                except Exception as e:
+                    messagebox.showerror("Error", 
+                                    f"An error occurred while processing images: {str(e)}")
+                    progress_window.destroy()
+
+            # Start processing in a separate thread
+            threading.Thread(target=process_all_images, daemon=True).start()
+
+    def detect_straighten_angle(self, image_path):
+        """Detect the angle needed to straighten the image by finding the most vertical edge."""
+        try:
+            # Read the image
+            image = cv2.imread(image_path)
+            if image is None:
+                return None
+            
+            # Convert to grayscale
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            
+            # Apply mild Gaussian blur to reduce noise while preserving edges
+            blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+            
+            # Try multiple Canny thresholds for better edge detection
+            edge_candidates = []
+            
+            # Adaptive thresholds based on image statistics
+            mean_val = np.mean(gray)
+            std_val = np.std(gray)
+            
+            # For high contrast images (like white text on black), use lower thresholds
+            if std_val > 50:  # High contrast
+                canny_params = [(30, 90), (50, 150), (70, 210)]
+            else:  # Lower contrast
+                canny_params = [(50, 150), (80, 240), (100, 300)]
+            
+            # Try different Hough thresholds too
+            hough_thresholds = [50, 75, 100, 150]
+            
+            all_vertical_lines = []
+            
+            for low, high in canny_params:
+                edges = cv2.Canny(blurred, low, high, apertureSize=3)
+                
+                for threshold in hough_thresholds:
+                    # Use Hough line transform to detect lines
+                    lines = cv2.HoughLines(edges, 1, np.pi/180, threshold=threshold)
+                    
+                    if lines is not None:
+                        for line in lines:
+                            rho, theta = line[0]
+                            # Convert theta to degrees
+                            angle_deg = np.degrees(theta)
+                            
+                            # Check if the line is close to vertical (90 degrees ± 30 degrees for better detection)
+                            # Hough transform gives angles from 0 to 180, where 90 is vertical
+                            deviation_from_vertical = min(abs(angle_deg - 90), abs(angle_deg - 90 + 180))
+                            
+                            if deviation_from_vertical < 30:  # More generous tolerance
+                                # Calculate how much we need to rotate to make it perfectly vertical
+                                if angle_deg > 90:
+                                    rotation_needed = -(angle_deg - 90)  # Clockwise rotation
+                                else:
+                                    rotation_needed = 90 - angle_deg     # Counter-clockwise rotation
+                                
+                                # Store with line strength (inverse of deviation + rho factor)
+                                line_strength = (30 - deviation_from_vertical) + abs(rho) / 1000
+                                all_vertical_lines.append((deviation_from_vertical, rotation_needed, rho, line_strength))
+            
+            if not all_vertical_lines:
+                print(f"No vertical lines detected in {os.path.basename(image_path)}")
+                return None
+            
+            # Sort by deviation from vertical (smaller deviation = more vertical)
+            all_vertical_lines.sort(key=lambda x: x[0])
+            
+            # Take the most vertical line
+            best_deviation, best_rotation, best_rho, best_strength = all_vertical_lines[0]
+            
+            print(f"Detected angle for {os.path.basename(image_path)}: {best_rotation:.2f}° (deviation: {best_deviation:.1f}°)")
+            
+            # Only return significant angles (more than 0.1 degrees)
+            if abs(best_rotation) > 0.1:
+                return best_rotation
+            else:
+                print(f"Angle too small ({best_rotation:.2f}°), skipping rotation")
+                return None
+                
+        except Exception as e:
+            print(f"Error detecting straighten angle for {image_path}: {str(e)}")
+            return None
+
+    def rotate_image_by_angle(self, image_path, angle):
+        """Rotate an image by a specific angle in degrees."""
+        try:
+            # Read the image
+            image = cv2.imread(image_path)
+            if image is None:
+                return False
+            
+            # Get image dimensions
+            height, width = image.shape[:2]
+            
+            # Calculate the rotation matrix
+            center = (width // 2, height // 2)
+            rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
+            
+            # Calculate new image dimensions to fit the rotated image
+            cos_angle = abs(rotation_matrix[0, 0])
+            sin_angle = abs(rotation_matrix[0, 1])
+            new_width = int((height * sin_angle) + (width * cos_angle))
+            new_height = int((height * cos_angle) + (width * sin_angle))
+            
+            # Adjust the rotation matrix to account for translation
+            rotation_matrix[0, 2] += (new_width / 2) - center[0]
+            rotation_matrix[1, 2] += (new_height / 2) - center[1]
+            
+            # Apply the rotation
+            rotated = cv2.warpAffine(image, rotation_matrix, (new_width, new_height), 
+                                   flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_CONSTANT, 
+                                   borderValue=(255, 255, 255))  # White background
+            
+            # Save the rotated image with high quality
+            cv2.imwrite(image_path, rotated, [cv2.IMWRITE_JPEG_QUALITY, 98])
+            
+            # Force image reload if this is the current image
+            current_image_row = self.image_data[self.image_data['Image_Index'] == self.current_image_index + 1].iloc[0]
+            current_image_path = current_image_row['Split_Image'] if pd.notna(current_image_row['Split_Image']) else current_image_row['Original_Image']
+            
+            if image_path == current_image_path:
+                self.show_current_image()
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error rotating image {image_path} by {angle} degrees: {str(e)}")
+            return False
     
     def crop_grayscale_image(self, image_path, is_left_image):
         # This is the working grayscale version
@@ -1667,7 +1918,7 @@ class ImageSplitter(tk.Toplevel):
                             # Method 3: If there's only one file in the originals folder and we're processing only one image, use that
                             if not backup_found and os.path.exists(self.originals_folder) and len(original_images) == 1:
                                 backup_files = [f for f in os.listdir(self.originals_folder) 
-                                             if f.lower().endswith(('.jpg', '.jpeg'))]
+                                    if f.lower().endswith(('.jpg', '.jpeg'))]
                                 if len(backup_files) == 1:
                                     backup_found = True
                                     original_backup_file = os.path.join(self.originals_folder, backup_files[0])
