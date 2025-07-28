@@ -2730,7 +2730,16 @@ class App(TkinterDnD.Tk):
                      messagebox.showwarning("No Edits", "No edited images were found in the output directory.")
                  else:
                     # --- Replace DataFrame content ---
+                    # Store the current project directory before reset
+                    project_dir = getattr(self, 'project_directory', None)
+                    
                     self.reset_application() # Clear existing DF and state
+                    
+                    # Restore the project directory and images directory after reset
+                    if project_dir:
+                        self.project_directory = project_dir
+                        self.images_directory = os.path.join(self.project_directory, "images")
+                        os.makedirs(self.images_directory, exist_ok=True)
 
                     new_rows_list = []
                     for i, edited_image_file in enumerate(edited_images):

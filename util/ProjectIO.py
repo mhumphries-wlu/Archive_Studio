@@ -79,6 +79,29 @@ class ProjectIO:
                     # expected_text_relative_path = os.path.join("texts", text_filename)
                     save_df.at[idx, 'Text_Path'] = expected_text_relative_path
 
+            # Ensure images directory exists
+            project_images_dir = os.path.join(self.app.project_directory, "images")
+            os.makedirs(project_images_dir, exist_ok=True)
+            
+            # Verify that image files referenced in the DataFrame actually exist in the project
+            missing_images = []
+            for idx, row in save_df.iterrows():
+                image_path_data = row['Image_Path']
+                if pd.notna(image_path_data) and image_path_data:
+                    if isinstance(image_path_data, list):
+                        for path in image_path_data:
+                            if path:  # Check non-empty paths
+                                full_path = os.path.join(self.app.project_directory, path)
+                                if not os.path.exists(full_path):
+                                    missing_images.append(path)
+                    elif isinstance(image_path_data, str) and image_path_data.strip():
+                        full_path = os.path.join(self.app.project_directory, image_path_data)
+                        if not os.path.exists(full_path):
+                            missing_images.append(image_path_data)
+            
+            if missing_images:
+                self.app.error_logging(f"Warning: Some image files referenced in DataFrame are missing from project directory: {missing_images[:5]}", level="WARNING")
+
             # Save the updated DataFrame with relative paths to the project file
             save_df.to_csv(project_file, index=False, encoding='utf-8')
 
