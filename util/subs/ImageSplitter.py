@@ -615,20 +615,31 @@ class ImageSplitter(tk.Toplevel):
         self.update_cursor_line(mock_event)
 
     def update_cursor_line(self, event):
-        if not self.special_cursor_active:
+        if not self.special_cursor_active or not self.original_image:
             return
 
         # Clear existing lines
         self.clear_cursor_lines()
         
+        # Get canvas and image dimensions
         canvas_width = self.image_canvas.winfo_width()
         canvas_height = self.image_canvas.winfo_height()
+        
+        # Get the displayed image dimensions (scaled)
+        image_width, image_height = self.original_image.size
+        scaled_width = int(image_width * self.current_scale)
+        scaled_height = int(image_height * self.current_scale)
+        
         x = self.image_canvas.canvasx(event.x)
         y = self.image_canvas.canvasy(event.y)
+        
+        # Only draw cursor lines if mouse is within the image area
+        if not (0 <= x <= scaled_width and 0 <= y <= scaled_height):
+            return
 
         if self.cursor_orientation == 'angled':
-            # Calculate line length that will extend across the entire canvas
-            line_length = math.sqrt(canvas_width**2 + canvas_height**2) * 2
+            # Calculate line length that will extend across the entire image area (not canvas)
+            line_length = math.sqrt(scaled_width**2 + scaled_height**2) * 2
             
             # Convert angle to radians
             angle_rad = math.radians(self.cursor_angle)
@@ -648,37 +659,94 @@ class ImageSplitter(tk.Toplevel):
                 fill="red", width=2
             )
         elif self.cursor_orientation == 'vertical':
+            # Limit vertical line to image height
             self.vertical_line = self.image_canvas.create_line(
-                x, 0, x, canvas_height,
+                x, 0, x, scaled_height,
                 fill="red", width=2
             )
         else:  # horizontal
+            # Limit horizontal line to image width
             self.horizontal_line = self.image_canvas.create_line(
-                0, y, canvas_width, y,
+                0, y, scaled_width, y,
                 fill="red", width=2
             )
 
     def handle_mouse_click(self, event):
         if self.special_cursor_active and self.original_image:
-            self.call_split_image_functions()
-            self.clear_cursor_lines()
-            
-            if self.batch_process.get():
-                # Move two images ahead after splitting
-                self.after(100, lambda: self.navigate_images(1))
-                self.after(200, lambda: self.navigate_images(1))
-                # Reactivate the special cursor for the next image
-                self.after(300, self.toggle_special_cursor)
+            try:
+                # Check if click is within the image bounds
+                if not self.is_click_within_image(event):
+                    return
+                    
+                # Get the current cursor coordinates
+                if self.cursor_orientation == 'angled' and self.cursor_line:
+                    coords = self.image_canvas.coords(self.cursor_line)
+                    if not coords:
+                        return
+                elif self.cursor_orientation == 'vertical' and self.vertical_line:
+                    coords = self.image_canvas.coords(self.vertical_line)
+                    if not coords:
+                        return
+                elif self.cursor_orientation == 'horizontal' and self.horizontal_line:
+                    coords = self.image_canvas.coords(self.horizontal_line)
+                    if not coords:
+                        return
+                else:
+                    return
+
+                self.call_split_image_functions()
+                self.clear_cursor_lines()
                 
-            if not self.auto_split:  # Only deactivate cursor if not in auto-split mode
-                self.special_cursor_active = False
-                self.image_canvas.config(cursor="")
+                if self.batch_process.get():
+                    # Move two images ahead after splitting
+                    self.after(100, lambda: self.navigate_images(1))
+                    self.after(200, lambda: self.navigate_images(1))
+                    
+                # Force cursor update with current mouse position
+                mock_event = type('MockEvent', (), {
+                    'x': self.image_canvas.winfo_pointerx() - self.image_canvas.winfo_rootx(),
+                    'y': self.image_canvas.winfo_pointery() - self.image_canvas.winfo_rooty()
+                })
+                self.update_cursor_line(mock_event)
+                    
+            except Exception as e:
+                print(f"Error in handle_mouse_click: {str(e)}")
+
+    def is_click_within_image(self, event):
+        """Check if the mouse click is within the displayed image bounds"""
+        try:
+            if not self.original_image:
+                return False
+                
+            # Get click coordinates
+            click_x = self.image_canvas.canvasx(event.x)
+            click_y = self.image_canvas.canvasy(event.y)
+            
+            # Get the displayed image dimensions (scaled)
+            image_width, image_height = self.original_image.size
+            scaled_width = int(image_width * self.current_scale)
+            scaled_height = int(image_height * self.current_scale)
+            
+            # Check if click is within the scaled image bounds
+            # The image is placed at (0, 0) on the canvas
+            if 0 <= click_x <= scaled_width and 0 <= click_y <= scaled_height:
+                return True
+            else:
+                return False
+                
+        except Exception as e:
+            print(f"Error in is_click_within_image: {str(e)}")
+            return False
 
     def on_threshold_margin_key_press(self, event):
         if event.keysym == 'space':
             return 'break'
 
     def toggle_auto_split(self):
+        # Clear cursor modes when toggling auto split
+        if hasattr(self, 'special_cursor_active') and self.special_cursor_active:
+            self.clear_all_modes()
+            
         self.auto_split = not self.auto_split
 
     def toggle_special_cursor(self):
@@ -710,6 +778,9 @@ class ImageSplitter(tk.Toplevel):
 # Routing Functions
 
     def show_edge_detection(self):
+        # Clear cursor modes when showing edge detection
+        self.clear_all_modes()
+        
         if not self.image_data.empty:
             current_image_row = self.image_data[self.image_data['Image_Index'] == self.current_image_index + 1].iloc[0]
             image_path = current_image_row['Split_Image'] if pd.notna(current_image_row['Split_Image']) else current_image_row['Original_Image']
@@ -726,8 +797,10 @@ class ImageSplitter(tk.Toplevel):
 # Auto Straighten Functions
 
     def manual_straighten(self):
+        # Clear existing cursor modes before starting manual straighten
+        self.clear_all_modes()
+        
         if not self.image_data.empty:
-            self.clear_all_modes()
             self.straightening_mode = True
             self.straighten_start = None
             self.straighten_line = None
@@ -899,6 +972,9 @@ class ImageSplitter(tk.Toplevel):
         return best_threshold
 
     def auto_crop_image(self, event=None):
+        # Clear cursor modes when auto cropping
+        self.clear_all_modes()
+        
         if not self.image_data.empty:
             current_image_row = self.image_data[self.image_data['Image_Index'] == self.current_image_index + 1].iloc[0]
             image_path = current_image_row['Split_Image'] if pd.notna(current_image_row['Split_Image']) else current_image_row['Original_Image']
@@ -907,6 +983,9 @@ class ImageSplitter(tk.Toplevel):
 
     def auto_crop_all_images(self):
         """Apply auto-cropping to all images in the collection."""
+        # Clear cursor modes when auto cropping all
+        self.clear_all_modes()
+        
         if not self.image_data.empty:
             # First, open threshold adjuster for the current image to get settings
             current_image_row = self.image_data[self.image_data['Image_Index'] == self.current_image_index + 1].iloc[0]
@@ -1077,6 +1156,9 @@ class ImageSplitter(tk.Toplevel):
 
     def auto_straighten_image(self, event=None):
         """Automatically straighten the current image by detecting vertical edges."""
+        # Clear cursor modes when auto straightening
+        self.clear_all_modes()
+        
         if not self.image_data.empty:
             current_image_row = self.image_data[self.image_data['Image_Index'] == self.current_image_index + 1].iloc[0]
             image_path = current_image_row['Split_Image'] if pd.notna(current_image_row['Split_Image']) else current_image_row['Original_Image']
@@ -1091,6 +1173,9 @@ class ImageSplitter(tk.Toplevel):
 
     def auto_straighten_all_images(self):
         """Apply auto straightening to all images in the collection."""
+        # Clear cursor modes when auto straightening all
+        self.clear_all_modes()
+        
         if not self.image_data.empty:
             # Create progress window
             progress_window = tk.Toplevel(self)
@@ -1736,6 +1821,9 @@ class ImageSplitter(tk.Toplevel):
     
     def revert_to_original(self):
         """Revert current image to its original state"""
+        # Clear cursor modes when reverting
+        self.clear_all_modes()
+        
         if not self.image_data.empty:
             current_image_row = self.image_data[self.image_data['Image_Index'] == self.current_image_index + 1].iloc[0]
             
@@ -1849,6 +1937,9 @@ class ImageSplitter(tk.Toplevel):
 
     def revert_all_images(self):
         """Revert all images to their original state"""
+        # Clear cursor modes when reverting all
+        self.clear_all_modes()
+        
         if not self.image_data.empty:
             # Create a progress window
             progress_window = tk.Toplevel(self)
@@ -2102,11 +2193,19 @@ class ImageSplitter(tk.Toplevel):
 # Image Rotation Functions
 
     def incremental_rotate(self):
+        # Only clear cursor modes when rotating if NOT in batch processing mode
+        if not self.batch_process.get():
+            self.clear_all_modes()
+            
         angle = simpledialog.askfloat("Rotate Image", "Enter rotation angle (positive for clockwise, negative for counter-clockwise):", initialvalue=0)
         if angle is not None:
             self.rotate_image(angle)
 
     def rotate_image(self, angle):
+        # Only clear cursor modes when rotating if NOT in batch processing mode
+        if hasattr(self, 'special_cursor_active') and self.special_cursor_active and not self.batch_process.get():
+            self.clear_all_modes()
+            
         if not self.image_data.empty:
             current_image_row = self.image_data[self.image_data['Image_Index'] == self.current_image_index + 1].iloc[0]
             image_path = current_image_row['Split_Image'] if pd.notna(current_image_row['Split_Image']) else current_image_row['Original_Image']
@@ -2121,6 +2220,9 @@ class ImageSplitter(tk.Toplevel):
         self.show_current_image()
         
     def rotate_all_images(self, angle):
+        # Clear cursor modes when rotating all images
+        self.clear_all_modes()
+        
         if not self.image_data.empty:
             for _, row in self.image_data.iterrows():
                 image_path = row['Split_Image'] if pd.notna(row['Split_Image']) else row['Original_Image']
@@ -2137,6 +2239,10 @@ class ImageSplitter(tk.Toplevel):
 # Image Navigation Functions
 
     def navigate_images(self, direction):
+        # Only clear cursor modes when navigating if NOT in batch processing mode
+        if hasattr(self, 'special_cursor_active') and self.special_cursor_active and not self.batch_process.get():
+            self.clear_all_modes()
+            
         # Get the total number of rows in the df
         total_images = len(self.image_data) - 1
         if direction == -2: # Go to the first image
@@ -2199,44 +2305,10 @@ class ImageSplitter(tk.Toplevel):
         except FileNotFoundError:
             messagebox.showerror("Error", "Image file not found.")  
 
-    def handle_mouse_click(self, event):
-        if self.special_cursor_active and self.original_image:
-            try:
-                # Get the current cursor coordinates
-                if self.cursor_orientation == 'angled' and self.cursor_line:
-                    coords = self.image_canvas.coords(self.cursor_line)
-                    if not coords:
-                        return
-                elif self.cursor_orientation == 'vertical' and self.vertical_line:
-                    coords = self.image_canvas.coords(self.vertical_line)
-                    if not coords:
-                        return
-                elif self.cursor_orientation == 'horizontal' and self.horizontal_line:
-                    coords = self.image_canvas.coords(self.horizontal_line)
-                    if not coords:
-                        return
-                else:
-                    return
-
-                self.call_split_image_functions()
-                self.clear_cursor_lines()
-                
-                if self.batch_process.get():
-                    # Move two images ahead after splitting
-                    self.after(100, lambda: self.navigate_images(1))
-                    self.after(200, lambda: self.navigate_images(1))
-                    
-                # Force cursor update with current mouse position
-                mock_event = type('MockEvent', (), {
-                    'x': self.image_canvas.winfo_pointerx() - self.image_canvas.winfo_rootx(),
-                    'y': self.image_canvas.winfo_pointery() - self.image_canvas.winfo_rooty()
-                })
-                self.update_cursor_line(mock_event)
-                    
-            except Exception as e:
-                print(f"Error in handle_mouse_click: {str(e)}")
-
     def delete_current_image(self):
+        # Clear cursor modes when deleting
+        self.clear_all_modes()
+        
         if not self.image_data.empty:
             current_image_row = self.image_data[self.image_data['Image_Index'] == self.current_image_index + 1].iloc[0]
             current_image_path = current_image_row['Original_Image']
@@ -2283,6 +2355,9 @@ class ImageSplitter(tk.Toplevel):
         self.show_current_image()
         
     def save_split_images(self, only_current=False):
+        # Clear cursor modes when saving
+        self.clear_all_modes()
+        
         confirm = messagebox.askyesno("Save Images", "Are you sure you want to save the current project? This will finalize the images and cannot be undone.")
         if not confirm:
             return
