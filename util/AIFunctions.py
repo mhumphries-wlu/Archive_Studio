@@ -65,6 +65,10 @@ class AIFunctionsHandler:
             self.temp_selected_source = export_text_source
             self.app.error_logging(f"Using export-provided text source: {export_text_source}", level="DEBUG")
 
+        # Special handling for the new structured Identify_Errors
+        if ai_job == "Identify_Errors":
+            return self.process_identify_errors_structured(all_or_one_flag)
+
         # Check if we should show preset/source selection windows (moved check here)
         # Skip window if triggered by export (export_text_source is provided)
         
@@ -81,7 +85,7 @@ class AIFunctionsHandler:
                 return
 
         # Check for text source selection window for other jobs
-        if ai_job in ["Correct_Text", "Translation", "Identify_Errors", "Format_Text", "Metadata"] and not export_text_source:
+        if ai_job in ["Correct_Text", "Translation", "Format_Text", "Metadata"] and not export_text_source:
              # Check if a selection window is needed (i.e., temp source not already set)
             source_needed = not hasattr(self, 'temp_selected_source') or not self.temp_selected_source
             # Check if format preset needed for Format_Text
@@ -295,24 +299,6 @@ class AIFunctionsHandler:
                      if skip_completed:
                           batch_df = source_check_df[source_check_df[target_col].isna() | (source_check_df[target_col] == '')]
                      else: batch_df = source_check_df
-            elif ai_job == "Identify_Errors":
-                target_col = 'Errors' # Target is the Errors column
-                source_col = selected_source # Source MUST be selected via window
-                if not source_col:
-                     messagebox.showerror("Error", "Text source for error identification not selected.")
-                     self.app.toggle_button_state()
-                     return
-                if all_or_one_flag == "Current Page":
-                     row_idx = self.app.page_counter
-                     if row_idx < len(self.app.main_df):
-                          row_data = self.app.main_df.loc[row_idx]
-                          if pd.notna(row_data.get(source_col)) and row_data.get(source_col, "").strip():
-                                # Always process errors, skip_completed doesn't apply same way
-                                batch_df = self.app.main_df.loc[[row_idx]]
-                          else: messagebox.showinfo("Skip", f"Page {row_idx+1} has no source text in '{source_col}'.")
-                     else: messagebox.showerror("Error", "Invalid page index.")
-                else: # All Pages
-                     batch_df = self.app.main_df[self.app.main_df[source_col].notna() & (self.app.main_df[source_col] != '')]
             elif ai_job == "Get_Names_and_Places":
                  target_col = ['People', 'Places'] # Multiple target cols
                  # Assume source is always best available text, skip_completed doesn't apply
@@ -1491,190 +1477,318 @@ class AIFunctionsHandler:
             # REMOVED traceback.print_exc()
 
     def process_relevance_search(self, criteria_text, selected_source, mode):
-        """Process the relevance search using AI and update the DataFrame"""
-        if self.app.main_df.empty:
-             messagebox.showinfo("No Documents", "No documents loaded to check for relevance.")
-             return
-
-        # Show progress window
-        progress_title = f"Finding Relevant Documents ({mode})..."
-        progress_window, progress_bar, progress_label = self.app.progress_bar.create_progress_window(progress_title)
-        self.app.progress_bar.update_progress(0, 1)
-
+        """Process relevance search based on user criteria"""
         try:
-            # Disable navigation buttons during processing
+            # Toggle buttons during processing
             self.app.toggle_button_state()
 
+            # Get the relevance preset
+            preset = next((p for p in self.app.settings.relevance_presets if p.get('name') == 'Relevance'), None)
+            if not preset:
+                messagebox.showerror("Error", "Relevance preset not found in settings.")
+                return
+
+            # Setup progress window
+            progress_title = f"Finding Relevant Documents ({'Current Page' if mode == 'Current Page' else 'All Pages'})..."
+            progress_window, progress_bar, progress_label = self.app.progress_bar.create_progress_window(progress_title)
+
             # Determine which rows to process
-            batch_df = pd.DataFrame()
             if mode == "Current Page":
-                if self.app.page_counter < len(self.app.main_df):
-                    batch_df = self.app.main_df.loc[[self.app.page_counter]]
-                else:
-                     messagebox.showerror("Error", "Invalid page index.")
-            else: # All Pages
-                 # Get rows with text in the selected source
-                 if selected_source in self.app.main_df.columns:
-                     batch_df = self.app.main_df[
-                         (self.app.main_df[selected_source].notna()) &
-                         (self.app.main_df[selected_source] != '')
-                     ].copy() # Use copy to avoid SettingWithCopyWarning if modifying later
-                 else:
-                      messagebox.showerror("Error", f"Selected source column '{selected_source}' not found.")
+                if self.app.main_df.empty or self.app.page_counter >= len(self.app.main_df):
+                    messagebox.showinfo("Info", "No page loaded to process.")
+                    return
+                batch_df = self.app.main_df.loc[[self.app.page_counter]]
+            else:  # All Pages
+                # Filter for rows that have text in the selected source
+                batch_df = self.app.main_df[
+                    self.app.main_df[selected_source].notna() & 
+                    (self.app.main_df[selected_source] != '')
+                ]
 
-
-            if batch_df.empty:
-                messagebox.showinfo("No Data", f"No rows found with text in '{selected_source}' to analyze for relevance.")
-                # Close progress window before returning
-                if 'progress_window' in locals() and progress_window.winfo_exists():
-                    self.app.progress_bar.close_progress_window()
-                self.app.toggle_button_state()
-                return
-
-            # Set up job parameters based on relevance preset (find preset in settings)
-            # Assume a preset named "Relevance" exists in analysis_presets
-            relevance_preset = next((p for p in self.app.settings.analysis_presets if p.get('name') == "Relevance"), None)
-
-            if not relevance_preset:
-                messagebox.showerror("Error", "Relevance analysis preset not found in settings.")
-                # Close progress window before returning
-                if 'progress_window' in locals() and progress_window.winfo_exists():
-                    self.app.progress_bar.close_progress_window()
-                self.app.toggle_button_state()
-                return
-
-            # Setup job parameters, injecting the user's criteria text
-            # Use specific_instructions field for the query prompt structure
-            user_prompt_template = relevance_preset.get('specific_instructions', 'Text:\n{text_to_process}\n\nRelevance Criteria:{query_text}\n\nIs this text Relevant, Partially Relevant, Irrelevant, or Uncertain based ONLY on the criteria?')
-            user_prompt_filled = user_prompt_template.replace("{query_text}", criteria_text) # Inject criteria
-
-            job_params = {
-                "temp": float(relevance_preset.get('temperature', 0.1)), # Low temp for classification
-                "val_text": relevance_preset.get('val_text', ''), # Expect direct answer
-                "engine": relevance_preset.get('model', self.app.settings.model_list[0] if self.app.settings.model_list else 'default'),
-                "user_prompt": user_prompt_filled, # Use the filled template
-                "system_prompt": relevance_preset.get('general_instructions', 'Classify text relevance based on criteria. Output only one word: Relevant, Partially Relevant, Irrelevant, or Uncertain.'),
-                "batch_size": min(10, getattr(self.app.settings, 'batch_size', 10)), # Smaller batch for analysis
-                "use_images": False, # Relevance check is text-based
-                "thinking_budget": relevance_preset.get('thinking_budget', '128')
-            }
-
-            # Initialize counters
             total_rows = len(batch_df)
-            self.app.progress_bar.set_total_steps(total_rows) # <--- ADDED
+            if total_rows == 0:
+                messagebox.showinfo("No Data", f"No pages have text in '{selected_source}' to analyze.")
+                return
+
+            self.app.progress_bar.set_total_steps(total_rows)
             processed_rows = 0
             error_count = 0
-            processed_indices = set()
-
-            # Ensure Relevance column exists
-            if 'Relevance' not in self.app.main_df.columns:
-                self.app.main_df['Relevance'] = ""
-                self.app.main_df['Relevance'] = self.app.main_df['Relevance'].astype(str)
-
 
             # Process each row
-            with ThreadPoolExecutor(max_workers=job_params['batch_size']) as executor:
+            batch_size = getattr(self.app.settings, 'batch_size', 10)
+            with ThreadPoolExecutor(max_workers=batch_size) as executor:
                 futures_to_index = {}
 
-                # Submit tasks for all rows
-                for index, row in batch_df.iterrows():
-                    text_to_process = row[selected_source] # Already checked non-empty
+                for index, row_data in batch_df.iterrows():
+                    text_to_process = row_data.get(selected_source, "")
+                    if not text_to_process.strip():
+                        processed_rows += 1
+                        self.app.progress_bar.update_progress(processed_rows, total_rows)
+                        continue
 
-                    if not pd.isna(text_to_process) and text_to_process.strip():
-                        # Submit the API request
-                        future = executor.submit(
-                            asyncio.run,
-                            self.process_api_request( # Use self here
-                                system_prompt=job_params['system_prompt'],
-                                user_prompt=job_params['user_prompt'], # Already contains criteria
-                                temp=job_params['temp'],
-                                image_data=[],  # No images
-                                text_to_process=text_to_process,
-                                val_text=job_params['val_text'],
-                                engine=job_params['engine'],
-                                index=index,
-                                is_base64=False,
-                                ai_job="Relevance", # Pass job type
-                                job_params=job_params
-                            )
+                    # Prepare user prompt with criteria and text
+                    user_prompt = preset.get('specific_instructions', '').format(
+                        query_text=criteria_text,
+                        text_to_process=text_to_process
+                    )
+
+                    # Submit API request
+                    future = executor.submit(
+                        asyncio.run,
+                        self.process_api_request(
+                            system_prompt=preset.get('general_instructions', ''),
+                            user_prompt=user_prompt,
+                            temp=float(preset.get('temperature', 0.3)),
+                            image_data=[],
+                            text_to_process=text_to_process,
+                            val_text=preset.get('val_text', 'Relevance:'),
+                            engine=preset.get('model', self.app.settings.model_list[0]),
+                            index=index,
+                            is_base64=False,
+                            ai_job="Relevance_Search",
+                            job_params={}
                         )
-                        futures_to_index[future] = index
+                    )
+                    futures_to_index[future] = index
 
-                # Process results as they complete
+                # Process results
                 for future in as_completed(futures_to_index):
                     index = futures_to_index[future]
                     try:
                         response, idx_confirm = future.result()
-                        if idx_confirm != index: raise ValueError("Index mismatch in result")
+                        if idx_confirm == index and response != "Error":
+                            # Extract relevance from response
+                            relevance_match = re.search(r'Relevance:\s*(Relevant|Partially Relevant|Irrelevant|Uncertain)', response, re.IGNORECASE)
+                            if relevance_match:
+                                relevance_value = relevance_match.group(1)
+                                self.app.main_df.loc[index, 'Relevance'] = relevance_value
+                                self.app.error_logging(f"Set relevance for index {index}: {relevance_value}", level="DEBUG")
 
-                        # Update progress
-                        if index not in processed_indices:
-                            processed_indices.add(index)
-                            processed_rows += 1
-                            self.app.progress_bar.update_progress(processed_rows, total_rows)
-
-                        # Process the response
-                        if response != "Error":
-                            # Clean response: take first word, capitalize
-                            first_word = response.strip().split()[0] if response.strip() else "Uncertain"
-                            # Remove trailing punctuation like periods or commas
-                            cleaned_word = re.sub(r'[.,!?;:]$', '', first_word)
-                            capitalized_word = cleaned_word.capitalize()
-
-
-                            # Validate response
-                            valid_responses = ["Relevant", "Partially Relevant", "Irrelevant", "Uncertain"]
-                            final_relevance = capitalized_word if capitalized_word in valid_responses else "Uncertain"
-
-                            # Update the DataFrame
-                            self.app.main_df.at[index, 'Relevance'] = final_relevance
-                            self.app.error_logging(f"Set Relevance for index {index} to: {final_relevance}", level="DEBUG")
+                                # Show relevance section if we have results
+                                if not self.app.show_relevance.get():
+                                    self.app.show_relevance.set(True)
+                                    self.app.toggle_relevance_visibility()
+                            else:
+                                self.app.error_logging(f"Could not extract relevance from response for index {index}: {response}", level="WARNING")
                         else:
                             error_count += 1
-                            self.app.main_df.at[index, 'Relevance'] = "Error" # Mark as error
+                            self.app.error_logging(f"API error for relevance analysis at index {index}", level="ERROR")
 
                     except Exception as e:
-                        self.app.error_logging(f"Error processing relevance for index {index}: {str(e)}", level="ERROR")
-                        # REMOVED traceback.print_exc()
                         error_count += 1
-                        self.app.main_df.at[index, 'Relevance'] = "Error" # Mark as error
-                         # Update progress even on error
-                        if index not in processed_indices:
-                            processed_indices.add(index)
-                            processed_rows += 1
-                            self.app.progress_bar.update_progress(processed_rows, total_rows)
+                        self.app.error_logging(f"Exception processing relevance for index {index}: {str(e)}", level="ERROR")
 
+                    processed_rows += 1
+                    self.app.progress_bar.update_progress(processed_rows, total_rows)
 
-            # Make the relevance dropdown visible after processing
-            self.app.show_relevance.set(True)
-            self.app.toggle_relevance_visibility()
-
-            # Refresh display to show updated relevance for the current page
-            self.app.load_text()
-
-            # Show summary message
+            # Show completion message
+            self.app.progress_bar.close_progress_window()
             if error_count > 0:
-                messagebox.showwarning("Processing Complete",
-                                    f"Relevance analysis complete with {error_count} errors. "
-                                    f"Successfully processed {total_rows - error_count} documents.")
+                messagebox.showinfo("Relevance Analysis Complete", 
+                    f"Relevance analysis completed with {error_count} errors. "
+                    f"Successfully processed {processed_rows - error_count} out of {total_rows} pages.")
             else:
-                messagebox.showinfo("Processing Complete",
-                                     f"Relevance analysis complete. {total_rows} documents processed.")
+                messagebox.showinfo("Relevance Analysis Complete", 
+                    f"Successfully analyzed relevance for {processed_rows} pages.")
+
+            # Refresh display to show relevance dropdown if applicable
+            if self.app.page_counter < len(self.app.main_df):
+                self.app.load_text()
 
         except Exception as e:
-            self.app.error_logging(f"Error in process_relevance_search: {str(e)}", level="ERROR")
-            # REMOVED traceback.print_exc()
+            self.app.error_logging(f"Critical error in process_relevance_search: {str(e)}", level="ERROR")
             messagebox.showerror("Error", f"An error occurred during relevance analysis: {str(e)}")
-
         finally:
-            # Close progress window and re-enable buttons
+            # Always restore button state
+            if hasattr(self.app, 'button1') and self.app.button1['state'] == "disabled":
+                self.app.toggle_button_state()
+
+    def process_identify_errors_structured(self, all_or_one_flag="All Pages"):
+        """
+        New structured approach for Identify_Errors that sends all images and expects JSON response
+        """
+        try:
+            # Toggle buttons during processing
+            self.app.toggle_button_state()
+
+            # Get the Identify_Errors preset from function_presets
+            preset = next((p for p in self.app.settings.function_presets if p.get('name') == 'Identify_Errors'), None)
+            if not preset:
+                messagebox.showerror("Error", "Identify_Errors preset not found in function_presets.")
+                return
+
+            # Setup progress window
+            progress_title = f"Identifying Errors ({'Current Page' if all_or_one_flag == 'Current Page' else 'All Pages'})..."
+            progress_window, progress_bar, progress_label = self.app.progress_bar.create_progress_window(progress_title)
+            self.app.progress_bar.update_progress(10, 100)
+
+            # Determine which rows to process - only those with Original_Text
+            if all_or_one_flag == "Current Page":
+                if self.app.main_df.empty or self.app.page_counter >= len(self.app.main_df):
+                    messagebox.showinfo("Info", "No page loaded to process.")
+                    return
+                
+                row_data = self.app.main_df.loc[self.app.page_counter]
+                if not (pd.notna(row_data.get('Original_Text')) and row_data.get('Original_Text', "").strip()):
+                    messagebox.showinfo("Skip", "Current page has no Original_Text to analyze for errors.")
+                    return
+                    
+                batch_df = self.app.main_df.loc[[self.app.page_counter]]
+            else:  # All Pages
+                # Filter for rows that have Original_Text
+                batch_df = self.app.main_df[
+                    self.app.main_df['Original_Text'].notna() & 
+                    (self.app.main_df['Original_Text'] != '')
+                ]
+
+            total_rows = len(batch_df)
+            if total_rows == 0:
+                messagebox.showinfo("No Data", "No pages have Original_Text to analyze for errors.")
+                return
+
+            self.app.progress_bar.update_progress(20, 100)
+
+            # Collect ALL images in the project (not just the ones being processed)
+            all_images_data = []
+            for index, row in self.app.main_df.iterrows():
+                image_path_rel = row.get('Image_Path', "")
+                if image_path_rel:
+                    image_path_abs = self.app.get_full_path(image_path_rel)
+                    if image_path_abs and os.path.exists(image_path_abs):
+                        all_images_data.append((image_path_abs, f"Page {index + 1}:"))
+
+            self.app.error_logging(f"Collected {len(all_images_data)} images for structured error identification", level="DEBUG")
+            self.app.progress_bar.update_progress(40, 100)
+
+            # Prepare the images for the API call
+            engine_name = preset.get('model', self.app.settings.model_list[0] if self.app.settings.model_list else 'gemini-2.0-flash').lower()
+            is_base64_needed = "gemini" not in engine_name
+
+            prepared_images = self.app.api_handler.prepare_image_data(
+                all_images_data,
+                engine_name,
+                is_base64_needed
+            )
+
+            self.app.progress_bar.update_progress(50, 100)
+
+            # Create JSON structure for the text data
+            json_data = []
+            for index, row_data in batch_df.iterrows():
+                original_text = row_data.get('Original_Text', "")
+                if original_text.strip():  # Only include non-empty text
+                    json_data.append({
+                        "Index": int(index),
+                        "Text": original_text.strip()
+                    })
+
+            if not json_data:
+                messagebox.showinfo("No Data", "No valid Original_Text found to process.")
+                return
+
+            # Convert to JSON string
+            import json
+            json_text = json.dumps(json_data, indent=2, ensure_ascii=False)
+
+            # Replace specific_instructions with our JSON structure
+            user_prompt = f"A list of JSON objects where each object contains Index (the row number) and Text (containing the text from Original_Text). Analyze each text for errors and return a list of JSON objects with Index, Error text, and Correction fields.\n\n{json_text}"
+
+            self.app.progress_bar.update_progress(60, 100)
+
+            # Make the API call with structured output
+            job_params = {
+                'thinking_budget': preset.get('thinking_budget', '128'),
+                'structured_output': True  # Enable structured output
+            }
+
+            # Submit API request
+            response, _ = asyncio.run(self.process_api_request(
+                system_prompt=preset.get('general_instructions', ''),
+                user_prompt=user_prompt,
+                temp=float(preset.get('temperature', 0.2)),
+                image_data=prepared_images,
+                text_to_process="",  # Empty since our data is in user_prompt
+                val_text="",  # Empty since we expect structured JSON
+                engine=preset.get('model', self.app.settings.model_list[0] if self.app.settings.model_list else 'gemini-2.0-flash'),
+                index=0,  # Not relevant for this call
+                is_base64=is_base64_needed,
+                ai_job="Identify_Errors_Structured",
+                job_params=job_params
+            ))
+
+            self.app.progress_bar.update_progress(80, 100)
+
+            if response == "Error":
+                messagebox.showerror("Error", "API call failed for error identification.")
+                return
+
+            # Parse the structured JSON response
             try:
-                 if 'progress_window' in locals() and progress_window.winfo_exists():
-                     self.app.progress_bar.close_progress_window()
-            except TclError: pass
+                # Try to extract JSON from the response
+                response_data = None
+                
+                # First try parsing the entire response as JSON
+                try:
+                    response_data = json.loads(response)
+                except json.JSONDecodeError:
+                    # Try to find JSON within the response text
+                    json_match = re.search(r'\[.*\]', response, re.DOTALL)
+                    if json_match:
+                        response_data = json.loads(json_match.group(0))
+                    else:
+                        raise ValueError("No valid JSON found in response")
 
-            if self.app.button1['state'] == 'disabled':
-                 self.app.toggle_button_state()
+                if not isinstance(response_data, list):
+                    raise ValueError("Response is not a list of objects")
 
-            # Refresh display again just in case
-            self.app.refresh_display()
+                # Process each error result
+                processed_count = 0
+                for result in response_data:
+                    if isinstance(result, dict) and 'Index' in result:
+                        index = int(result['Index'])
+                        error_text = result.get('Error text', '')
+                        correction = result.get('Correction', '')
+                        
+                        # Update the DataFrame
+                        if index in self.app.main_df.index:
+                            # Store both error and correction (you might want to add a Correction column to your DF)
+                            if error_text.strip():
+                                self.app.main_df.loc[index, 'Errors'] = error_text.strip()
+                                self.app.main_df.loc[index, 'Errors_Source'] = 'Original_Text'
+                                
+                                # If your DF has a Correction column, store it there
+                                if 'Correction' in self.app.main_df.columns and correction.strip():
+                                    self.app.main_df.loc[index, 'Correction'] = correction.strip()
+                                
+                                processed_count += 1
+                                self.app.error_logging(f"Updated errors for index {index}: {error_text[:50]}...", level="DEBUG")
+
+                self.app.progress_bar.update_progress(90, 100)
+
+                # Refresh display if we're viewing one of the processed pages
+                if self.app.page_counter in batch_df.index:
+                    self.app.load_text()
+
+                self.app.progress_bar.update_progress(100, 100)
+
+                # Show completion message
+                messagebox.showinfo("Error Identification Complete", 
+                    f"Successfully identified errors in {processed_count} pages using structured analysis.")
+
+            except (json.JSONDecodeError, ValueError, KeyError) as e:
+                self.app.error_logging(f"Failed to parse structured response: {str(e)}\nResponse: {response}", level="ERROR")
+                messagebox.showerror("Error", f"Failed to parse AI response as structured JSON: {str(e)}")
+
+        except Exception as e:
+            self.app.error_logging(f"Critical error in process_identify_errors_structured: {str(e)}", level="ERROR")
+            messagebox.showerror("Error", f"An error occurred during structured error identification: {str(e)}")
+        finally:
+            # Always restore button state and close progress window
+            try:
+                if 'progress_window' in locals() and progress_window.winfo_exists():
+                    self.app.progress_bar.close_progress_window()
+            except:
+                pass
+            
+            if hasattr(self.app, 'button1') and self.app.button1['state'] == "disabled":
+                self.app.toggle_button_state()

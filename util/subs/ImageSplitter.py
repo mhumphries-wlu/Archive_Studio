@@ -366,7 +366,7 @@ class ImageSplitter(tk.Toplevel):
                     # Create a simple blank image as a placeholder
                     blank_image = Image.new('RGB', (800, 1000), (255, 255, 255))  # White background
                     blank_path = os.path.join(self.temp_folder, "blank_image.jpg")
-                    blank_image.save(blank_path)
+                    blank_image.save(blank_path, 'JPEG', quality=98, optimize=True)
                     image_files = ["blank_image.jpg"]
                     print(f"Created placeholder image at {blank_path}")
                 except Exception as e:
@@ -441,9 +441,9 @@ class ImageSplitter(tk.Toplevel):
             left_image = left_image.convert("RGB")
             right_image = right_image.convert("RGB")
             
-            # Save the split images
-            left_image.save(left_image_path)
-            right_image.save(right_image_path)
+            # Save the split images with high quality
+            left_image.save(left_image_path, 'JPEG', quality=98, optimize=True)
+            right_image.save(right_image_path, 'JPEG', quality=98, optimize=True)
             
             # Get the current index in the DataFrame
             # Handle different types of indices safely
@@ -979,8 +979,8 @@ class ImageSplitter(tk.Toplevel):
                         # Crop the image
                         cropped = image[y:y+h, x:x+w]
                         
-                        # Save the cropped image
-                        cv2.imwrite(image_path, cropped)
+                        # Save the cropped image with high quality
+                        cv2.imwrite(image_path, cropped, [cv2.IMWRITE_JPEG_QUALITY, 98])
                     
                     processed_count.set(processed_count.get() + 1)
                     self.after(10, update_progress)
@@ -1050,8 +1050,8 @@ class ImageSplitter(tk.Toplevel):
                 # Crop the image
                 cropped = image[y:y+h, x:x+w]
                 
-                # Save the cropped image
-                cv2.imwrite(image_path, cropped)
+                # Save the cropped image with high quality
+                cv2.imwrite(image_path, cropped, [cv2.IMWRITE_JPEG_QUALITY, 98])
                 
                 # Force image reload if this is the current image
                 current_image_row = self.image_data[self.image_data['Image_Index'] == self.current_image_index + 1].iloc[0]
@@ -1268,7 +1268,7 @@ class ImageSplitter(tk.Toplevel):
                 
                 # Crop the image
                 cropped_image = image.crop((left, top, right, bottom))
-                cropped_image.save(image_path)
+                cropped_image.save(image_path, 'JPEG', quality=98, optimize=True)
                 
                 # Clear crop rectangle and reset crop variables
                 if self.crop_rect:
@@ -1862,7 +1862,7 @@ class ImageSplitter(tk.Toplevel):
             
             image = Image.open(image_path)
             rotated_image = image.rotate(-angle, expand=True, resample=Image.BICUBIC)  # Note the negative angle here
-            rotated_image.save(image_path)
+            rotated_image.save(image_path, 'JPEG', quality=98, optimize=True)
             
             self.show_current_image()
         
@@ -1876,7 +1876,7 @@ class ImageSplitter(tk.Toplevel):
                 
                 image = Image.open(image_path)
                 rotated_image = image.rotate(angle, expand=True)
-                rotated_image.save(image_path)
+                rotated_image.save(image_path, 'JPEG', quality=98, optimize=True)
             
             self.show_current_image()
         
@@ -2062,6 +2062,19 @@ class ImageSplitter(tk.Toplevel):
                 # Save all images (default behavior)
                 data_to_save = self.image_data.sort_values('Image_Index').reset_index(drop=True)
 
+            # Debug: Print temp folder contents
+            print(f"Debug: Temp folder path: {self.temp_folder}")
+            if os.path.exists(self.temp_folder):
+                temp_files = os.listdir(self.temp_folder)
+                print(f"Debug: Files in temp folder: {temp_files}")
+            else:
+                print(f"Debug: Temp folder does not exist!")
+            
+            # Debug: Print dataframe info
+            print(f"Debug: Data to save shape: {data_to_save.shape}")
+            for idx, row in data_to_save.iterrows():
+                print(f"Debug Row {idx}: Split_Image={row.get('Split_Image', 'N/A')}, Original_Image={row.get('Original_Image', 'N/A')}")
+
             # Process and save images sequentially
             for i, row in data_to_save.iterrows():
                 try:
@@ -2070,14 +2083,35 @@ class ImageSplitter(tk.Toplevel):
                     new_path = os.path.join(pass_images_dir, new_name)
                     # Determine source image - prefer Split_Image over Original_Image
                     source_path = row['Split_Image'] if pd.notna(row['Split_Image']) else row['Original_Image']
-                    # Copy and optimize image
-                    with Image.open(source_path) as img:
-                        img = img.convert('RGB')
-                        img.save(new_path, 'JPEG', quality=95, optimize=True)
+                    
+                    # Validate source path exists
+                    if not source_path or not os.path.exists(source_path):
+                        print(f"Error: Source image not found at {source_path}")
+                        print(f"Row data: Split_Image={row.get('Split_Image', 'N/A')}, Original_Image={row.get('Original_Image', 'N/A')}")
+                        
+                        # Try to find the image in temp folder by filename
+                        if source_path:
+                            source_filename = os.path.basename(source_path)
+                            temp_file_path = os.path.join(self.temp_folder, source_filename)
+                            print(f"Debug: Trying temp file path: {temp_file_path}")
+                            if os.path.exists(temp_file_path):
+                                print(f"Debug: Found image in temp folder, using {temp_file_path}")
+                                source_path = temp_file_path
+                            else:
+                                print(f"Debug: Image not found in temp folder either")
+                                continue
+                        else:
+                            continue
+                    
+                    # Copy image directly to preserve quality (avoid double compression)
+                    shutil.copy2(source_path, new_path)
+                    print(f"Debug: Successfully copied {source_path} to {new_path}")
+                    
                     # Keep track of the mapping between old and new paths
                     row['Final_Path'] = new_path
                 except Exception as e:
                     print(f"Error processing image {i+1}: {e}")
+                    print(f"Source path was: {source_path if 'source_path' in locals() else 'undefined'}")
                     continue
 
             self.status = "saved"

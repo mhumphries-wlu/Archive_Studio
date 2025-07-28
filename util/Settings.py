@@ -183,15 +183,16 @@ These are the line numbers where a document separator should be placed immediate
             },
             {
                 'name': "Identify_Errors",
-                'model': "claude-3-7-sonnet-20250219",
+                'model': "gemini-2.0-flash",
                 'temperature': "0.2",
-                'general_instructions': '''Your task is to compare draft transcriptions with the original handwritten document. You will identify all the single words and multiple-word phrases exactly as written in the transcription where you are less than 90% certain the transcription is correct. In your response, write "Errors:" followed by a semi-colon delineated list of all the errors you have identified.''',
+                'general_instructions': '''Your task is to analyze transcriptions against handwritten documents using all provided images. You will receive a JSON list of objects containing Index and Text fields. For each text, compare it against the corresponding handwritten page and identify errors with suggested corrections. Return a JSON list of objects with Index, "Error text", and "Correction" fields for each error found.''',
                 'specific_instructions': '''Here is the text to analyze:\n\n{text_to_process}''',
                 'use_images': True,
                 'current_image': "Yes",
                 'num_prev_images': "0",
                 'num_after_images': "0",
-                'val_text': "Errors:",
+                'val_text': "",
+                'structured_output': True,
                 "thinking_budget": "128"
             },
             {
